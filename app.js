@@ -92,8 +92,11 @@
     bestMode: $("#bestMode"),
 
     btnCopy: $("#btnCopy"),
-    btnSave: $("#btnSave"),
-    btnGoPredict: $("#btnGoPredict"),
+btnSave: $("#btnSave"),
+btnGoPredict: $("#btnGoPredict"),
+btnCopyAllPredict: $("#btnCopyAllPredict"),
+btnPredictSummary: $("#btnPredictSummary"),
+predictResultsList: $("#predictResultsList"),
     btnRecent5: $("#btnRecent5"),
     btnDataStatus: $("#btnDataStatus"),
     btnFullAnalysis: $("#btnFullAnalysis"),
