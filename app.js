@@ -702,6 +702,7 @@ function normalizeLatestFromAny(raw, sourceUrl = "") {
   alert(`最近 5 期開獎\n\n${text}`);
 }
 
+
   function showDataStatus() {
     const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
     const status = readJSON(STORAGE_KEYS.status, {
