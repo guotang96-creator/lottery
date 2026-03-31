@@ -1,28 +1,209 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<title>台灣彩券預測系統</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>今彩539 AI 預測系統 V2.0</title>
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="description" content="今彩539 AI 預測系統｜手機版｜539 專用版" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-block">
+        <div class="brand-icon">539</div>
+        <div class="brand-text">
+          <h1>今彩539 AI 預測系統</h1>
+          <p>V2.0｜資料正常 <span class="status-dot">●</span></p>
+          <small>最後更新：<span id="lastUpdateText">2026-03-31 20:05</span></small>
+        </div>
+      </div>
+    </header>
 
-<h1>台灣彩券預測系統</h1>
+    <main class="main-content">
+      <section class="card">
+        <div class="card-header">
+          <h2>539 資料狀態</h2>
+          <button class="text-btn" id="btnDataStatus">查看詳細資料狀態</button>
+        </div>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">最新期數</span>
+            <strong id="latestPeriod">115000001</strong>
+          </div>
+          <div class="info-item">
+            <span class="label">最新日期</span>
+            <strong id="latestDate">2026-03-31</strong>
+          </div>
+          <div class="info-item">
+            <span class="label">資料筆數</span>
+            <strong id="historyCount">最近 120 期</strong>
+          </div>
+          <div class="info-item">
+            <span class="label">更新狀態</span>
+            <strong class="ok-text">正常</strong>
+          </div>
+        </div>
+      </section>
 
-<select id="game">
-<option value="bingo">賓果</option>
-<option value="lotto">大樂透</option>
-<option value="power">威力彩</option>
-<option value="539">今彩539</option>
-</select>
+      <section class="card">
+        <div class="card-header">
+          <h2>快速預測</h2>
+        </div>
 
-<button onclick="predict()">產生推薦號碼</button>
+        <div class="form-grid">
+          <label class="field">
+            <span>分析期數</span>
+            <select id="analysisPeriods">
+              <option value="30">30期</option>
+              <option value="60">60期</option>
+              <option value="120" selected>120期</option>
+              <option value="240">240期</option>
+              <option value="500">500期</option>
+            </select>
+          </label>
 
-<h2>推薦號碼</h2>
-<div id="result"></div>
+          <label class="field">
+            <span>推薦組數</span>
+            <select id="recommendCount">
+              <option value="1">1組</option>
+              <option value="3" selected>3組</option>
+              <option value="5">5組</option>
+              <option value="10">10組</option>
+            </select>
+          </label>
 
-<script src="script.js"></script>
+          <label class="field">
+            <span>模式</span>
+            <select id="predictMode">
+              <option value="balanced" selected>均衡型</option>
+              <option value="hot">熱號型</option>
+              <option value="cold">冷號型</option>
+              <option value="tail">尾數型</option>
+              <option value="drag">拖號型</option>
+            </select>
+          </label>
+        </div>
 
+        <button class="primary-btn" id="btnPredict">立即預測</button>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2>本期最新開獎摘要</h2>
+          <button class="text-btn" id="btnRecent5">查看最近5期</button>
+        </div>
+        <div class="latest-result">
+          <div class="balls-row" id="latestBalls">
+            <span class="ball">05</span>
+            <span class="ball">12</span>
+            <span class="ball">21</span>
+            <span class="ball">33</span>
+            <span class="ball">39</span>
+          </div>
+          <div class="sub-note">第 <span id="latestDrawNo">115000001</span> 期</div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2>AI 推薦結果預覽</h2>
+        </div>
+
+        <div class="recommend-box">
+          <div class="recommend-row">
+            <span class="recommend-title">推薦1</span>
+            <div class="balls-row" id="recommendBalls1">
+              <span class="ball active">08</span>
+              <span class="ball active">13</span>
+              <span class="ball active">19</span>
+              <span class="ball active">27</span>
+              <span class="ball active">31</span>
+            </div>
+          </div>
+
+          <div class="recommend-meta">
+            <span>信心：<strong id="confidenceText">78</strong></span>
+            <span>偏熱號</span>
+            <span>2組拖號</span>
+          </div>
+
+          <div class="action-row">
+            <button class="secondary-btn" id="btnCopy">複製</button>
+            <button class="secondary-btn" id="btnSave">收藏</button>
+            <button class="secondary-btn" id="btnFullAnalysis">看完整分析</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2>分析摘要</h2>
+          <button class="text-btn" id="btnAnalysis">進入完整分析</button>
+        </div>
+
+        <div class="analysis-list">
+          <div class="analysis-item">
+            <span class="label">熱門號</span>
+            <strong id="hotNums">08 19 31</strong>
+          </div>
+          <div class="analysis-item">
+            <span class="label">冷門號</span>
+            <strong id="coldNums">04 17 26</strong>
+          </div>
+          <div class="analysis-item">
+            <span class="label">拖號組</span>
+            <strong id="dragNums">08→19、13→27</strong>
+          </div>
+          <div class="analysis-item">
+            <span class="label">尾數強勢</span>
+            <strong id="tailNums">1尾、9尾</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2>最近命中追蹤</h2>
+          <button class="text-btn" id="btnHitTrack">進入命中追蹤</button>
+        </div>
+
+        <div class="track-grid">
+          <div class="track-item">
+            <span class="label">最近5次平均</span>
+            <strong id="avgHit">1.8顆</strong>
+          </div>
+          <div class="track-item">
+            <span class="label">最高命中</span>
+            <strong id="maxHit">3顆</strong>
+          </div>
+          <div class="track-item">
+            <span class="label">最佳模式</span>
+            <strong id="bestMode">均衡型</strong>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-page="home">首頁</button>
+      <button class="nav-btn" data-page="predict">預測</button>
+      <button class="nav-btn" data-page="history">歷史</button>
+      <button class="nav-btn" data-page="settings">設定</button>
+    </nav>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch(console.error);
+      });
+    }
+  </script>
 </body>
 </html>
