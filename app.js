@@ -360,6 +360,7 @@ function normalizeLatestFromAny(raw, sourceUrl = "") {
   return rows.slice(0, 5);
 }
 
+
   function getFrequency(history) {
     const freq = new Map();
     for (let i = 1; i <= 39; i++) freq.set(i, 0);
