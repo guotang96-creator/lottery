@@ -1,12 +1,12 @@
 (() => {
-  const APP_VERSION = "V2.7｜今彩539 專用版｜記住設定版";
+  const APP_VERSION = "V2.8｜今彩539 專用版｜設定記憶修正版";
 
   const STORAGE_KEYS = {
-    favorites: "jincai539_favorites_v27",
-    history: "jincai539_predict_history_v27",
-    latest: "jincai539_latest_result_v27",
-    status: "jincai539_data_status_v27",
-    settings: "jincai539_user_settings_v27"
+    favorites: "jincai539_favorites_v28",
+    history: "jincai539_predict_history_v28",
+    latest: "jincai539_latest_result_v28",
+    status: "jincai539_data_status_v28",
+    settings: "jincai539_user_settings_v28"
   };
 
   const JSON_CANDIDATES = [
@@ -164,10 +164,13 @@
       predictMode: els.predictMode?.value || "balanced"
     };
     writeJSON(STORAGE_KEYS.settings, settings);
+    console.log("已儲存設定", settings);
   }
 
   function loadUserSettings() {
     const settings = readJSON(STORAGE_KEYS.settings, null);
+    console.log("讀取設定", settings);
+
     if (!settings) return;
 
     if (els.analysisPeriods && settings.analysisPeriods) {
@@ -196,9 +199,7 @@
 
   function toIntArray(arr) {
     if (!Array.isArray(arr)) return [];
-    return arr
-      .map((v) => Number(v))
-      .filter((v) => Number.isFinite(v) && v >= 1 && v <= 39);
+    return arr.map((v) => Number(v)).filter((v) => Number.isFinite(v) && v >= 1 && v <= 39);
   }
 
   function normalizeRecentRows(rows) {
@@ -206,29 +207,10 @@
 
     return rows
       .map((item) => {
-        const period =
-          item.period ||
-          item.drawTerm ||
-          item.issue ||
-          item.term ||
-          item.drawNo ||
-          "";
-
-        const date = normalizeDateOnly(
-          item.lotteryDate ||
-          item.drawDate ||
-          item.dDate ||
-          item.date ||
-          ""
-        );
-
+        const period = item.period || item.drawTerm || item.issue || item.term || item.drawNo || "";
+        const date = normalizeDateOnly(item.lotteryDate || item.drawDate || item.dDate || item.date || "");
         const numbers = toIntArray(
-          item.drawNumberSize ||
-          item.drawNumbers ||
-          item.numbers ||
-          item.orderNumbers ||
-          item.num ||
-          []
+          item.drawNumberSize || item.drawNumbers || item.numbers || item.orderNumbers || item.num || []
         );
 
         if (!period || numbers.length < 5) return null;
@@ -262,30 +244,11 @@
     for (const item of candidates) {
       if (!item || typeof item !== "object") continue;
 
-      const period =
-        item.period ||
-        item.drawTerm ||
-        item.issue ||
-        item.term ||
-        item.drawNo ||
-        "";
-
+      const period = item.period || item.drawTerm || item.issue || item.term || item.drawNo || "";
       const date =
-        normalizeDateOnly(
-          item.lotteryDate ||
-          item.drawDate ||
-          item.dDate ||
-          item.date ||
-          ""
-        ) || DEFAULT_LATEST.date;
-
+        normalizeDateOnly(item.lotteryDate || item.drawDate || item.dDate || item.date || "") || DEFAULT_LATEST.date;
       const numbers = toIntArray(
-        item.drawNumberSize ||
-        item.drawNumbers ||
-        item.numbers ||
-        item.orderNumbers ||
-        item.num ||
-        []
+        item.drawNumberSize || item.drawNumbers || item.numbers || item.orderNumbers || item.num || []
       );
 
       if (period && numbers.length >= 5) {
@@ -294,19 +257,10 @@
           date,
           numbers: uniqueSorted(numbers.slice(0, 5)),
           recent5: normalizeRecentRows(
-            raw.recent5 ||
-            raw.content?.recent5 ||
-            raw.content?.daily539Res ||
-            raw.daily539Res ||
-            []
+            raw.recent5 || raw.content?.recent5 || raw.content?.daily539Res || raw.daily539Res || []
           ),
           updatedAt: normalizeDateText(
-            raw.updatedAt ||
-            raw.generatedAt ||
-            raw.lastUpdated ||
-            item.updatedAt ||
-            item.generatedAt ||
-            new Date().toISOString()
+            raw.updatedAt || raw.generatedAt || raw.lastUpdated || item.updatedAt || item.generatedAt || new Date().toISOString()
           ),
           source: sourceUrl || "remote-json"
         };
@@ -430,30 +384,18 @@
 
   function getHotNumbers(history, count = 10) {
     const freq = getFrequency(history);
-    return [...freq.entries()]
-      .sort((a, b) => b[1] - a[1] || a[0] - b[0])
-      .slice(0, count)
-      .map(([n]) => n);
+    return [...freq.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0]).slice(0, count).map(([n]) => n);
   }
 
   function getColdNumbers(history, count = 10) {
     const freq = getFrequency(history);
-    return [...freq.entries()]
-      .sort((a, b) => a[1] - b[1] || a[0] - b[0])
-      .slice(0, count)
-      .map(([n]) => n);
+    return [...freq.entries()].sort((a, b) => a[1] - b[1] || a[0] - b[0]).slice(0, count).map(([n]) => n);
   }
 
   function getHotAndCold(freq) {
     const entries = [...freq.entries()];
-    const hot = [...entries]
-      .sort((a, b) => b[1] - a[1] || a[0] - b[0])
-      .slice(0, 8)
-      .map(([n]) => n);
-    const cold = [...entries]
-      .sort((a, b) => a[1] - b[1] || a[0] - b[0])
-      .slice(0, 8)
-      .map(([n]) => n);
+    const hot = [...entries].sort((a, b) => b[1] - a[1] || a[0] - b[0]).slice(0, 8).map(([n]) => n);
+    const cold = [...entries].sort((a, b) => a[1] - b[1] || a[0] - b[0]).slice(0, 8).map(([n]) => n);
     return { hot, cold };
   }
 
@@ -497,10 +439,7 @@
       });
     }
 
-    return [...pairs.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10)
-      .map(([key, count]) => ({ key, count }));
+    return [...pairs.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([key, count]) => ({ key, count }));
   }
 
   function pickFromPool(pool, count) {
@@ -577,9 +516,7 @@
 
   function renderBalls(container, numbers, active = false) {
     if (!container) return;
-    container.innerHTML = numbers
-      .map((num) => `<span class="ball${active ? " active" : ""}">${pad2(num)}</span>`)
-      .join("");
+    container.innerHTML = numbers.map((num) => `<span class="ball${active ? " active" : ""}">${pad2(num)}</span>`).join("");
   }
 
   function renderLatest(latest) {
@@ -708,9 +645,7 @@
 
     els.predictResultsList.innerHTML = allPredictions
       .map((nums, idx) => {
-        const ballsHtml = nums
-          .map((n) => `<span class="ball active">${pad2(n)}</span>`)
-          .join("");
+        const ballsHtml = nums.map((n) => `<span class="ball active">${pad2(n)}</span>`).join("");
 
         return `
           <div class="analysis-item">
@@ -931,10 +866,7 @@
     const freq = getFrequency(history);
     const sorted = [...freq.entries()].sort((a, b) => b[1] - a[1]);
 
-    const top10 = sorted
-      .slice(0, 10)
-      .map(([n, c]) => `${pad2(n)}（${c}次）`)
-      .join("\n");
+    const top10 = sorted.slice(0, 10).map(([n, c]) => `${pad2(n)}（${c}次）`).join("\n");
 
     alert(`完整分析\n\n最近 ${periods} 期熱門號 Top 10：\n${top10}`);
   }
@@ -964,12 +896,13 @@
     renderRecent5List();
 
     const periods = Number(els.analysisPeriods?.value || 120);
+    const currentMode = els.predictMode?.value || "balanced";
     const history = sampleHistory(periods, latest.numbers);
-    const primary = predictNumbers("balanced", history);
-    const confidence = estimateConfidence(primary, history, "balanced");
+    const primary = predictNumbers(currentMode, history);
+    const confidence = estimateConfidence(primary, history, currentMode);
 
-    updateDashboard(primary, confidence, "balanced", history);
-    renderPredictResults([primary], "balanced", confidence);
+    updateDashboard(primary, confidence, currentMode, history);
+    renderPredictResults([primary], currentMode, confidence);
 
     if (els.dataSourceText) els.dataSourceText.textContent = latest.source || "latest.json";
     alert("資料已重新載入");
@@ -1025,15 +958,26 @@
 
     if (els.analysisPeriods) {
       els.analysisPeriods.addEventListener("change", saveUserSettings);
+      els.analysisPeriods.addEventListener("input", saveUserSettings);
     }
 
     if (els.recommendCount) {
       els.recommendCount.addEventListener("change", saveUserSettings);
+      els.recommendCount.addEventListener("input", saveUserSettings);
     }
 
     if (els.predictMode) {
       els.predictMode.addEventListener("change", saveUserSettings);
+      els.predictMode.addEventListener("input", saveUserSettings);
     }
+
+    window.addEventListener("pagehide", saveUserSettings);
+    window.addEventListener("beforeunload", saveUserSettings);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") {
+        saveUserSettings();
+      }
+    });
   }
 
   async function init() {
