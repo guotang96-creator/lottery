@@ -954,7 +954,7 @@ function showPredictSummary() {
     const primary = predictNumbers("balanced", history);
     const confidence = estimateConfidence(primary, history, "balanced");
     updateDashboard(primary, confidence, "balanced", history);
-
+    renderPredictResults([primary], "balanced", confidence);
     if (els.dataSourceText) els.dataSourceText.textContent = latest.source || "latest.json";
     alert("資料已重新載入");
   }
