@@ -1,4 +1,4 @@
-const CACHE_NAME = "jincai539-v1";
+const CACHE_NAME = "jincai539-v2";
 const ASSETS = [
   "./",
   "./index.html",
