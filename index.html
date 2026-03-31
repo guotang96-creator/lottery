@@ -126,72 +126,83 @@
 
       <!-- 預測頁 -->
       <section class="page-section hidden" id="page-predict">
-        <section class="card">
-          <div class="card-header">
-            <h2>快速預測</h2>
-          </div>
+  <section class="card">
+    <div class="card-header">
+      <h2>快速預測</h2>
+    </div>
 
-          <div class="form-grid">
-            <label class="field">
-              <span>分析期數</span>
-              <select id="analysisPeriods">
-                <option value="30">30期</option>
-                <option value="60">60期</option>
-                <option value="120" selected>120期</option>
-                <option value="240">240期</option>
-                <option value="500">500期</option>
-              </select>
-            </label>
+    <div class="form-grid">
+      <label class="field">
+        <span>分析期數</span>
+        <select id="analysisPeriods">
+          <option value="30">30期</option>
+          <option value="60">60期</option>
+          <option value="120" selected>120期</option>
+          <option value="240">240期</option>
+          <option value="500">500期</option>
+        </select>
+      </label>
 
-            <label class="field">
-              <span>推薦組數</span>
-              <select id="recommendCount">
-                <option value="1">1組</option>
-                <option value="3" selected>3組</option>
-                <option value="5">5組</option>
-                <option value="10">10組</option>
-              </select>
-            </label>
+      <label class="field">
+        <span>推薦組數</span>
+        <select id="recommendCount">
+          <option value="1">1組</option>
+          <option value="3" selected>3組</option>
+          <option value="5">5組</option>
+          <option value="10">10組</option>
+        </select>
+      </label>
 
-            <label class="field">
-              <span>模式</span>
-              <select id="predictMode">
-                <option value="balanced" selected>均衡型</option>
-                <option value="hot">熱號型</option>
-                <option value="cold">冷號型</option>
-                <option value="tail">尾數型</option>
-                <option value="drag">拖號型</option>
-              </select>
-            </label>
-          </div>
+      <label class="field">
+        <span>模式</span>
+        <select id="predictMode">
+          <option value="balanced" selected>均衡型</option>
+          <option value="hot">熱號型</option>
+          <option value="cold">冷號型</option>
+          <option value="tail">尾數型</option>
+          <option value="drag">拖號型</option>
+        </select>
+      </label>
+    </div>
 
-          <button class="primary-btn" id="btnPredict">立即預測</button>
-        </section>
+    <div class="action-row" style="margin-top: 12px;">
+      <button class="primary-btn" id="btnPredict">立即預測</button>
+      <button class="secondary-btn" id="btnCopyAllPredict">複製全部</button>
+    </div>
+  </section>
 
-        <section class="card">
-          <div class="card-header">
-            <h2>預測摘要</h2>
-          </div>
-          <div class="analysis-list">
-            <div class="analysis-item">
-              <span class="label">熱門號</span>
-              <strong id="hotNums">08 19 31</strong>
-            </div>
-            <div class="analysis-item">
-              <span class="label">冷門號</span>
-              <strong id="coldNums">04 17 26</strong>
-            </div>
-            <div class="analysis-item">
-              <span class="label">拖號組</span>
-              <strong id="dragNums">08→19、13→27</strong>
-            </div>
-            <div class="analysis-item">
-              <span class="label">尾數強勢</span>
-              <strong id="tailNums">1尾、9尾</strong>
-            </div>
-          </div>
-        </section>
-      </section>
+  <section class="card">
+    <div class="card-header">
+      <h2>本次推薦結果</h2>
+      <button class="text-btn" id="btnPredictSummary">查看摘要</button>
+    </div>
+    <div id="predictResultsList" class="analysis-list"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-header">
+      <h2>預測摘要</h2>
+    </div>
+    <div class="analysis-list">
+      <div class="analysis-item">
+        <span class="label">熱門號</span>
+        <strong id="hotNums">08 19 31</strong>
+      </div>
+      <div class="analysis-item">
+        <span class="label">冷門號</span>
+        <strong id="coldNums">04 17 26</strong>
+      </div>
+      <div class="analysis-item">
+        <span class="label">拖號組</span>
+        <strong id="dragNums">08→19、13→27</strong>
+      </div>
+      <div class="analysis-item">
+        <span class="label">尾數強勢</span>
+        <strong id="tailNums">1尾、9尾</strong>
+      </div>
+    </div>
+  </section>
+</section>
 
       <!-- 歷史頁 -->
       <section class="page-section hidden" id="page-history">
