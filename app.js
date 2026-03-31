@@ -684,20 +684,21 @@ function normalizeLatestFromAny(raw, sourceUrl = "") {
   }
 
   function showRecent5() {
-    const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
-    const history = getRecentFiveDraws(latest.numbers);
+  const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
+  const history = getRecentFiveDraws(latest);
 
-    const text = history
-      .map((draw, idx) => {
-        if (idx === 0) {
-          return `最新一期（${latest.period}）：${formatNums(draw)}`;
-        }
-        return `參考第${idx + 1}筆：${formatNums(draw)}`;
-      })
-      .join("\n");
+  const text = history
+    .map((draw, idx) => {
+      const nums = formatNums(draw.numbers || []);
+      const dateText = draw.date ? `｜${draw.date}` : "";
+      const periodText = draw.period ? `第${draw.period}期` : `參考第${idx + 1}筆`;
 
-    alert(`最近 5 期開獎參考\n\n${text}`);
-  }
+      return `${idx + 1}. ${periodText}${dateText}｜${nums}`;
+    })
+    .join("\n");
+
+  alert(`最近 5 期開獎\n\n${text}`);
+}
 
   function showDataStatus() {
     const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
