@@ -1,13 +1,12 @@
 (() => {
-  const APP_VERSION = "V2.3｜今彩539 專用版｜最近5期真實版";
+  const APP_VERSION = "V2.4｜今彩539 專用版｜真實分析完整版";
 
-
-const STORAGE_KEYS = {
-  favorites: "jincai539_favorites_v23",
-  history: "jincai539_predict_history_v23",
-  latest: "jincai539_latest_result_v23",
-  status: "jincai539_data_status_v23"
-};
+  const STORAGE_KEYS = {
+    favorites: "jincai539_favorites_v24",
+    history: "jincai539_predict_history_v24",
+    latest: "jincai539_latest_result_v24",
+    status: "jincai539_data_status_v24"
+  };
 
   const JSON_CANDIDATES = [
     "./latest.json",
@@ -26,6 +25,7 @@ const STORAGE_KEYS = {
     period: "115000001",
     date: "2026-03-31",
     numbers: [5, 12, 21, 33, 39],
+    recent5: [],
     updatedAt: "2026-03-31 20:05",
     source: "fallback-local"
   };
@@ -151,10 +151,66 @@ const STORAGE_KEYS = {
   }
 
   function normalizeRecentRows(rows) {
-  if (!Array.isArray(rows)) return [];
+    if (!Array.isArray(rows)) return [];
 
-  return rows
-    .map((item) => {
+    return rows
+      .map((item) => {
+        const period =
+          item.period ||
+          item.drawTerm ||
+          item.issue ||
+          item.term ||
+          item.drawNo ||
+          "";
+
+        const date = normalizeDateOnly(
+          item.lotteryDate ||
+          item.drawDate ||
+          item.dDate ||
+          item.date ||
+          ""
+        );
+
+        const numbers = toIntArray(
+          item.drawNumberSize ||
+          item.drawNumbers ||
+          item.numbers ||
+          item.orderNumbers ||
+          item.num ||
+          []
+        );
+
+        if (!period || numbers.length < 5) return null;
+
+        return {
+          period: String(period),
+          date,
+          numbers: uniqueSorted(numbers.slice(0, 5))
+        };
+      })
+      .filter(Boolean)
+      .slice(0, 5);
+  }
+
+  function normalizeLatestFromAny(raw, sourceUrl = "") {
+    if (!raw || typeof raw !== "object") return null;
+
+    const candidates = [];
+
+    if (raw.content?.daily539) candidates.push(raw.content.daily539);
+    if (raw.daily539) candidates.push(raw.daily539);
+    if (raw.content?.latest?.daily539) candidates.push(raw.content.latest.daily539);
+    if (raw.latest?.daily539) candidates.push(raw.latest.daily539);
+    if (raw.content?.lottery?.daily539) candidates.push(raw.content.lottery.daily539);
+    if (Array.isArray(raw.content?.daily539Res) && raw.content.daily539Res.length) candidates.push(raw.content.daily539Res[0]);
+    if (Array.isArray(raw.daily539Res) && raw.daily539Res.length) candidates.push(raw.daily539Res[0]);
+    if (Array.isArray(raw.data) && raw.data.length) candidates.push(raw.data[0]);
+    if (Array.isArray(raw.results) && raw.results.length) candidates.push(raw.results[0]);
+    if (raw.period || raw.lotteryDate || raw.drawNumberSize || raw.numbers) candidates.push(raw);
+
+    for (const item of candidates) {
+      if (!item || typeof item !== "object") continue;
+
       const period =
         item.period ||
         item.drawTerm ||
@@ -163,13 +219,14 @@ const STORAGE_KEYS = {
         item.drawNo ||
         "";
 
-      const date = normalizeDateOnly(
-        item.lotteryDate ||
-        item.drawDate ||
-        item.dDate ||
-        item.date ||
-        ""
-      );
+      const date =
+        normalizeDateOnly(
+          item.lotteryDate ||
+          item.drawDate ||
+          item.dDate ||
+          item.date ||
+          ""
+        ) || DEFAULT_LATEST.date;
 
       const numbers = toIntArray(
         item.drawNumberSize ||
@@ -180,91 +237,33 @@ const STORAGE_KEYS = {
         []
       );
 
-      if (!period || numbers.length < 5) return null;
-
-      return {
-        period: String(period),
-        date,
-        numbers: uniqueSorted(numbers.slice(0, 5))
-      };
-    })
-    .filter(Boolean)
-    .slice(0, 5);
-}
-
-
-function normalizeLatestFromAny(raw, sourceUrl = "") {
-  if (!raw || typeof raw !== "object") return null;
-
-  const candidates = [];
-
-  if (raw.content?.daily539) candidates.push(raw.content.daily539);
-  if (raw.daily539) candidates.push(raw.daily539);
-  if (raw.content?.latest?.daily539) candidates.push(raw.content.latest.daily539);
-  if (raw.latest?.daily539) candidates.push(raw.latest.daily539);
-  if (raw.content?.lottery?.daily539) candidates.push(raw.content.lottery.daily539);
-  if (Array.isArray(raw.content?.daily539Res) && raw.content.daily539Res.length) candidates.push(raw.content.daily539Res[0]);
-  if (Array.isArray(raw.daily539Res) && raw.daily539Res.length) candidates.push(raw.daily539Res[0]);
-  if (Array.isArray(raw.data) && raw.data.length) candidates.push(raw.data[0]);
-  if (Array.isArray(raw.results) && raw.results.length) candidates.push(raw.results[0]);
-  if (raw.period || raw.lotteryDate || raw.drawNumberSize || raw.numbers) candidates.push(raw);
-
-  for (const item of candidates) {
-    if (!item || typeof item !== "object") continue;
-
-    const period =
-      item.period ||
-      item.drawTerm ||
-      item.issue ||
-      item.term ||
-      item.drawNo ||
-      "";
-
-    const date =
-      normalizeDateOnly(
-        item.lotteryDate ||
-        item.drawDate ||
-        item.dDate ||
-        item.date ||
-        ""
-      ) || DEFAULT_LATEST.date;
-
-    const numbers = toIntArray(
-      item.drawNumberSize ||
-      item.drawNumbers ||
-      item.numbers ||
-      item.orderNumbers ||
-      item.num ||
-      []
-    );
-
-    if (period && numbers.length >= 5) {
-      return {
-        period: String(period),
-        date,
-        numbers: uniqueSorted(numbers.slice(0, 5)),
-        recent5: normalizeRecentRows(
-          raw.recent5 ||
-          raw.content?.recent5 ||
-          raw.content?.daily539Res ||
-          raw.daily539Res ||
-          []
-        ),
-        updatedAt: normalizeDateText(
-          raw.updatedAt ||
-          raw.generatedAt ||
-          raw.lastUpdated ||
-          item.updatedAt ||
-          item.generatedAt ||
-          new Date().toISOString()
-        ),
-        source: sourceUrl || "remote-json"
-      };
+      if (period && numbers.length >= 5) {
+        return {
+          period: String(period),
+          date,
+          numbers: uniqueSorted(numbers.slice(0, 5)),
+          recent5: normalizeRecentRows(
+            raw.recent5 ||
+            raw.content?.recent5 ||
+            raw.content?.daily539Res ||
+            raw.daily539Res ||
+            []
+          ),
+          updatedAt: normalizeDateText(
+            raw.updatedAt ||
+            raw.generatedAt ||
+            raw.lastUpdated ||
+            item.updatedAt ||
+            item.generatedAt ||
+            new Date().toISOString()
+          ),
+          source: sourceUrl || "remote-json"
+        };
+      }
     }
-  }
 
-  return null;
-}
+    return null;
+  }
 
   async function fetchJSON(url) {
     const res = await fetch(`${url}?t=${Date.now()}`, { cache: "no-store" });
@@ -313,11 +312,51 @@ function normalizeLatestFromAny(raw, sourceUrl = "") {
     return DEFAULT_LATEST;
   }
 
+  function getRecentFiveDraws(latest) {
+    if (Array.isArray(latest?.recent5) && latest.recent5.length) {
+      return latest.recent5.slice(0, 5);
+    }
+
+    const rows = [];
+
+    if (Array.isArray(latest?.numbers) && latest.numbers.length >= 5) {
+      rows.push({
+        period: latest.period || "",
+        date: latest.date || "",
+        numbers: uniqueSorted(latest.numbers.slice(0, 5))
+      });
+    }
+
+    for (const item of MOCK_HISTORY) {
+      if (rows.length >= 5) break;
+
+      const normalized = uniqueSorted(item);
+      const alreadyExists = rows.some((row) => row.numbers.join(",") === normalized.join(","));
+
+      if (!alreadyExists) {
+        rows.push({
+          period: "",
+          date: "",
+          numbers: normalized
+        });
+      }
+    }
+
+    return rows.slice(0, 5);
+  }
+
   function sampleHistory(periods, latestNumbers = null) {
+    const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
+    const recentReal = Array.isArray(latest?.recent5)
+      ? latest.recent5.map(item => uniqueSorted(item.numbers || []))
+      : [];
+
     const size = Math.min(Number(periods) || 120, 500);
     const source = [];
 
-    if (Array.isArray(latestNumbers) && latestNumbers.length >= 5) {
+    if (recentReal.length) {
+      source.push(...recentReal);
+    } else if (Array.isArray(latestNumbers) && latestNumbers.length >= 5) {
       source.push(uniqueSorted(latestNumbers.slice(0, 5)));
     }
 
@@ -327,40 +366,6 @@ function normalizeLatestFromAny(raw, sourceUrl = "") {
 
     return source.slice(0, size);
   }
-
-  function getRecentFiveDraws(latest) {
-  if (Array.isArray(latest?.recent5) && latest.recent5.length) {
-    return latest.recent5.slice(0, 5);
-  }
-
-  const rows = [];
-
-  if (Array.isArray(latest?.numbers) && latest.numbers.length >= 5) {
-    rows.push({
-      period: latest.period || "",
-      date: latest.date || "",
-      numbers: uniqueSorted(latest.numbers.slice(0, 5))
-    });
-  }
-
-  for (const item of MOCK_HISTORY) {
-    if (rows.length >= 5) break;
-
-    const normalized = uniqueSorted(item);
-    const alreadyExists = rows.some((row) => row.numbers.join(",") === normalized.join(","));
-
-    if (!alreadyExists) {
-      rows.push({
-        period: "",
-        date: "",
-        numbers: normalized
-      });
-    }
-  }
-
-  return rows.slice(0, 5);
-}
-
 
   function getFrequency(history) {
     const freq = new Map();
@@ -373,6 +378,22 @@ function normalizeLatestFromAny(raw, sourceUrl = "") {
     });
 
     return freq;
+  }
+
+  function getHotNumbers(history, count = 10) {
+    const freq = getFrequency(history);
+    return [...freq.entries()]
+      .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+      .slice(0, count)
+      .map(([n]) => n);
+  }
+
+  function getColdNumbers(history, count = 10) {
+    const freq = getFrequency(history);
+    return [...freq.entries()]
+      .sort((a, b) => a[1] - b[1] || a[0] - b[0])
+      .slice(0, count)
+      .map(([n]) => n);
   }
 
   function getHotAndCold(freq) {
@@ -402,6 +423,18 @@ function normalizeLatestFromAny(raw, sourceUrl = "") {
     });
 
     return [...tails.entries()].sort((a, b) => b[1] - a[1]);
+  }
+
+  function getStrongTailNumbers(history, count = 10) {
+    const tails = getTailGroups(history);
+    const topTails = tails.slice(0, 3).map(([tail]) => tail);
+
+    const pool = [];
+    for (let i = 1; i <= 39; i++) {
+      if (topTails.includes(i % 10)) pool.push(i);
+    }
+
+    return pool.slice(0, count);
   }
 
   function getDragPairs(history) {
@@ -446,54 +479,69 @@ function normalizeLatestFromAny(raw, sourceUrl = "") {
   }
 
   function predictNumbers(mode, history) {
-    const freq = getFrequency(history);
-    const { hot, cold } = getHotAndCold(freq);
-    const tails = getTailGroups(history);
+    const hot = getHotNumbers(history, 12);
+    const cold = getColdNumbers(history, 12);
+    const tailPool = getStrongTailNumbers(history, 15);
     const dragPairs = getDragPairs(history);
 
     let result = [];
 
     if (mode === "hot") {
-      result = fillToFive(pickFromPool(hot, 5));
+      result = fillToFive([
+        ...pickFromPool(hot, 4),
+        ...pickFromPool(tailPool, 1)
+      ]);
     } else if (mode === "cold") {
-      result = fillToFive(pickFromPool(cold, 5));
+      result = fillToFive([
+        ...pickFromPool(cold, 4),
+        ...pickFromPool(tailPool, 1)
+      ]);
     } else if (mode === "tail") {
-      const topTails = tails.slice(0, 2).map(([tail]) => tail);
-      const tailPool = [];
-      for (let i = 1; i <= 39; i++) {
-        if (topTails.includes(i % 10)) tailPool.push(i);
-      }
-      result = fillToFive(pickFromPool(tailPool, 5));
+      result = fillToFive([
+        ...pickFromPool(tailPool, 3),
+        ...pickFromPool(hot, 2)
+      ]);
     } else if (mode === "drag") {
       const dragNums = [];
       dragPairs.slice(0, 5).forEach((item) => {
         const [a, b] = item.key.split("->").map(Number);
         dragNums.push(a, b);
       });
-      result = fillToFive(pickFromPool(uniqueSorted(dragNums), 5));
+
+      result = fillToFive([
+        ...pickFromPool(uniqueSorted(dragNums), 3),
+        ...pickFromPool(hot, 2)
+      ]);
     } else {
-      const mixed = uniqueSorted([
-        ...pickFromPool(hot, 3),
+      result = fillToFive([
+        ...pickFromPool(hot, 2),
         ...pickFromPool(cold, 1),
+        ...pickFromPool(tailPool, 1),
         ...pickFromPool(Array.from({ length: 39 }, (_, i) => i + 1), 1)
       ]);
-      result = fillToFive(mixed);
     }
 
-    return result;
+    return uniqueSorted(result);
   }
 
   function estimateConfidence(numbers, history, mode) {
-    const freq = getFrequency(history);
-    const score = numbers.reduce((sum, n) => sum + (freq.get(n) || 0), 0);
-    const base = Math.min(92, 55 + Math.round(score / 4));
-    const modeBonus =
-      mode === "balanced" ? 4 :
-      mode === "hot" ? 6 :
-      mode === "cold" ? 2 :
-      mode === "tail" ? 3 : 5;
+    const hot = getHotNumbers(history, 12);
+    const tails = getTailGroups(history).slice(0, 3).map(([tail]) => tail);
 
-    return Math.min(98, base + modeBonus);
+    let score = 60;
+
+    numbers.forEach((n) => {
+      if (hot.includes(n)) score += 4;
+      if (tails.includes(n % 10)) score += 2;
+    });
+
+    if (mode === "hot") score += 6;
+    if (mode === "tail") score += 4;
+    if (mode === "drag") score += 5;
+    if (mode === "balanced") score += 3;
+    if (mode === "cold") score += 2;
+
+    return Math.min(98, score);
   }
 
   function renderBalls(container, numbers, active = false) {
@@ -584,9 +632,16 @@ function normalizeLatestFromAny(raw, sourceUrl = "") {
     writeJSON(STORAGE_KEYS.history, oldHistory);
   }
 
+  function getModeMeta(mode) {
+    if (mode === "hot") return ["熱號優先", "近期偏強"];
+    if (mode === "cold") return ["冷號反轉", "低頻嘗試"];
+    if (mode === "tail") return ["尾數強勢", "尾群集中"];
+    if (mode === "drag") return ["拖號分析", "連動參考"];
+    return ["均衡混合", "熱冷搭配"];
+  }
+
   function updateDashboard(numbers, confidence, mode, history) {
     renderBalls(els.recommendBalls1, numbers, true);
-    els.confidenceText.textContent = String(confidence);
 
     const summary = getAnalysisSummary(history);
     els.hotNums.textContent = summary.hotText;
@@ -599,6 +654,16 @@ function normalizeLatestFromAny(raw, sourceUrl = "") {
     els.avgHit.textContent = stats.avg;
     els.maxHit.textContent = stats.max;
     els.bestMode.textContent = stats.bestMode || MODE_LABELS[mode] || "均衡型";
+
+    const meta = getModeMeta(mode);
+    const metaBox = document.querySelector(".recommend-meta");
+    if (metaBox) {
+      metaBox.innerHTML = `
+        <span>信心：<strong id="confidenceText">${confidence}</strong></span>
+        <span>${meta[0]}</span>
+        <span>${meta[1]}</span>
+      `;
+    }
   }
 
   function generatePrediction() {
@@ -687,22 +752,21 @@ function normalizeLatestFromAny(raw, sourceUrl = "") {
   }
 
   function showRecent5() {
-  const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
-  const history = getRecentFiveDraws(latest);
+    const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
+    const history = getRecentFiveDraws(latest);
 
-  const text = history
-    .map((draw, idx) => {
-      const nums = formatNums(draw.numbers || []);
-      const dateText = draw.date ? `｜${draw.date}` : "";
-      const periodText = draw.period ? `第${draw.period}期` : `參考第${idx + 1}筆`;
+    const text = history
+      .map((draw, idx) => {
+        const nums = formatNums(draw.numbers || []);
+        const dateText = draw.date ? `｜${draw.date}` : "";
+        const periodText = draw.period ? `第${draw.period}期` : `參考第${idx + 1}筆`;
 
-      return `${idx + 1}. ${periodText}${dateText}｜${nums}`;
-    })
-    .join("\n");
+        return `${idx + 1}. ${periodText}${dateText}｜${nums}`;
+      })
+      .join("\n");
 
-  alert(`最近 5 期開獎\n\n${text}`);
-}
-
+    alert(`最近 5 期開獎\n\n${text}`);
+  }
 
   function showDataStatus() {
     const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
