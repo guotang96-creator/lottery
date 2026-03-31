@@ -978,7 +978,8 @@ function showPredictSummary() {
     els.btnHistoryRefresh?.addEventListener("click", showRecent5);
 
     els.btnGoPredict?.addEventListener("click", () => switchPage("predict"));
-
+    els.btnCopyAllPredict?.addEventListener("click", copyAllPredictions);
+    els.btnPredictSummary?.addEventListener("click", showPredictSummary);
     els.btnClearFavorites?.addEventListener("click", () => {
       localStorage.removeItem(STORAGE_KEYS.favorites);
       alert("收藏已清除");
