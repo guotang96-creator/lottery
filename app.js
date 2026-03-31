@@ -1,6 +1,7 @@
 (() => {
   const APP_VERSION = "V2.3｜今彩539 專用版｜最近5期真實版";
 
+
 const STORAGE_KEYS = {
   favorites: "jincai539_favorites_v23",
   history: "jincai539_predict_history_v23",
