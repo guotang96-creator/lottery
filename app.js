@@ -1,17 +1,32 @@
 (() => {
-  const APP_VERSION = "V2.0｜今彩539 專用版";
+  const APP_VERSION = "V2.1｜今彩539 專用版｜真實資料版";
+
   const STORAGE_KEYS = {
-    favorites: "jincai539_favorites_v20",
-    history: "jincai539_predict_history_v20",
-    latest: "jincai539_latest_result_v20",
-    status: "jincai539_data_status_v20"
+    favorites: "jincai539_favorites_v21",
+    history: "jincai539_predict_history_v21",
+    latest: "jincai539_latest_result_v21",
+    status: "jincai539_data_status_v21"
   };
+
+  const JSON_CANDIDATES = [
+    "./latest.json",
+    "./docs/latest.json",
+    "./539_api.json",
+    "./docs/539_api.json",
+    "./data/latest.json",
+    "./data/539_api.json",
+    "/latest.json",
+    "/docs/latest.json",
+    "/539_api.json",
+    "/docs/539_api.json"
+  ];
 
   const DEFAULT_LATEST = {
     period: "115000001",
     date: "2026-03-31",
     numbers: [5, 12, 21, 33, 39],
-    updatedAt: "2026-03-31 20:05"
+    updatedAt: "2026-03-31 20:05",
+    source: "fallback-local"
   };
 
   const MOCK_HISTORY = [
@@ -116,9 +131,172 @@
     }
   }
 
-  function sampleHistory(periods) {
+  function normalizeDateText(value) {
+    if (!value) return "";
+    if (typeof value !== "string") value = String(value);
+    return value.replace("T00:00:00", "").replace("T", " ").slice(0, 19);
+  }
+
+  function toIntArray(arr) {
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .map(v => Number(v))
+      .filter(v => Number.isFinite(v) && v >= 1 && v <= 39);
+  }
+
+  function normalizeLatestFromAny(raw, sourceUrl = "") {
+    if (!raw || typeof raw !== "object") return null;
+
+    const candidates = [];
+
+    if (raw.content?.daily539) {
+      candidates.push(raw.content.daily539);
+    }
+
+    if (raw.daily539) {
+      candidates.push(raw.daily539);
+    }
+
+    if (raw.content?.latest?.daily539) {
+      candidates.push(raw.content.latest.daily539);
+    }
+
+    if (raw.latest?.daily539) {
+      candidates.push(raw.latest.daily539);
+    }
+
+    if (raw.content?.lottery?.daily539) {
+      candidates.push(raw.content.lottery.daily539);
+    }
+
+    if (Array.isArray(raw.content?.daily539Res) && raw.content.daily539Res.length) {
+      candidates.push(raw.content.daily539Res[0]);
+    }
+
+    if (Array.isArray(raw.daily539Res) && raw.daily539Res.length) {
+      candidates.push(raw.daily539Res[0]);
+    }
+
+    if (Array.isArray(raw.data) && raw.data.length) {
+      candidates.push(raw.data[0]);
+    }
+
+    if (Array.isArray(raw.results) && raw.results.length) {
+      candidates.push(raw.results[0]);
+    }
+
+    if (raw.period || raw.lotteryDate || raw.drawNumberSize || raw.numbers) {
+      candidates.push(raw);
+    }
+
+    for (const item of candidates) {
+      if (!item || typeof item !== "object") continue;
+
+      const period =
+        item.period ||
+        item.drawTerm ||
+        item.issue ||
+        item.term ||
+        item.drawNo ||
+        "";
+
+      const date =
+        normalizeDateText(
+          item.lotteryDate ||
+          item.drawDate ||
+          item.dDate ||
+          item.date ||
+          ""
+        ) || DEFAULT_LATEST.date;
+
+      const numbers = toIntArray(
+        item.drawNumberSize ||
+        item.drawNumbers ||
+        item.numbers ||
+        item.orderNumbers ||
+        item.num ||
+        []
+      );
+
+      if (period && numbers.length >= 5) {
+        return {
+          period: String(period),
+          date,
+          numbers: uniqueSorted(numbers.slice(0, 5)),
+          updatedAt: normalizeDateText(
+            raw.updatedAt ||
+            raw.generatedAt ||
+            raw.lastUpdated ||
+            item.updatedAt ||
+            item.generatedAt ||
+            new Date().toISOString()
+          ),
+          source: sourceUrl || "remote-json"
+        };
+      }
+    }
+
+    return null;
+  }
+
+  async function fetchJSON(url) {
+    const res = await fetch(`${url}?t=${Date.now()}`, {
+      cache: "no-store"
+    });
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+    return await res.json();
+  }
+
+  async function loadLatestFromCandidates() {
+    for (const url of JSON_CANDIDATES) {
+      try {
+        const data = await fetchJSON(url);
+        const normalized = normalizeLatestFromAny(data, url);
+        if (normalized) {
+          writeJSON(STORAGE_KEYS.latest, normalized);
+          writeJSON(STORAGE_KEYS.status, {
+            ok: true,
+            source: url,
+            total: Number(els.analysisPeriods?.value || 120),
+            version: APP_VERSION
+          });
+          return normalized;
+        }
+      } catch (err) {
+        console.warn(`讀取失敗：${url}`, err);
+      }
+    }
+
+    const local = readJSON(STORAGE_KEYS.latest, null);
+    if (local) {
+      writeJSON(STORAGE_KEYS.status, {
+        ok: true,
+        source: local.source || "local-cache",
+        total: Number(els.analysisPeriods?.value || 120),
+        version: APP_VERSION
+      });
+      return local;
+    }
+
+    writeJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
+    writeJSON(STORAGE_KEYS.status, {
+      ok: false,
+      source: "fallback-local",
+      total: Number(els.analysisPeriods?.value || 120),
+      version: APP_VERSION
+    });
+    return DEFAULT_LATEST;
+  }
+
+  function sampleHistory(periods, latestNumbers = null) {
     const size = Math.min(Number(periods) || 120, 500);
     const source = [];
+
+    if (Array.isArray(latestNumbers) && latestNumbers.length >= 5) {
+      source.push(uniqueSorted(latestNumbers.slice(0, 5)));
+    }
 
     while (source.length < size) {
       source.push(...MOCK_HISTORY);
@@ -268,6 +446,7 @@
   }
 
   function renderLatest(latest) {
+    if (!latest) latest = DEFAULT_LATEST;
     els.lastUpdateText.textContent = latest.updatedAt || DEFAULT_LATEST.updatedAt;
     els.latestPeriod.textContent = latest.period || DEFAULT_LATEST.period;
     els.latestDate.textContent = latest.date || DEFAULT_LATEST.date;
@@ -368,7 +547,8 @@
     const mode = els.predictMode.value || "balanced";
     const modeLabel = MODE_LABELS[mode] || "均衡型";
 
-    const history = sampleHistory(periods);
+    const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
+    const history = sampleHistory(periods, latest.numbers);
     const allPredictions = [];
 
     for (let i = 0; i < recommendCount; i++) {
@@ -378,8 +558,6 @@
 
     const primary = allPredictions[0];
     const confidence = estimateConfidence(primary, history, mode);
-
-    const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
     const hitCount = compareHit(primary, latest.numbers || DEFAULT_LATEST.numbers);
 
     savePredictRecord({
@@ -449,7 +627,9 @@
   }
 
   function showRecent5() {
-    const history = sampleHistory(5);
+    const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
+    const history = sampleHistory(5, latest.numbers);
+
     const text = history
       .slice(0, 5)
       .map((draw, idx) => `最近第${idx + 1}期：${formatNums(draw)}`)
@@ -462,7 +642,7 @@
     const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
     const status = readJSON(STORAGE_KEYS.status, {
       ok: true,
-      source: "local-demo",
+      source: "local-cache",
       total: 120,
       version: APP_VERSION
     });
@@ -473,7 +653,7 @@
       `最新期數：${latest.period}\n` +
       `最新日期：${latest.date}\n` +
       `最後更新：${latest.updatedAt}\n` +
-      `資料來源：${status.source || "local-demo"}\n` +
+      `資料來源：${status.source || "local-cache"}\n` +
       `資料筆數：${status.total || 120}\n` +
       `狀態：${status.ok ? "正常" : "異常"}`
     );
@@ -481,7 +661,8 @@
 
   function showFullAnalysis() {
     const periods = Number(els.analysisPeriods.value || 120);
-    const history = sampleHistory(periods);
+    const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
+    const history = sampleHistory(periods, latest.numbers);
     const freq = getFrequency(history);
     const sorted = [...freq.entries()].sort((a, b) => b[1] - a[1]);
 
@@ -528,39 +709,12 @@
           settings: "設定"
         };
 
-        alert(`目前是示範版\n你點了：「${labelMap[page] || page}」\n之後可再擴充成分頁切換。`);
+        alert(`目前是單頁版\n你點了：「${labelMap[page] || page}」\n之後可再擴充成真正分頁。`);
       });
     });
   }
 
-  function seedLocalData() {
-    const latest = readJSON(STORAGE_KEYS.latest, null);
-    if (!latest) {
-      writeJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
-    }
-
-    const status = readJSON(STORAGE_KEYS.status, null);
-    if (!status) {
-      writeJSON(STORAGE_KEYS.status, {
-        ok: true,
-        source: "local-demo",
-        total: 120,
-        version: APP_VERSION
-      });
-    }
-  }
-
-  function init() {
-    seedLocalData();
-
-    const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
-    renderLatest(latest);
-
-    const history = sampleHistory(Number(els.analysisPeriods?.value || 120));
-    const primary = predictNumbers("balanced", history);
-    const confidence = estimateConfidence(primary, history, "balanced");
-    updateDashboard(primary, confidence, "balanced", history);
-
+  function bindActions() {
     els.btnPredict?.addEventListener("click", generatePrediction);
     els.btnCopy?.addEventListener("click", copyPrediction);
     els.btnSave?.addEventListener("click", saveFavorite);
@@ -569,10 +723,25 @@
     els.btnFullAnalysis?.addEventListener("click", showFullAnalysis);
     els.btnAnalysis?.addEventListener("click", showFullAnalysis);
     els.btnHitTrack?.addEventListener("click", showHitTrack);
+  }
 
+  async function init() {
+    bindActions();
     bindNav();
 
+    const latest = await loadLatestFromCandidates();
+    renderLatest(latest);
+
+    const periods = Number(els.analysisPeriods?.value || 120);
+    els.historyCount.textContent = `最近 ${periods} 期`;
+
+    const history = sampleHistory(periods, latest.numbers);
+    const primary = predictNumbers("balanced", history);
+    const confidence = estimateConfidence(primary, history, "balanced");
+    updateDashboard(primary, confidence, "balanced", history);
+
     console.log(`${APP_VERSION} 已載入`);
+    console.log("目前資料來源：", latest.source || "unknown");
   }
 
   document.addEventListener("DOMContentLoaded", init);
