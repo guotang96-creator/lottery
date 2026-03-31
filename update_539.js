@@ -6,6 +6,14 @@ function getMonthText(date = new Date()) {
   return `${y}-${m}`;
 }
 
+function normalizeRow(row) {
+  return {
+    period: String(row.period || ""),
+    lotteryDate: row.lotteryDate || "",
+    drawNumberSize: Array.isArray(row.drawNumberSize) ? row.drawNumberSize : []
+  };
+}
+
 async function main() {
   const month = getMonthText();
   const url = `https://api.taiwanlottery.com/TLCAPIWeB/Lottery/Daily539Result?period&month=${month}&endMonth=${month}&pageNum=1&pageSize=50`;
@@ -28,15 +36,11 @@ async function main() {
   }
 
   const latest = rows[0];
+  const recent5 = rows.slice(0, 5).map(normalizeRow);
 
   const output = {
-    daily539: {
-      period: String(latest.period || ""),
-      lotteryDate: latest.lotteryDate || "",
-      drawNumberSize: Array.isArray(latest.drawNumberSize)
-        ? latest.drawNumberSize
-        : []
-    },
+    daily539: normalizeRow(latest),
+    recent5,
     updatedAt: new Date().toISOString()
   };
 
