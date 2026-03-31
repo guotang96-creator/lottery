@@ -646,6 +646,67 @@
   function updateDashboard(numbers, confidence, mode, history) {
     renderBalls(els.recommendBalls1, numbers, true);
     updateAnalysisViews(history);
+    function renderPredictResults(allPredictions, mode, confidence) {
+  if (!els.predictResultsList) return;
+
+  els.predictResultsList.innerHTML = allPredictions
+    .map((nums, idx) => {
+      const ballsHtml = nums
+        .map((n) => `<span class="ball active">${pad2(n)}</span>`)
+        .join("");
+
+      return `
+        <div class="analysis-item">
+          <span class="label">推薦${idx + 1}</span>
+          <div class="balls-row" style="margin-top:8px;">${ballsHtml}</div>
+          <strong style="margin-top:10px;">模式：${MODE_LABELS[mode] || "均衡型"}</strong>
+          <strong style="margin-top:6px;">號碼：${formatNums(nums)}</strong>
+          <strong style="margin-top:6px;">信心參考：${confidence}</strong>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+async function copyAllPredictions() {
+  const cards = [...document.querySelectorAll("#predictResultsList .analysis-item")];
+  if (!cards.length) {
+    alert("目前沒有可複製的預測結果");
+    return;
+  }
+
+  const text = cards
+    .map((card, idx) => {
+      const balls = [...card.querySelectorAll(".ball")]
+        .map((el) => el.textContent?.trim())
+        .filter(Boolean)
+        .join(" ");
+      return `推薦${idx + 1}：${balls}`;
+    })
+    .join("\n");
+
+  try {
+    await navigator.clipboard.writeText(text);
+    alert(`已複製全部推薦：\n\n${text}`);
+  } catch (err) {
+    alert(`複製失敗，請手動複製：\n\n${text}`);
+  }
+}
+
+function showPredictSummary() {
+  const hot = els.hotNums?.textContent || "";
+  const cold = els.coldNums?.textContent || "";
+  const drag = els.dragNums?.textContent || "";
+  const tail = els.tailNums?.textContent || "";
+
+  alert(
+    `預測摘要\n\n` +
+    `熱門號：${hot}\n` +
+    `冷門號：${cold}\n` +
+    `拖號組：${drag}\n` +
+    `尾數強勢：${tail}`
+  );
+}
 
     const saved = readJSON(STORAGE_KEYS.history, []);
     const stats = calcHitStats(saved);
