@@ -1,12 +1,12 @@
 (() => {
-  const APP_VERSION = "V2.8｜今彩539 專用版｜設定記憶修正版";
+  const APP_VERSION = "V2.9｜今彩539 專用版｜單組操作完整版";
 
   const STORAGE_KEYS = {
-    favorites: "jincai539_favorites_v28",
-    history: "jincai539_predict_history_v28",
-    latest: "jincai539_latest_result_v28",
-    status: "jincai539_data_status_v28",
-    settings: "jincai539_user_settings_v28"
+    favorites: "jincai539_favorites_v29",
+    history: "jincai539_predict_history_v29",
+    latest: "jincai539_latest_result_v29",
+    status: "jincai539_data_status_v29",
+    settings: "jincai539_user_settings_v29"
   };
 
   const JSON_CANDIDATES = [
@@ -164,23 +164,18 @@
       predictMode: els.predictMode?.value || "balanced"
     };
     writeJSON(STORAGE_KEYS.settings, settings);
-    console.log("已儲存設定", settings);
   }
 
   function loadUserSettings() {
     const settings = readJSON(STORAGE_KEYS.settings, null);
-    console.log("讀取設定", settings);
-
     if (!settings) return;
 
     if (els.analysisPeriods && settings.analysisPeriods) {
       els.analysisPeriods.value = settings.analysisPeriods;
     }
-
     if (els.recommendCount && settings.recommendCount) {
       els.recommendCount.value = settings.recommendCount;
     }
-
     if (els.predictMode && settings.predictMode) {
       els.predictMode.value = settings.predictMode;
     }
@@ -592,6 +587,40 @@
     writeJSON(STORAGE_KEYS.history, oldHistory);
   }
 
+  function saveFavoriteNumbers(numbers) {
+    const balls = (numbers || []).map(pad2);
+    if (!balls.length) {
+      alert("目前沒有可收藏的號碼");
+      return;
+    }
+
+    const oldFavorites = readJSON(STORAGE_KEYS.favorites, []);
+    const newItem = {
+      id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      createdAt: new Date().toISOString(),
+      numbers: balls
+    };
+
+    oldFavorites.unshift(newItem);
+    writeJSON(STORAGE_KEYS.favorites, oldFavorites.slice(0, 100));
+    alert(`已收藏：${balls.join(" ")}`);
+  }
+
+  async function copyNumbers(numbers) {
+    const text = (numbers || []).map(pad2).join(" ");
+    if (!text) {
+      alert("目前沒有可複製的號碼");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      alert(`已複製：${text}`);
+    } catch (err) {
+      alert(`複製失敗，請手動複製：${text}`);
+    }
+  }
+
   function getModeMeta(mode) {
     if (mode === "hot") return ["熱號優先", "近期偏強"];
     if (mode === "cold") return ["冷號反轉", "低頻嘗試"];
@@ -654,10 +683,28 @@
             <strong style="margin-top:10px; display:block;">模式：${MODE_LABELS[mode] || "均衡型"}</strong>
             <strong style="margin-top:6px; display:block;">號碼：${formatNums(nums)}</strong>
             <strong style="margin-top:6px; display:block;">信心參考：${confidence}</strong>
+            <div class="action-row" style="margin-top:12px;">
+              <button class="secondary-btn" data-copy-index="${idx}">複製這組</button>
+              <button class="secondary-btn" data-save-index="${idx}">收藏這組</button>
+            </div>
           </div>
         `;
       })
       .join("");
+
+    els.predictResultsList.querySelectorAll("[data-copy-index]").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const idx = Number(btn.dataset.copyIndex);
+        await copyNumbers(allPredictions[idx] || []);
+      });
+    });
+
+    els.predictResultsList.querySelectorAll("[data-save-index]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.dataset.saveIndex);
+        saveFavoriteNumbers(allPredictions[idx] || []);
+      });
+    });
   }
 
   async function copyAllPredictions() {
@@ -801,24 +848,10 @@
   function saveFavorite() {
     const balls = [...document.querySelectorAll("#recommendBalls1 .ball")]
       .map((el) => el.textContent?.trim())
-      .filter(Boolean);
+      .filter(Boolean)
+      .map((v) => Number(v));
 
-    if (!balls.length) {
-      alert("目前沒有可收藏的號碼");
-      return;
-    }
-
-    const oldFavorites = readJSON(STORAGE_KEYS.favorites, []);
-    const newItem = {
-      id: `${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      numbers: balls
-    };
-
-    oldFavorites.unshift(newItem);
-    writeJSON(STORAGE_KEYS.favorites, oldFavorites.slice(0, 50));
-
-    alert(`已收藏：${balls.join(" ")}`);
+    saveFavoriteNumbers(balls);
   }
 
   function showRecent5() {
@@ -982,8 +1015,6 @@
 
   async function init() {
     try {
-      console.log("init start");
-
       bindActions();
       bindNav();
       loadUserSettings();
@@ -1010,9 +1041,6 @@
       if (els.currentModeText) els.currentModeText.textContent = MODE_LABELS[currentMode] || "均衡型";
 
       switchPage("home");
-
-      console.log(`${APP_VERSION} 已載入`);
-      console.log("目前資料來源：", latest.source || "unknown");
     } catch (err) {
       console.error("init error:", err);
       alert("頁面初始化失敗，請檢查 index.html 或 app.js 是否有漏貼。");
