@@ -1,11 +1,11 @@
 (() => {
-  const APP_VERSION = "V2.4｜今彩539 專用版｜真實分析完整版";
+  const APP_VERSION = "V2.5｜今彩539 專用版｜真分頁版";
 
   const STORAGE_KEYS = {
-    favorites: "jincai539_favorites_v24",
-    history: "jincai539_predict_history_v24",
-    latest: "jincai539_latest_result_v24",
-    status: "jincai539_data_status_v24"
+    favorites: "jincai539_favorites_v25",
+    history: "jincai539_predict_history_v25",
+    latest: "jincai539_latest_result_v25",
+    status: "jincai539_data_status_v25"
   };
 
   const JSON_CANDIDATES = [
@@ -77,11 +77,15 @@
     btnPredict: $("#btnPredict"),
 
     recommendBalls1: $("#recommendBalls1"),
-    confidenceText: $("#confidenceText"),
     hotNums: $("#hotNums"),
     coldNums: $("#coldNums"),
     dragNums: $("#dragNums"),
     tailNums: $("#tailNums"),
+
+    historyHotNums: $("#historyHotNums"),
+    historyColdNums: $("#historyColdNums"),
+    historyDragNums: $("#historyDragNums"),
+    historyTailNums: $("#historyTailNums"),
 
     avgHit: $("#avgHit"),
     maxHit: $("#maxHit"),
@@ -89,13 +93,30 @@
 
     btnCopy: $("#btnCopy"),
     btnSave: $("#btnSave"),
-    btnFullAnalysis: $("#btnFullAnalysis"),
+    btnGoPredict: $("#btnGoPredict"),
     btnRecent5: $("#btnRecent5"),
     btnDataStatus: $("#btnDataStatus"),
-    btnAnalysis: $("#btnAnalysis"),
+    btnFullAnalysis: $("#btnFullAnalysis"),
     btnHitTrack: $("#btnHitTrack"),
+    btnHistoryRefresh: $("#btnHistoryRefresh"),
 
-    navButtons: document.querySelectorAll(".nav-btn")
+    appVersionText: $("#appVersionText"),
+    dataSourceText: $("#dataSourceText"),
+    currentModeText: $("#currentModeText"),
+
+    btnClearFavorites: $("#btnClearFavorites"),
+    btnClearHistory: $("#btnClearHistory"),
+    btnReloadData: $("#btnReloadData"),
+
+    recent5List: $("#recent5List"),
+
+    navButtons: document.querySelectorAll(".nav-btn"),
+    pages: {
+      home: $("#page-home"),
+      predict: $("#page-predict"),
+      history: $("#page-history"),
+      settings: $("#page-settings")
+    }
   };
 
   function pad2(n) {
@@ -318,7 +339,6 @@
     }
 
     const rows = [];
-
     if (Array.isArray(latest?.numbers) && latest.numbers.length >= 5) {
       rows.push({
         period: latest.period || "",
@@ -329,10 +349,8 @@
 
     for (const item of MOCK_HISTORY) {
       if (rows.length >= 5) break;
-
       const normalized = uniqueSorted(item);
       const alreadyExists = rows.some((row) => row.numbers.join(",") === normalized.join(","));
-
       if (!alreadyExists) {
         rows.push({
           period: "",
@@ -348,7 +366,7 @@
   function sampleHistory(periods, latestNumbers = null) {
     const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
     const recentReal = Array.isArray(latest?.recent5)
-      ? latest.recent5.map(item => uniqueSorted(item.numbers || []))
+      ? latest.recent5.map((item) => uniqueSorted(item.numbers || []))
       : [];
 
     const size = Math.min(Number(periods) || 120, 500);
@@ -398,17 +416,8 @@
 
   function getHotAndCold(freq) {
     const entries = [...freq.entries()];
-
-    const hot = [...entries]
-      .sort((a, b) => b[1] - a[1] || a[0] - b[0])
-      .slice(0, 8)
-      .map(([n]) => n);
-
-    const cold = [...entries]
-      .sort((a, b) => a[1] - b[1] || a[0] - b[0])
-      .slice(0, 8)
-      .map(([n]) => n);
-
+    const hot = [...entries].sort((a, b) => b[1] - a[1] || a[0] - b[0]).slice(0, 8).map(([n]) => n);
+    const cold = [...entries].sort((a, b) => a[1] - b[1] || a[0] - b[0]).slice(0, 8).map(([n]) => n);
     return { hot, cold };
   }
 
@@ -428,8 +437,8 @@
   function getStrongTailNumbers(history, count = 10) {
     const tails = getTailGroups(history);
     const topTails = tails.slice(0, 3).map(([tail]) => tail);
-
     const pool = [];
+
     for (let i = 1; i <= 39; i++) {
       if (topTails.includes(i % 10)) pool.push(i);
     }
@@ -487,31 +496,18 @@
     let result = [];
 
     if (mode === "hot") {
-      result = fillToFive([
-        ...pickFromPool(hot, 4),
-        ...pickFromPool(tailPool, 1)
-      ]);
+      result = fillToFive([...pickFromPool(hot, 4), ...pickFromPool(tailPool, 1)]);
     } else if (mode === "cold") {
-      result = fillToFive([
-        ...pickFromPool(cold, 4),
-        ...pickFromPool(tailPool, 1)
-      ]);
+      result = fillToFive([...pickFromPool(cold, 4), ...pickFromPool(tailPool, 1)]);
     } else if (mode === "tail") {
-      result = fillToFive([
-        ...pickFromPool(tailPool, 3),
-        ...pickFromPool(hot, 2)
-      ]);
+      result = fillToFive([...pickFromPool(tailPool, 3), ...pickFromPool(hot, 2)]);
     } else if (mode === "drag") {
       const dragNums = [];
       dragPairs.slice(0, 5).forEach((item) => {
         const [a, b] = item.key.split("->").map(Number);
         dragNums.push(a, b);
       });
-
-      result = fillToFive([
-        ...pickFromPool(uniqueSorted(dragNums), 3),
-        ...pickFromPool(hot, 2)
-      ]);
+      result = fillToFive([...pickFromPool(uniqueSorted(dragNums), 3), ...pickFromPool(hot, 2)]);
     } else {
       result = fillToFive([
         ...pickFromPool(hot, 2),
@@ -529,7 +525,6 @@
     const tails = getTailGroups(history).slice(0, 3).map(([tail]) => tail);
 
     let score = 60;
-
     numbers.forEach((n) => {
       if (hot.includes(n)) score += 4;
       if (tails.includes(n % 10)) score += 2;
@@ -558,7 +553,6 @@
     els.latestPeriod.textContent = latest.period || DEFAULT_LATEST.period;
     els.latestDate.textContent = latest.date || DEFAULT_LATEST.date;
     els.latestDrawNo.textContent = latest.period || DEFAULT_LATEST.period;
-
     renderBalls(els.latestBalls, latest.numbers || DEFAULT_LATEST.numbers, false);
   }
 
@@ -582,11 +576,7 @@
 
   function calcHitStats(records) {
     if (!records.length) {
-      return {
-        avg: "0顆",
-        max: "0顆",
-        bestMode: "均衡型"
-      };
+      return { avg: "0顆", max: "0顆", bestMode: "均衡型" };
     }
 
     const recent = records.slice(-5);
@@ -614,11 +604,7 @@
       }
     }
 
-    return {
-      avg: `${avg}顆`,
-      max: `${max}顆`,
-      bestMode
-    };
+    return { avg: `${avg}顆`, max: `${max}顆`, bestMode };
   }
 
   function compareHit(predicted, actual) {
@@ -640,14 +626,23 @@
     return ["均衡混合", "熱冷搭配"];
   }
 
+  function updateAnalysisViews(history) {
+    const summary = getAnalysisSummary(history);
+
+    if (els.hotNums) els.hotNums.textContent = summary.hotText;
+    if (els.coldNums) els.coldNums.textContent = summary.coldText;
+    if (els.dragNums) els.dragNums.textContent = summary.dragText;
+    if (els.tailNums) els.tailNums.textContent = summary.tailText;
+
+    if (els.historyHotNums) els.historyHotNums.textContent = summary.hotText;
+    if (els.historyColdNums) els.historyColdNums.textContent = summary.coldText;
+    if (els.historyDragNums) els.historyDragNums.textContent = summary.dragText;
+    if (els.historyTailNums) els.historyTailNums.textContent = summary.tailText;
+  }
+
   function updateDashboard(numbers, confidence, mode, history) {
     renderBalls(els.recommendBalls1, numbers, true);
-
-    const summary = getAnalysisSummary(history);
-    els.hotNums.textContent = summary.hotText;
-    els.coldNums.textContent = summary.coldText;
-    els.dragNums.textContent = summary.dragText;
-    els.tailNums.textContent = summary.tailText;
+    updateAnalysisViews(history);
 
     const saved = readJSON(STORAGE_KEYS.history, []);
     const stats = calcHitStats(saved);
@@ -659,11 +654,49 @@
     const metaBox = document.querySelector(".recommend-meta");
     if (metaBox) {
       metaBox.innerHTML = `
-        <span>信心：<strong id="confidenceText">${confidence}</strong></span>
+        <span>信心：<strong>${confidence}</strong></span>
         <span>${meta[0]}</span>
         <span>${meta[1]}</span>
       `;
     }
+
+    if (els.currentModeText) {
+      els.currentModeText.textContent = MODE_LABELS[mode] || "均衡型";
+    }
+  }
+
+  function renderRecent5List() {
+    if (!els.recent5List) return;
+
+    const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
+    const history = getRecentFiveDraws(latest);
+
+    els.recent5List.innerHTML = history
+      .map((draw, idx) => {
+        const nums = formatNums(draw.numbers || []);
+        const periodText = draw.period ? `第${draw.period}期` : `參考第${idx + 1}筆`;
+        const dateText = draw.date || "-";
+
+        return `
+          <div class="analysis-item">
+            <span class="label">${periodText}</span>
+            <strong>${dateText}</strong>
+            <strong style="margin-top:6px;">${nums}</strong>
+          </div>
+        `;
+      })
+      .join("");
+  }
+
+  function switchPage(page) {
+    Object.entries(els.pages).forEach(([key, el]) => {
+      if (!el) return;
+      el.classList.toggle("hidden", key !== page);
+    });
+
+    els.navButtons.forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.page === page);
+    });
   }
 
   function generatePrediction() {
@@ -760,7 +793,6 @@
         const nums = formatNums(draw.numbers || []);
         const dateText = draw.date ? `｜${draw.date}` : "";
         const periodText = draw.period ? `第${draw.period}期` : `參考第${idx + 1}筆`;
-
         return `${idx + 1}. ${periodText}${dateText}｜${nums}`;
       })
       .join("\n");
@@ -824,21 +856,25 @@
     );
   }
 
+  async function reloadData() {
+    const latest = await loadLatestFromCandidates();
+    renderLatest(latest);
+    renderRecent5List();
+
+    const periods = Number(els.analysisPeriods?.value || 120);
+    const history = sampleHistory(periods, latest.numbers);
+    const primary = predictNumbers("balanced", history);
+    const confidence = estimateConfidence(primary, history, "balanced");
+    updateDashboard(primary, confidence, "balanced", history);
+
+    if (els.dataSourceText) els.dataSourceText.textContent = latest.source || "latest.json";
+    alert("資料已重新載入");
+  }
+
   function bindNav() {
     els.navButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
-        els.navButtons.forEach((x) => x.classList.remove("active"));
-        btn.classList.add("active");
-
-        const page = btn.dataset.page;
-        const labelMap = {
-          home: "首頁",
-          predict: "預測",
-          history: "歷史",
-          settings: "設定"
-        };
-
-        alert(`目前是單頁版\n你點了：「${labelMap[page] || page}」\n之後可再擴充成真正分頁。`);
+        switchPage(btn.dataset.page);
       });
     });
   }
@@ -850,8 +886,22 @@
     els.btnRecent5?.addEventListener("click", showRecent5);
     els.btnDataStatus?.addEventListener("click", showDataStatus);
     els.btnFullAnalysis?.addEventListener("click", showFullAnalysis);
-    els.btnAnalysis?.addEventListener("click", showFullAnalysis);
     els.btnHitTrack?.addEventListener("click", showHitTrack);
+    els.btnHistoryRefresh?.addEventListener("click", showRecent5);
+
+    els.btnGoPredict?.addEventListener("click", () => switchPage("predict"));
+
+    els.btnClearFavorites?.addEventListener("click", () => {
+      localStorage.removeItem(STORAGE_KEYS.favorites);
+      alert("收藏已清除");
+    });
+
+    els.btnClearHistory?.addEventListener("click", () => {
+      localStorage.removeItem(STORAGE_KEYS.history);
+      alert("預測記錄已清除");
+    });
+
+    els.btnReloadData?.addEventListener("click", reloadData);
   }
 
   async function init() {
@@ -860,6 +910,7 @@
 
     const latest = await loadLatestFromCandidates();
     renderLatest(latest);
+    renderRecent5List();
 
     const periods = Number(els.analysisPeriods?.value || 120);
     els.historyCount.textContent = `最近 ${periods} 期`;
@@ -868,6 +919,12 @@
     const primary = predictNumbers("balanced", history);
     const confidence = estimateConfidence(primary, history, "balanced");
     updateDashboard(primary, confidence, "balanced", history);
+
+    if (els.appVersionText) els.appVersionText.textContent = APP_VERSION;
+    if (els.dataSourceText) els.dataSourceText.textContent = latest.source || "latest.json";
+    if (els.currentModeText) els.currentModeText.textContent = "均衡型";
+
+    switchPage("home");
 
     console.log(`${APP_VERSION} 已載入`);
     console.log("目前資料來源：", latest.source || "unknown");
