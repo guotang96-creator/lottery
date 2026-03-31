@@ -12,7 +12,7 @@ async function main() {
 
   const res = await fetch(url, {
     headers: {
-      "accept": "application/json, text/plain, */*"
+      accept: "application/json, text/plain, */*"
     }
   });
 
@@ -45,7 +45,7 @@ async function main() {
   console.log(JSON.stringify(output, null, 2));
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error(err);
   process.exit(1);
 });
