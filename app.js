@@ -764,19 +764,43 @@ function showPredictSummary() {
   }
 
   function generatePrediction() {
-    const periods = Number(els.analysisPeriods.value || 120);
-    const recommendCount = Number(els.recommendCount.value || 3);
-    const mode = els.predictMode.value || "balanced";
-    const modeLabel = MODE_LABELS[mode] || "均衡型";
+  const periods = Number(els.analysisPeriods.value || 120);
+  const recommendCount = Number(els.recommendCount.value || 3);
+  const mode = els.predictMode.value || "balanced";
+  const modeLabel = MODE_LABELS[mode] || "均衡型";
 
-    const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
-    const history = sampleHistory(periods, latest.numbers);
-    const allPredictions = [];
+  const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
+  const history = sampleHistory(periods, latest.numbers);
+  const allPredictions = [];
 
-    for (let i = 0; i < recommendCount; i++) {
-      const nums = predictNumbers(mode, history);
-      allPredictions.push(nums);
-    }
+  for (let i = 0; i < recommendCount; i++) {
+    const nums = predictNumbers(mode, history);
+    allPredictions.push(nums);
+  }
+
+  const primary = allPredictions[0];
+  const confidence = estimateConfidence(primary, history, mode);
+  const hitCount = compareHit(primary, latest.numbers || DEFAULT_LATEST.numbers);
+
+  savePredictRecord({
+    createdAt: new Date().toISOString(),
+    mode,
+    modeLabel,
+    periods,
+    recommendCount,
+    numbers: primary,
+    confidence,
+    hitCount
+  });
+
+  els.historyCount.textContent = `最近 ${periods} 期`;
+  updateDashboard(primary, confidence, mode, history);
+  renderPredictResults(allPredictions, mode, confidence);
+
+  alert(
+    `539 預測完成\n\n模式：${modeLabel}\n分析期數：${periods}期\n推薦組數：${recommendCount}組\n\n主推薦：${formatNums(primary)}\n主推薦信心：${confidence}`
+  );
+}
 
     const primary = allPredictions[0];
     const confidence = estimateConfidence(primary, history, mode);
