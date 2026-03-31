@@ -1,12 +1,12 @@
 (() => {
-  const APP_VERSION = "V2.2｜今彩539 專用版｜真實資料同步版";
+  const APP_VERSION = "V2.3｜今彩539 專用版｜最近5期真實版";
 
-  const STORAGE_KEYS = {
-    favorites: "jincai539_favorites_v22",
-    history: "jincai539_predict_history_v22",
-    latest: "jincai539_latest_result_v22",
-    status: "jincai539_data_status_v22"
-  };
+const STORAGE_KEYS = {
+  favorites: "jincai539_favorites_v23",
+  history: "jincai539_predict_history_v23",
+  latest: "jincai539_latest_result_v23",
+  status: "jincai539_data_status_v23"
+};
 
   const JSON_CANDIDATES = [
     "./latest.json",
