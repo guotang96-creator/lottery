@@ -1,11 +1,11 @@
 (() => {
-  const APP_VERSION = "V2.1｜今彩539 專用版｜真實資料版";
+  const APP_VERSION = "V2.2｜今彩539 專用版｜真實資料同步版";
 
   const STORAGE_KEYS = {
-    favorites: "jincai539_favorites_v21",
-    history: "jincai539_predict_history_v21",
-    latest: "jincai539_latest_result_v21",
-    status: "jincai539_data_status_v21"
+    favorites: "jincai539_favorites_v22",
+    history: "jincai539_predict_history_v22",
+    latest: "jincai539_latest_result_v22",
+    status: "jincai539_data_status_v22"
   };
 
   const JSON_CANDIDATES = [
@@ -137,11 +137,16 @@
     return value.replace("T00:00:00", "").replace("T", " ").slice(0, 19);
   }
 
+  function normalizeDateOnly(value) {
+    const text = normalizeDateText(value);
+    return text ? text.slice(0, 10) : "";
+  }
+
   function toIntArray(arr) {
     if (!Array.isArray(arr)) return [];
     return arr
-      .map(v => Number(v))
-      .filter(v => Number.isFinite(v) && v >= 1 && v <= 39);
+      .map((v) => Number(v))
+      .filter((v) => Number.isFinite(v) && v >= 1 && v <= 39);
   }
 
   function normalizeLatestFromAny(raw, sourceUrl = "") {
@@ -149,45 +154,16 @@
 
     const candidates = [];
 
-    if (raw.content?.daily539) {
-      candidates.push(raw.content.daily539);
-    }
-
-    if (raw.daily539) {
-      candidates.push(raw.daily539);
-    }
-
-    if (raw.content?.latest?.daily539) {
-      candidates.push(raw.content.latest.daily539);
-    }
-
-    if (raw.latest?.daily539) {
-      candidates.push(raw.latest.daily539);
-    }
-
-    if (raw.content?.lottery?.daily539) {
-      candidates.push(raw.content.lottery.daily539);
-    }
-
-    if (Array.isArray(raw.content?.daily539Res) && raw.content.daily539Res.length) {
-      candidates.push(raw.content.daily539Res[0]);
-    }
-
-    if (Array.isArray(raw.daily539Res) && raw.daily539Res.length) {
-      candidates.push(raw.daily539Res[0]);
-    }
-
-    if (Array.isArray(raw.data) && raw.data.length) {
-      candidates.push(raw.data[0]);
-    }
-
-    if (Array.isArray(raw.results) && raw.results.length) {
-      candidates.push(raw.results[0]);
-    }
-
-    if (raw.period || raw.lotteryDate || raw.drawNumberSize || raw.numbers) {
-      candidates.push(raw);
-    }
+    if (raw.content?.daily539) candidates.push(raw.content.daily539);
+    if (raw.daily539) candidates.push(raw.daily539);
+    if (raw.content?.latest?.daily539) candidates.push(raw.content.latest.daily539);
+    if (raw.latest?.daily539) candidates.push(raw.latest.daily539);
+    if (raw.content?.lottery?.daily539) candidates.push(raw.content.lottery.daily539);
+    if (Array.isArray(raw.content?.daily539Res) && raw.content.daily539Res.length) candidates.push(raw.content.daily539Res[0]);
+    if (Array.isArray(raw.daily539Res) && raw.daily539Res.length) candidates.push(raw.daily539Res[0]);
+    if (Array.isArray(raw.data) && raw.data.length) candidates.push(raw.data[0]);
+    if (Array.isArray(raw.results) && raw.results.length) candidates.push(raw.results[0]);
+    if (raw.period || raw.lotteryDate || raw.drawNumberSize || raw.numbers) candidates.push(raw);
 
     for (const item of candidates) {
       if (!item || typeof item !== "object") continue;
@@ -201,7 +177,7 @@
         "";
 
       const date =
-        normalizeDateText(
+        normalizeDateOnly(
           item.lotteryDate ||
           item.drawDate ||
           item.dDate ||
@@ -240,12 +216,8 @@
   }
 
   async function fetchJSON(url) {
-    const res = await fetch(`${url}?t=${Date.now()}`, {
-      cache: "no-store"
-    });
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
+    const res = await fetch(`${url}?t=${Date.now()}`, { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   }
 
@@ -305,12 +277,29 @@
     return source.slice(0, size);
   }
 
+  function getRecentFiveDraws(latestNumbers = null) {
+    const rows = [];
+
+    if (Array.isArray(latestNumbers) && latestNumbers.length >= 5) {
+      rows.push(uniqueSorted(latestNumbers.slice(0, 5)));
+    }
+
+    for (const item of MOCK_HISTORY) {
+      if (rows.length >= 5) break;
+      const normalized = uniqueSorted(item);
+      const alreadyExists = rows.some((row) => row.join(",") === normalized.join(","));
+      if (!alreadyExists) rows.push(normalized);
+    }
+
+    return rows.slice(0, 5);
+  }
+
   function getFrequency(history) {
     const freq = new Map();
     for (let i = 1; i <= 39; i++) freq.set(i, 0);
 
-    history.forEach(draw => {
-      draw.forEach(num => {
+    history.forEach((draw) => {
+      draw.forEach((num) => {
         freq.set(num, (freq.get(num) || 0) + 1);
       });
     });
@@ -320,6 +309,7 @@
 
   function getHotAndCold(freq) {
     const entries = [...freq.entries()];
+
     const hot = [...entries]
       .sort((a, b) => b[1] - a[1] || a[0] - b[0])
       .slice(0, 8)
@@ -337,8 +327,8 @@
     const tails = new Map();
     for (let i = 0; i <= 9; i++) tails.set(i, 0);
 
-    history.forEach(draw => {
-      draw.forEach(num => {
+    history.forEach((draw) => {
+      draw.forEach((num) => {
         tails.set(num % 10, (tails.get(num % 10) || 0) + 1);
       });
     });
@@ -353,8 +343,8 @@
       const current = history[i];
       const next = history[i + 1];
 
-      current.forEach(a => {
-        next.forEach(b => {
+      current.forEach((a) => {
+        next.forEach((b) => {
           const key = `${a}->${b}`;
           pairs.set(key, (pairs.get(key) || 0) + 1);
         });
@@ -408,7 +398,7 @@
       result = fillToFive(pickFromPool(tailPool, 5));
     } else if (mode === "drag") {
       const dragNums = [];
-      dragPairs.slice(0, 5).forEach(item => {
+      dragPairs.slice(0, 5).forEach((item) => {
         const [a, b] = item.key.split("->").map(Number);
         dragNums.push(a, b);
       });
@@ -441,16 +431,18 @@
   function renderBalls(container, numbers, active = false) {
     if (!container) return;
     container.innerHTML = numbers
-      .map(num => `<span class="ball${active ? " active" : ""}">${pad2(num)}</span>`)
+      .map((num) => `<span class="ball${active ? " active" : ""}">${pad2(num)}</span>`)
       .join("");
   }
 
   function renderLatest(latest) {
     if (!latest) latest = DEFAULT_LATEST;
+
     els.lastUpdateText.textContent = latest.updatedAt || DEFAULT_LATEST.updatedAt;
     els.latestPeriod.textContent = latest.period || DEFAULT_LATEST.period;
     els.latestDate.textContent = latest.date || DEFAULT_LATEST.date;
     els.latestDrawNo.textContent = latest.period || DEFAULT_LATEST.period;
+
     renderBalls(els.latestBalls, latest.numbers || DEFAULT_LATEST.numbers, false);
   }
 
@@ -467,7 +459,7 @@
     return {
       hotText: formatNums(hot.slice(0, 3)),
       coldText: formatNums(cold.slice(0, 3)),
-      dragText: drags.slice(0, 2).map(d => d.key.replace("->", "→")).join("、") || "暫無",
+      dragText: drags.slice(0, 2).map((d) => d.key.replace("->", "→")).join("、") || "暫無",
       tailText: tails.slice(0, 2).map(([tail]) => `${tail}尾`).join("、")
     };
   }
@@ -482,12 +474,12 @@
     }
 
     const recent = records.slice(-5);
-    const hitCounts = recent.map(r => r.hitCount || 0);
+    const hitCounts = recent.map((r) => r.hitCount || 0);
     const avg = (hitCounts.reduce((a, b) => a + b, 0) / hitCounts.length).toFixed(1);
     const max = Math.max(...hitCounts);
 
     const modeMap = new Map();
-    records.forEach(r => {
+    records.forEach((r) => {
       const key = r.modeLabel || "均衡型";
       const prev = modeMap.get(key) || { total: 0, count: 0 };
       prev.total += r.hitCount || 0;
@@ -515,7 +507,7 @@
 
   function compareHit(predicted, actual) {
     const actualSet = new Set(actual);
-    return predicted.filter(n => actualSet.has(n)).length;
+    return predicted.filter((n) => actualSet.has(n)).length;
   }
 
   function savePredictRecord(record) {
@@ -585,7 +577,7 @@
 
   async function copyPrediction() {
     const balls = [...els.recommendBalls1.querySelectorAll(".ball")]
-      .map(el => el.textContent?.trim())
+      .map((el) => el.textContent?.trim())
       .filter(Boolean);
 
     const text = balls.join(" ");
@@ -605,7 +597,7 @@
 
   function saveFavorite() {
     const balls = [...els.recommendBalls1.querySelectorAll(".ball")]
-      .map(el => el.textContent?.trim())
+      .map((el) => el.textContent?.trim())
       .filter(Boolean);
 
     if (!balls.length) {
@@ -628,11 +620,15 @@
 
   function showRecent5() {
     const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
-    const history = sampleHistory(5, latest.numbers);
+    const history = getRecentFiveDraws(latest.numbers);
 
     const text = history
-      .slice(0, 5)
-      .map((draw, idx) => `最近第${idx + 1}期：${formatNums(draw)}`)
+      .map((draw, idx) => {
+        if (idx === 0) {
+          return `最新一期（${latest.period}）：${formatNums(draw)}`;
+        }
+        return `參考第${idx + 1}筆：${formatNums(draw)}`;
+      })
       .join("\n");
 
     alert(`最近 5 期開獎參考\n\n${text}`);
@@ -652,6 +648,7 @@
       `版本：${status.version || APP_VERSION}\n` +
       `最新期數：${latest.period}\n` +
       `最新日期：${latest.date}\n` +
+      `最新號碼：${formatNums(latest.numbers || [])}\n` +
       `最後更新：${latest.updatedAt}\n` +
       `資料來源：${status.source || "local-cache"}\n` +
       `資料筆數：${status.total || 120}\n` +
@@ -683,9 +680,7 @@
 
     const recent = records.slice(-5);
     const text = recent
-      .map((r, idx) => {
-        return `${idx + 1}. ${r.modeLabel}｜${formatNums(r.numbers || [])}｜命中 ${r.hitCount || 0} 顆`;
-      })
+      .map((r, idx) => `${idx + 1}. ${r.modeLabel}｜${formatNums(r.numbers || [])}｜命中 ${r.hitCount || 0} 顆`)
       .join("\n");
 
     const stats = calcHitStats(records);
@@ -696,9 +691,9 @@
   }
 
   function bindNav() {
-    els.navButtons.forEach(btn => {
+    els.navButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
-        els.navButtons.forEach(x => x.classList.remove("active"));
+        els.navButtons.forEach((x) => x.classList.remove("active"));
         btn.classList.add("active");
 
         const page = btn.dataset.page;
