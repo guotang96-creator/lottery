@@ -149,25 +149,11 @@
       .filter((v) => Number.isFinite(v) && v >= 1 && v <= 39);
   }
 
-  function normalizeLatestFromAny(raw, sourceUrl = "") {
-    if (!raw || typeof raw !== "object") return null;
+  function normalizeRecentRows(rows) {
+  if (!Array.isArray(rows)) return [];
 
-    const candidates = [];
-
-    if (raw.content?.daily539) candidates.push(raw.content.daily539);
-    if (raw.daily539) candidates.push(raw.daily539);
-    if (raw.content?.latest?.daily539) candidates.push(raw.content.latest.daily539);
-    if (raw.latest?.daily539) candidates.push(raw.latest.daily539);
-    if (raw.content?.lottery?.daily539) candidates.push(raw.content.lottery.daily539);
-    if (Array.isArray(raw.content?.daily539Res) && raw.content.daily539Res.length) candidates.push(raw.content.daily539Res[0]);
-    if (Array.isArray(raw.daily539Res) && raw.daily539Res.length) candidates.push(raw.daily539Res[0]);
-    if (Array.isArray(raw.data) && raw.data.length) candidates.push(raw.data[0]);
-    if (Array.isArray(raw.results) && raw.results.length) candidates.push(raw.results[0]);
-    if (raw.period || raw.lotteryDate || raw.drawNumberSize || raw.numbers) candidates.push(raw);
-
-    for (const item of candidates) {
-      if (!item || typeof item !== "object") continue;
-
+  return rows
+    .map((item) => {
       const period =
         item.period ||
         item.drawTerm ||
@@ -176,14 +162,13 @@
         item.drawNo ||
         "";
 
-      const date =
-        normalizeDateOnly(
-          item.lotteryDate ||
-          item.drawDate ||
-          item.dDate ||
-          item.date ||
-          ""
-        ) || DEFAULT_LATEST.date;
+      const date = normalizeDateOnly(
+        item.lotteryDate ||
+        item.drawDate ||
+        item.dDate ||
+        item.date ||
+        ""
+      );
 
       const numbers = toIntArray(
         item.drawNumberSize ||
@@ -194,26 +179,90 @@
         []
       );
 
-      if (period && numbers.length >= 5) {
-        return {
-          period: String(period),
-          date,
-          numbers: uniqueSorted(numbers.slice(0, 5)),
-          updatedAt: normalizeDateText(
-            raw.updatedAt ||
-            raw.generatedAt ||
-            raw.lastUpdated ||
-            item.updatedAt ||
-            item.generatedAt ||
-            new Date().toISOString()
-          ),
-          source: sourceUrl || "remote-json"
-        };
-      }
-    }
+      if (!period || numbers.length < 5) return null;
 
-    return null;
+      return {
+        period: String(period),
+        date,
+        numbers: uniqueSorted(numbers.slice(0, 5))
+      };
+    })
+    .filter(Boolean)
+    .slice(0, 5);
+}
+
+function normalizeLatestFromAny(raw, sourceUrl = "") {
+  if (!raw || typeof raw !== "object") return null;
+
+  const candidates = [];
+
+  if (raw.content?.daily539) candidates.push(raw.content.daily539);
+  if (raw.daily539) candidates.push(raw.daily539);
+  if (raw.content?.latest?.daily539) candidates.push(raw.content.latest.daily539);
+  if (raw.latest?.daily539) candidates.push(raw.latest.daily539);
+  if (raw.content?.lottery?.daily539) candidates.push(raw.content.lottery.daily539);
+  if (Array.isArray(raw.content?.daily539Res) && raw.content.daily539Res.length) candidates.push(raw.content.daily539Res[0]);
+  if (Array.isArray(raw.daily539Res) && raw.daily539Res.length) candidates.push(raw.daily539Res[0]);
+  if (Array.isArray(raw.data) && raw.data.length) candidates.push(raw.data[0]);
+  if (Array.isArray(raw.results) && raw.results.length) candidates.push(raw.results[0]);
+  if (raw.period || raw.lotteryDate || raw.drawNumberSize || raw.numbers) candidates.push(raw);
+
+  for (const item of candidates) {
+    if (!item || typeof item !== "object") continue;
+
+    const period =
+      item.period ||
+      item.drawTerm ||
+      item.issue ||
+      item.term ||
+      item.drawNo ||
+      "";
+
+    const date =
+      normalizeDateOnly(
+        item.lotteryDate ||
+        item.drawDate ||
+        item.dDate ||
+        item.date ||
+        ""
+      ) || DEFAULT_LATEST.date;
+
+    const numbers = toIntArray(
+      item.drawNumberSize ||
+      item.drawNumbers ||
+      item.numbers ||
+      item.orderNumbers ||
+      item.num ||
+      []
+    );
+
+    if (period && numbers.length >= 5) {
+      return {
+        period: String(period),
+        date,
+        numbers: uniqueSorted(numbers.slice(0, 5)),
+        recent5: normalizeRecentRows(
+          raw.recent5 ||
+          raw.content?.recent5 ||
+          raw.content?.daily539Res ||
+          raw.daily539Res ||
+          []
+        ),
+        updatedAt: normalizeDateText(
+          raw.updatedAt ||
+          raw.generatedAt ||
+          raw.lastUpdated ||
+          item.updatedAt ||
+          item.generatedAt ||
+          new Date().toISOString()
+        ),
+        source: sourceUrl || "remote-json"
+      };
+    }
   }
+
+  return null;
+}
 
   async function fetchJSON(url) {
     const res = await fetch(`${url}?t=${Date.now()}`, { cache: "no-store" });
