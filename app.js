@@ -1,11 +1,11 @@
 (() => {
-  const APP_VERSION = "V2.5｜今彩539 專用版｜真分頁版";
+  const APP_VERSION = "V2.6｜今彩539 專用版｜穩定修正版";
 
   const STORAGE_KEYS = {
-    favorites: "jincai539_favorites_v25",
-    history: "jincai539_predict_history_v25",
-    latest: "jincai539_latest_result_v25",
-    status: "jincai539_data_status_v25"
+    favorites: "jincai539_favorites_v26",
+    history: "jincai539_predict_history_v26",
+    latest: "jincai539_latest_result_v26",
+    status: "jincai539_data_status_v26"
   };
 
   const JSON_CANDIDATES = [
@@ -96,7 +96,6 @@
     btnGoPredict: $("#btnGoPredict"),
     btnCopyAllPredict: $("#btnCopyAllPredict"),
     btnPredictSummary: $("#btnPredictSummary"),
-    predictResultsList: $("#predictResultsList"),
     btnRecent5: $("#btnRecent5"),
     btnDataStatus: $("#btnDataStatus"),
     btnFullAnalysis: $("#btnFullAnalysis"),
@@ -112,6 +111,7 @@
     btnReloadData: $("#btnReloadData"),
 
     recent5List: $("#recent5List"),
+    predictResultsList: $("#predictResultsList"),
 
     navButtons: document.querySelectorAll(".nav-btn"),
     pages: {
@@ -419,8 +419,14 @@
 
   function getHotAndCold(freq) {
     const entries = [...freq.entries()];
-    const hot = [...entries].sort((a, b) => b[1] - a[1] || a[0] - b[0]).slice(0, 8).map(([n]) => n);
-    const cold = [...entries].sort((a, b) => a[1] - b[1] || a[0] - b[0]).slice(0, 8).map(([n]) => n);
+    const hot = [...entries]
+      .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+      .slice(0, 8)
+      .map(([n]) => n);
+    const cold = [...entries]
+      .sort((a, b) => a[1] - b[1] || a[0] - b[0])
+      .slice(0, 8)
+      .map(([n]) => n);
     return { hot, cold };
   }
 
@@ -552,10 +558,11 @@
   function renderLatest(latest) {
     if (!latest) latest = DEFAULT_LATEST;
 
-    els.lastUpdateText.textContent = latest.updatedAt || DEFAULT_LATEST.updatedAt;
-    els.latestPeriod.textContent = latest.period || DEFAULT_LATEST.period;
-    els.latestDate.textContent = latest.date || DEFAULT_LATEST.date;
-    els.latestDrawNo.textContent = latest.period || DEFAULT_LATEST.period;
+    if (els.lastUpdateText) els.lastUpdateText.textContent = latest.updatedAt || DEFAULT_LATEST.updatedAt;
+    if (els.latestPeriod) els.latestPeriod.textContent = latest.period || DEFAULT_LATEST.period;
+    if (els.latestDate) els.latestDate.textContent = latest.date || DEFAULT_LATEST.date;
+    if (els.latestDrawNo) els.latestDrawNo.textContent = latest.period || DEFAULT_LATEST.period;
+
     renderBalls(els.latestBalls, latest.numbers || DEFAULT_LATEST.numbers, false);
   }
 
@@ -646,73 +653,13 @@
   function updateDashboard(numbers, confidence, mode, history) {
     renderBalls(els.recommendBalls1, numbers, true);
     updateAnalysisViews(history);
-    function renderPredictResults(allPredictions, mode, confidence) {
-  if (!els.predictResultsList) return;
-
-  els.predictResultsList.innerHTML = allPredictions
-    .map((nums, idx) => {
-      const ballsHtml = nums
-        .map((n) => `<span class="ball active">${pad2(n)}</span>`)
-        .join("");
-
-      return `
-        <div class="analysis-item">
-          <span class="label">推薦${idx + 1}</span>
-          <div class="balls-row" style="margin-top:8px;">${ballsHtml}</div>
-          <strong style="margin-top:10px;">模式：${MODE_LABELS[mode] || "均衡型"}</strong>
-          <strong style="margin-top:6px;">號碼：${formatNums(nums)}</strong>
-          <strong style="margin-top:6px;">信心參考：${confidence}</strong>
-        </div>
-      `;
-    })
-    .join("");
-}
-
-async function copyAllPredictions() {
-  const cards = [...document.querySelectorAll("#predictResultsList .analysis-item")];
-  if (!cards.length) {
-    alert("目前沒有可複製的預測結果");
-    return;
-  }
-
-  const text = cards
-    .map((card, idx) => {
-      const balls = [...card.querySelectorAll(".ball")]
-        .map((el) => el.textContent?.trim())
-        .filter(Boolean)
-        .join(" ");
-      return `推薦${idx + 1}：${balls}`;
-    })
-    .join("\n");
-
-  try {
-    await navigator.clipboard.writeText(text);
-    alert(`已複製全部推薦：\n\n${text}`);
-  } catch (err) {
-    alert(`複製失敗，請手動複製：\n\n${text}`);
-  }
-}
-
-function showPredictSummary() {
-  const hot = els.hotNums?.textContent || "";
-  const cold = els.coldNums?.textContent || "";
-  const drag = els.dragNums?.textContent || "";
-  const tail = els.tailNums?.textContent || "";
-
-  alert(
-    `預測摘要\n\n` +
-    `熱門號：${hot}\n` +
-    `冷門號：${cold}\n` +
-    `拖號組：${drag}\n` +
-    `尾數強勢：${tail}`
-  );
-}
 
     const saved = readJSON(STORAGE_KEYS.history, []);
     const stats = calcHitStats(saved);
-    els.avgHit.textContent = stats.avg;
-    els.maxHit.textContent = stats.max;
-    els.bestMode.textContent = stats.bestMode || MODE_LABELS[mode] || "均衡型";
+
+    if (els.avgHit) els.avgHit.textContent = stats.avg;
+    if (els.maxHit) els.maxHit.textContent = stats.max;
+    if (els.bestMode) els.bestMode.textContent = stats.bestMode || MODE_LABELS[mode] || "均衡型";
 
     const meta = getModeMeta(mode);
     const metaBox = document.querySelector(".recommend-meta");
@@ -727,6 +674,68 @@ function showPredictSummary() {
     if (els.currentModeText) {
       els.currentModeText.textContent = MODE_LABELS[mode] || "均衡型";
     }
+  }
+
+  function renderPredictResults(allPredictions, mode, confidence) {
+    if (!els.predictResultsList) return;
+
+    els.predictResultsList.innerHTML = allPredictions
+      .map((nums, idx) => {
+        const ballsHtml = nums
+          .map((n) => `<span class="ball active">${pad2(n)}</span>`)
+          .join("");
+
+        return `
+          <div class="analysis-item">
+            <span class="label">推薦${idx + 1}</span>
+            <div class="balls-row" style="margin-top:8px;">${ballsHtml}</div>
+            <strong style="margin-top:10px; display:block;">模式：${MODE_LABELS[mode] || "均衡型"}</strong>
+            <strong style="margin-top:6px; display:block;">號碼：${formatNums(nums)}</strong>
+            <strong style="margin-top:6px; display:block;">信心參考：${confidence}</strong>
+          </div>
+        `;
+      })
+      .join("");
+  }
+
+  async function copyAllPredictions() {
+    const cards = [...document.querySelectorAll("#predictResultsList .analysis-item")];
+    if (!cards.length) {
+      alert("目前沒有可複製的預測結果");
+      return;
+    }
+
+    const text = cards
+      .map((card, idx) => {
+        const balls = [...card.querySelectorAll(".ball")]
+          .map((el) => el.textContent?.trim())
+          .filter(Boolean)
+          .join(" ");
+        return `推薦${idx + 1}：${balls}`;
+      })
+      .join("\n");
+
+    try {
+      await navigator.clipboard.writeText(text);
+      alert(`已複製全部推薦：\n\n${text}`);
+    } catch (err) {
+      alert(`複製失敗，請手動複製：\n\n${text}`);
+    }
+  }
+
+  function showPredictSummary() {
+    const hot = els.hotNums?.textContent || "";
+    const cold = els.coldNums?.textContent || "";
+    const drag = els.dragNums?.textContent || "";
+    const tail = els.tailNums?.textContent || "";
+
+    alert(
+      `預測摘要\n\n` +
+      `熱門號：${hot}\n` +
+      `冷門號：${cold}\n` +
+      `拖號組：${drag}\n` +
+      `尾數強勢：${tail}`
+    );
   }
 
   function renderRecent5List() {
@@ -764,43 +773,19 @@ function showPredictSummary() {
   }
 
   function generatePrediction() {
-  const periods = Number(els.analysisPeriods.value || 120);
-  const recommendCount = Number(els.recommendCount.value || 3);
-  const mode = els.predictMode.value || "balanced";
-  const modeLabel = MODE_LABELS[mode] || "均衡型";
+    const periods = Number(els.analysisPeriods?.value || 120);
+    const recommendCount = Number(els.recommendCount?.value || 3);
+    const mode = els.predictMode?.value || "balanced";
+    const modeLabel = MODE_LABELS[mode] || "均衡型";
 
-  const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
-  const history = sampleHistory(periods, latest.numbers);
-  const allPredictions = [];
+    const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
+    const history = sampleHistory(periods, latest.numbers);
+    const allPredictions = [];
 
-  for (let i = 0; i < recommendCount; i++) {
-    const nums = predictNumbers(mode, history);
-    allPredictions.push(nums);
-  }
-
-  const primary = allPredictions[0];
-  const confidence = estimateConfidence(primary, history, mode);
-  const hitCount = compareHit(primary, latest.numbers || DEFAULT_LATEST.numbers);
-
-  savePredictRecord({
-    createdAt: new Date().toISOString(),
-    mode,
-    modeLabel,
-    periods,
-    recommendCount,
-    numbers: primary,
-    confidence,
-    hitCount
-  });
-
-  els.historyCount.textContent = `最近 ${periods} 期`;
-  updateDashboard(primary, confidence, mode, history);
-  renderPredictResults(allPredictions, mode, confidence);
-
-  alert(
-    `539 預測完成\n\n模式：${modeLabel}\n分析期數：${periods}期\n推薦組數：${recommendCount}組\n\n主推薦：${formatNums(primary)}\n主推薦信心：${confidence}`
-  );
-}
+    for (let i = 0; i < recommendCount; i++) {
+      const nums = predictNumbers(mode, history);
+      allPredictions.push(nums);
+    }
 
     const primary = allPredictions[0];
     const confidence = estimateConfidence(primary, history, mode);
@@ -817,20 +802,20 @@ function showPredictSummary() {
       hitCount
     });
 
-    els.historyCount.textContent = `最近 ${periods} 期`;
-    updateDashboard(primary, confidence, mode, history);
+    if (els.historyCount) {
+      els.historyCount.textContent = `最近 ${periods} 期`;
+    }
 
-    const multiText = allPredictions
-      .map((nums, idx) => `推薦${idx + 1}：${formatNums(nums)}`)
-      .join("\n");
+    updateDashboard(primary, confidence, mode, history);
+    renderPredictResults(allPredictions, mode, confidence);
 
     alert(
-      `539 預測完成\n\n模式：${modeLabel}\n分析期數：${periods}期\n推薦組數：${recommendCount}組\n\n${multiText}\n\n主推薦信心：${confidence}`
+      `539 預測完成\n\n模式：${modeLabel}\n分析期數：${periods}期\n推薦組數：${recommendCount}組\n\n主推薦：${formatNums(primary)}\n主推薦信心：${confidence}`
     );
   }
 
   async function copyPrediction() {
-    const balls = [...els.recommendBalls1.querySelectorAll(".ball")]
+    const balls = [...document.querySelectorAll("#recommendBalls1 .ball")]
       .map((el) => el.textContent?.trim())
       .filter(Boolean);
 
@@ -850,7 +835,7 @@ function showPredictSummary() {
   }
 
   function saveFavorite() {
-    const balls = [...els.recommendBalls1.querySelectorAll(".ball")]
+    const balls = [...document.querySelectorAll("#recommendBalls1 .ball")]
       .map((el) => el.textContent?.trim())
       .filter(Boolean);
 
@@ -911,7 +896,7 @@ function showPredictSummary() {
   }
 
   function showFullAnalysis() {
-    const periods = Number(els.analysisPeriods.value || 120);
+    const periods = Number(els.analysisPeriods?.value || 120);
     const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
     const history = sampleHistory(periods, latest.numbers);
     const freq = getFrequency(history);
@@ -953,8 +938,10 @@ function showPredictSummary() {
     const history = sampleHistory(periods, latest.numbers);
     const primary = predictNumbers("balanced", history);
     const confidence = estimateConfidence(primary, history, "balanced");
+
     updateDashboard(primary, confidence, "balanced", history);
     renderPredictResults([primary], "balanced", confidence);
+
     if (els.dataSourceText) els.dataSourceText.textContent = latest.source || "latest.json";
     alert("資料已重新載入");
   }
@@ -968,55 +955,81 @@ function showPredictSummary() {
   }
 
   function bindActions() {
-    els.btnPredict?.addEventListener("click", generatePrediction);
-    els.btnCopy?.addEventListener("click", copyPrediction);
-    els.btnSave?.addEventListener("click", saveFavorite);
-    els.btnRecent5?.addEventListener("click", showRecent5);
-    els.btnDataStatus?.addEventListener("click", showDataStatus);
-    els.btnFullAnalysis?.addEventListener("click", showFullAnalysis);
-    els.btnHitTrack?.addEventListener("click", showHitTrack);
-    els.btnHistoryRefresh?.addEventListener("click", showRecent5);
+    if (els.btnPredict) els.btnPredict.addEventListener("click", generatePrediction);
+    if (els.btnCopy) els.btnCopy.addEventListener("click", copyPrediction);
+    if (els.btnSave) els.btnSave.addEventListener("click", saveFavorite);
+    if (els.btnRecent5) els.btnRecent5.addEventListener("click", showRecent5);
+    if (els.btnDataStatus) els.btnDataStatus.addEventListener("click", showDataStatus);
+    if (els.btnFullAnalysis) els.btnFullAnalysis.addEventListener("click", showFullAnalysis);
+    if (els.btnHitTrack) els.btnHitTrack.addEventListener("click", showHitTrack);
+    if (els.btnHistoryRefresh) els.btnHistoryRefresh.addEventListener("click", showRecent5);
 
-    els.btnGoPredict?.addEventListener("click", () => switchPage("predict"));
-    els.btnCopyAllPredict?.addEventListener("click", copyAllPredictions);
-    els.btnPredictSummary?.addEventListener("click", showPredictSummary);
-    els.btnClearFavorites?.addEventListener("click", () => {
-      localStorage.removeItem(STORAGE_KEYS.favorites);
-      alert("收藏已清除");
-    });
+    if (els.btnGoPredict) {
+      els.btnGoPredict.addEventListener("click", () => switchPage("predict"));
+    }
 
-    els.btnClearHistory?.addEventListener("click", () => {
-      localStorage.removeItem(STORAGE_KEYS.history);
-      alert("預測記錄已清除");
-    });
+    if (els.btnCopyAllPredict) {
+      els.btnCopyAllPredict.addEventListener("click", copyAllPredictions);
+    }
 
-    els.btnReloadData?.addEventListener("click", reloadData);
+    if (els.btnPredictSummary) {
+      els.btnPredictSummary.addEventListener("click", showPredictSummary);
+    }
+
+    if (els.btnClearFavorites) {
+      els.btnClearFavorites.addEventListener("click", () => {
+        localStorage.removeItem(STORAGE_KEYS.favorites);
+        alert("收藏已清除");
+      });
+    }
+
+    if (els.btnClearHistory) {
+      els.btnClearHistory.addEventListener("click", () => {
+        localStorage.removeItem(STORAGE_KEYS.history);
+        alert("預測記錄已清除");
+      });
+    }
+
+    if (els.btnReloadData) {
+      els.btnReloadData.addEventListener("click", reloadData);
+    }
   }
 
   async function init() {
-    bindActions();
-    bindNav();
+    try {
+      console.log("init start");
 
-    const latest = await loadLatestFromCandidates();
-    renderLatest(latest);
-    renderRecent5List();
+      bindActions();
+      bindNav();
 
-    const periods = Number(els.analysisPeriods?.value || 120);
-    els.historyCount.textContent = `最近 ${periods} 期`;
+      const latest = await loadLatestFromCandidates();
+      renderLatest(latest);
+      renderRecent5List();
 
-    const history = sampleHistory(periods, latest.numbers);
-    const primary = predictNumbers("balanced", history);
-    const confidence = estimateConfidence(primary, history, "balanced");
-    updateDashboard(primary, confidence, "balanced", history);
+      const periods = Number(els.analysisPeriods?.value || 120);
+      if (els.historyCount) {
+        els.historyCount.textContent = `最近 ${periods} 期`;
+      }
 
-    if (els.appVersionText) els.appVersionText.textContent = APP_VERSION;
-    if (els.dataSourceText) els.dataSourceText.textContent = latest.source || "latest.json";
-    if (els.currentModeText) els.currentModeText.textContent = "均衡型";
+      const history = sampleHistory(periods, latest.numbers);
+      const primary = predictNumbers("balanced", history);
+      const confidence = estimateConfidence(primary, history, "balanced");
 
-    switchPage("home");
+      updateDashboard(primary, confidence, "balanced", history);
+      renderPredictResults([primary], "balanced", confidence);
 
-    console.log(`${APP_VERSION} 已載入`);
-    console.log("目前資料來源：", latest.source || "unknown");
+      if (els.appVersionText) els.appVersionText.textContent = APP_VERSION;
+      if (els.dataSourceText) els.dataSourceText.textContent = latest.source || "latest.json";
+      if (els.currentModeText) els.currentModeText.textContent = "均衡型";
+
+      switchPage("home");
+
+      console.log(`${APP_VERSION} 已載入`);
+      console.log("目前資料來源：", latest.source || "unknown");
+    } catch (err) {
+      console.error("init error:", err);
+      alert("頁面初始化失敗，請檢查 index.html 或 app.js 是否有漏貼。");
+    }
   }
 
   document.addEventListener("DOMContentLoaded", init);
