@@ -326,22 +326,38 @@ function normalizeLatestFromAny(raw, sourceUrl = "") {
     return source.slice(0, size);
   }
 
-  function getRecentFiveDraws(latestNumbers = null) {
-    const rows = [];
-
-    if (Array.isArray(latestNumbers) && latestNumbers.length >= 5) {
-      rows.push(uniqueSorted(latestNumbers.slice(0, 5)));
-    }
-
-    for (const item of MOCK_HISTORY) {
-      if (rows.length >= 5) break;
-      const normalized = uniqueSorted(item);
-      const alreadyExists = rows.some((row) => row.join(",") === normalized.join(","));
-      if (!alreadyExists) rows.push(normalized);
-    }
-
-    return rows.slice(0, 5);
+  function getRecentFiveDraws(latest) {
+  if (Array.isArray(latest?.recent5) && latest.recent5.length) {
+    return latest.recent5.slice(0, 5);
   }
+
+  const rows = [];
+
+  if (Array.isArray(latest?.numbers) && latest.numbers.length >= 5) {
+    rows.push({
+      period: latest.period || "",
+      date: latest.date || "",
+      numbers: uniqueSorted(latest.numbers.slice(0, 5))
+    });
+  }
+
+  for (const item of MOCK_HISTORY) {
+    if (rows.length >= 5) break;
+
+    const normalized = uniqueSorted(item);
+    const alreadyExists = rows.some((row) => row.numbers.join(",") === normalized.join(","));
+
+    if (!alreadyExists) {
+      rows.push({
+        period: "",
+        date: "",
+        numbers: normalized
+      });
+    }
+  }
+
+  return rows.slice(0, 5);
+}
 
   function getFrequency(history) {
     const freq = new Map();
