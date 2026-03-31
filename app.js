@@ -1,11 +1,12 @@
 (() => {
-  const APP_VERSION = "V2.6｜今彩539 專用版｜穩定修正版";
+  const APP_VERSION = "V2.7｜今彩539 專用版｜記住設定版";
 
   const STORAGE_KEYS = {
-    favorites: "jincai539_favorites_v26",
-    history: "jincai539_predict_history_v26",
-    latest: "jincai539_latest_result_v26",
-    status: "jincai539_data_status_v26"
+    favorites: "jincai539_favorites_v27",
+    history: "jincai539_predict_history_v27",
+    latest: "jincai539_latest_result_v27",
+    status: "jincai539_data_status_v27",
+    settings: "jincai539_user_settings_v27"
   };
 
   const JSON_CANDIDATES = [
@@ -153,6 +154,32 @@
       localStorage.setItem(key, JSON.stringify(value));
     } catch (err) {
       console.warn("localStorage 寫入失敗", err);
+    }
+  }
+
+  function saveUserSettings() {
+    const settings = {
+      analysisPeriods: els.analysisPeriods?.value || "120",
+      recommendCount: els.recommendCount?.value || "3",
+      predictMode: els.predictMode?.value || "balanced"
+    };
+    writeJSON(STORAGE_KEYS.settings, settings);
+  }
+
+  function loadUserSettings() {
+    const settings = readJSON(STORAGE_KEYS.settings, null);
+    if (!settings) return;
+
+    if (els.analysisPeriods && settings.analysisPeriods) {
+      els.analysisPeriods.value = settings.analysisPeriods;
+    }
+
+    if (els.recommendCount && settings.recommendCount) {
+      els.recommendCount.value = settings.recommendCount;
+    }
+
+    if (els.predictMode && settings.predictMode) {
+      els.predictMode.value = settings.predictMode;
     }
   }
 
@@ -778,6 +805,8 @@
     const mode = els.predictMode?.value || "balanced";
     const modeLabel = MODE_LABELS[mode] || "均衡型";
 
+    saveUserSettings();
+
     const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
     const history = sampleHistory(periods, latest.numbers);
     const allPredictions = [];
@@ -993,6 +1022,18 @@
     if (els.btnReloadData) {
       els.btnReloadData.addEventListener("click", reloadData);
     }
+
+    if (els.analysisPeriods) {
+      els.analysisPeriods.addEventListener("change", saveUserSettings);
+    }
+
+    if (els.recommendCount) {
+      els.recommendCount.addEventListener("change", saveUserSettings);
+    }
+
+    if (els.predictMode) {
+      els.predictMode.addEventListener("change", saveUserSettings);
+    }
   }
 
   async function init() {
@@ -1001,6 +1042,7 @@
 
       bindActions();
       bindNav();
+      loadUserSettings();
 
       const latest = await loadLatestFromCandidates();
       renderLatest(latest);
@@ -1011,16 +1053,17 @@
         els.historyCount.textContent = `最近 ${periods} 期`;
       }
 
+      const currentMode = els.predictMode?.value || "balanced";
       const history = sampleHistory(periods, latest.numbers);
-      const primary = predictNumbers("balanced", history);
-      const confidence = estimateConfidence(primary, history, "balanced");
+      const primary = predictNumbers(currentMode, history);
+      const confidence = estimateConfidence(primary, history, currentMode);
 
-      updateDashboard(primary, confidence, "balanced", history);
-      renderPredictResults([primary], "balanced", confidence);
+      updateDashboard(primary, confidence, currentMode, history);
+      renderPredictResults([primary], currentMode, confidence);
 
       if (els.appVersionText) els.appVersionText.textContent = APP_VERSION;
       if (els.dataSourceText) els.dataSourceText.textContent = latest.source || "latest.json";
-      if (els.currentModeText) els.currentModeText.textContent = "均衡型";
+      if (els.currentModeText) els.currentModeText.textContent = MODE_LABELS[currentMode] || "均衡型";
 
       switchPage("home");
 
