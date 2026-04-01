@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>今彩539 AI 預測系統 V2.5</title>
+  <title>今彩539 AI 預測系統 V3.0</title>
   <meta name="theme-color" content="#0f172a" />
-  <meta name="description" content="今彩539 AI 預測系統｜真分頁版" />
+  <meta name="description" content="今彩539 AI 預測系統｜收藏頁版" />
 
-  <link rel="manifest" href="manifest.json?v=25" />
+  <link rel="manifest" href="manifest.json?v=31" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="icon" type="image/png" href="favicon.png" />
   <link rel="stylesheet" href="style.css" />
@@ -19,7 +19,7 @@
         <div class="brand-icon">539</div>
         <div class="brand-text">
           <h1>今彩539 AI 預測系統</h1>
-          <p>V2.5｜資料正常 <span class="status-dot">●</span></p>
+          <p>V3.0｜資料正常 <span class="status-dot">●</span></p>
           <small>最後更新：<span id="lastUpdateText">2026-03-31 20:05</span></small>
         </div>
       </div>
@@ -74,7 +74,6 @@
           <div class="card-header">
             <h2>AI 推薦結果預覽</h2>
           </div>
-
           <div class="recommend-box">
             <div class="recommend-row">
               <span class="recommend-title">推薦1</span>
@@ -88,7 +87,7 @@
             </div>
 
             <div class="recommend-meta">
-              <span>信心：<strong id="confidenceText">78</strong></span>
+              <span>信心：<strong>78</strong></span>
               <span>均衡混合</span>
               <span>熱冷搭配</span>
             </div>
@@ -106,7 +105,6 @@
             <h2>最近命中追蹤</h2>
             <button class="text-btn" id="btnHitTrack">進入命中追蹤</button>
           </div>
-
           <div class="track-grid">
             <div class="track-item">
               <span class="label">最近5次平均</span>
@@ -124,87 +122,87 @@
         </section>
       </section>
 
-      <!-- 預測頁 -->
+      <!-- 預測 -->
       <section class="page-section hidden" id="page-predict">
-  <section class="card">
-    <div class="card-header">
-      <h2>快速預測</h2>
-    </div>
+        <section class="card">
+          <div class="card-header">
+            <h2>快速預測</h2>
+          </div>
 
-    <div class="form-grid">
-      <label class="field">
-        <span>分析期數</span>
-        <select id="analysisPeriods">
-          <option value="30">30期</option>
-          <option value="60">60期</option>
-          <option value="120" selected>120期</option>
-          <option value="240">240期</option>
-          <option value="500">500期</option>
-        </select>
-      </label>
+          <div class="form-grid">
+            <label class="field">
+              <span>分析期數</span>
+              <select id="analysisPeriods">
+                <option value="30">30期</option>
+                <option value="60">60期</option>
+                <option value="120" selected>120期</option>
+                <option value="240">240期</option>
+                <option value="500">500期</option>
+              </select>
+            </label>
 
-      <label class="field">
-        <span>推薦組數</span>
-        <select id="recommendCount">
-          <option value="1">1組</option>
-          <option value="3" selected>3組</option>
-          <option value="5">5組</option>
-          <option value="10">10組</option>
-        </select>
-      </label>
+            <label class="field">
+              <span>推薦組數</span>
+              <select id="recommendCount">
+                <option value="1">1組</option>
+                <option value="3" selected>3組</option>
+                <option value="5">5組</option>
+                <option value="10">10組</option>
+              </select>
+            </label>
 
-      <label class="field">
-        <span>模式</span>
-        <select id="predictMode">
-          <option value="balanced" selected>均衡型</option>
-          <option value="hot">熱號型</option>
-          <option value="cold">冷號型</option>
-          <option value="tail">尾數型</option>
-          <option value="drag">拖號型</option>
-        </select>
-      </label>
-    </div>
+            <label class="field">
+              <span>模式</span>
+              <select id="predictMode">
+                <option value="balanced" selected>均衡型</option>
+                <option value="hot">熱號型</option>
+                <option value="cold">冷號型</option>
+                <option value="tail">尾數型</option>
+                <option value="drag">拖號型</option>
+              </select>
+            </label>
+          </div>
 
-    <div class="action-row" style="margin-top: 12px;">
-      <button class="primary-btn" id="btnPredict">立即預測</button>
-      <button class="secondary-btn" id="btnCopyAllPredict">複製全部</button>
-    </div>
-  </section>
+          <div class="action-row" style="margin-top:12px;">
+            <button class="primary-btn" id="btnPredict">立即預測</button>
+            <button class="secondary-btn" id="btnCopyAllPredict">複製全部</button>
+          </div>
+        </section>
 
-  <section class="card">
-    <div class="card-header">
-      <h2>本次推薦結果</h2>
-      <button class="text-btn" id="btnPredictSummary">查看摘要</button>
-    </div>
-    <div id="predictResultsList" class="analysis-list"></div>
-  </section>
+        <section class="card">
+          <div class="card-header">
+            <h2>本次推薦結果</h2>
+            <button class="text-btn" id="btnPredictSummary">查看摘要</button>
+          </div>
+          <div id="predictResultsList" class="analysis-list"></div>
+        </section>
 
-  <section class="card">
-    <div class="card-header">
-      <h2>預測摘要</h2>
-    </div>
-    <div class="analysis-list">
-      <div class="analysis-item">
-        <span class="label">熱門號</span>
-        <strong id="hotNums">08 19 31</strong>
-      </div>
-      <div class="analysis-item">
-        <span class="label">冷門號</span>
-        <strong id="coldNums">04 17 26</strong>
-      </div>
-      <div class="analysis-item">
-        <span class="label">拖號組</span>
-        <strong id="dragNums">08→19、13→27</strong>
-      </div>
-      <div class="analysis-item">
-        <span class="label">尾數強勢</span>
-        <strong id="tailNums">1尾、9尾</strong>
-      </div>
-    </div>
-  </section>
-</section>
+        <section class="card">
+          <div class="card-header">
+            <h2>預測摘要</h2>
+          </div>
+          <div class="analysis-list">
+            <div class="analysis-item">
+              <span class="label">熱門號</span>
+              <strong id="hotNums">08 19 31</strong>
+            </div>
+            <div class="analysis-item">
+              <span class="label">冷門號</span>
+              <strong id="coldNums">04 17 26</strong>
+            </div>
+            <div class="analysis-item">
+              <span class="label">拖號組</span>
+              <strong id="dragNums">08→19、13→27</strong>
+            </div>
+            <div class="analysis-item">
+              <span class="label">尾數強勢</span>
+              <strong id="tailNums">1尾、9尾</strong>
+            </div>
+          </div>
+        </section>
+      </section>
 
-      <!-- 歷史頁 -->
+      <!-- 歷史 -->
       <section class="page-section hidden" id="page-history">
         <section class="card">
           <div class="card-header">
@@ -240,7 +238,18 @@
         </section>
       </section>
 
-      <!-- 設定頁 -->
+      <!-- 收藏 -->
+      <section class="page-section hidden" id="page-favorites">
+        <section class="card">
+          <div class="card-header">
+            <h2>我的收藏</h2>
+            <button class="text-btn" id="btnRefreshFavorites">重新整理</button>
+          </div>
+          <div id="favoritesList" class="analysis-list"></div>
+        </section>
+      </section>
+
+      <!-- 設定 -->
       <section class="page-section hidden" id="page-settings">
         <section class="card">
           <div class="card-header">
@@ -249,7 +258,7 @@
           <div class="analysis-list">
             <div class="analysis-item">
               <span class="label">系統版本</span>
-              <strong id="appVersionText">V2.5｜今彩539 專用版｜真分頁版</strong>
+              <strong id="appVersionText">V3.0｜今彩539 專用版｜收藏頁版</strong>
             </div>
             <div class="analysis-item">
               <span class="label">資料來源</span>
@@ -274,15 +283,16 @@
       <button class="nav-btn active" data-page="home">首頁</button>
       <button class="nav-btn" data-page="predict">預測</button>
       <button class="nav-btn" data-page="history">歷史</button>
+      <button class="nav-btn" data-page="favorites">收藏</button>
       <button class="nav-btn" data-page="settings">設定</button>
     </nav>
   </div>
 
-  <script src="app.js?v=30"></script>
+  <script src="app.js?v=31"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./service-worker.js?v=25").catch(console.error);
+        navigator.serviceWorker.register("./service-worker.js?v=31").catch(console.error);
       });
     }
   </script>
