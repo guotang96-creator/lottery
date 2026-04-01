@@ -720,7 +720,7 @@
     if (!container) return;
 
     container.innerHTML = rows.map((row) => {
-      const width = maxValue > 0 ? Math.max(8, (row.value / maxValue) * 100) : 0;
+      const width = maxValue > 0 ? Math.max(28, (row.value / maxValue) * 100) : 0;
 
       return `
         <div style="display:grid;grid-template-columns:56px 1fr 42px;gap:8px;align-items:center;margin:10px 0;">
