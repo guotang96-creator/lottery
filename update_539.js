@@ -31,7 +31,7 @@ function readExistingLatest() {
 }
 
 async function fetch539ByMonth(month) {
-  const url = `https://api.taiwanlottery.com/TLCAPIWeB/Lottery/Daily539Result?period&month=${month}&endMonth=${month}&pageNum=1&pageSize=50`;
+  const url = `https://api.taiwanlottery.com/TLCAPIWeB/Lottery/Daily539Result?period&month=${month}&endMonth=${month}&pageNum=1&pageSize=200`;
 
   const res = await fetch(url, {
     headers: {
@@ -77,10 +77,12 @@ async function main() {
   if (result && result.rows.length) {
     const latest = result.rows[0];
     const recent5 = result.rows.slice(0, 5).map(normalizeRow);
+    const recent50 = result.rows.slice(0, 50).map(normalizeRow);
 
     const output = {
       daily539: normalizeRow(latest),
       recent5,
+      recent50,
       updatedAt: new Date().toISOString(),
       sourceMonth: result.month
     };
@@ -97,7 +99,9 @@ async function main() {
     return;
   }
 
-  throw new Error(`找不到 539 資料（當月：${currentMonth}，上月：${previousMonth}，且無既有 latest.json 可保留）`);
+  throw new Error(
+    `找不到 539 資料（當月：${currentMonth}，上月：${previousMonth}，且無既有 latest.json 可保留）`
+  );
 }
 
 main().catch((err) => {
