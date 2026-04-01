@@ -67,6 +67,305 @@
       ]
     }
   ],
-  "updatedAt": "2026-04-01T04:59:38.337Z",
+  "recent50": [
+    {
+      "period": "115000080",
+      "lotteryDate": "2026-03-31T00:00:00",
+      "drawNumberSize": [
+        9,
+        16,
+        23,
+        35,
+        39
+      ]
+    },
+    {
+      "period": "115000079",
+      "lotteryDate": "2026-03-30T00:00:00",
+      "drawNumberSize": [
+        6,
+        8,
+        20,
+        22,
+        32
+      ]
+    },
+    {
+      "period": "115000078",
+      "lotteryDate": "2026-03-28T00:00:00",
+      "drawNumberSize": [
+        6,
+        9,
+        11,
+        16,
+        17
+      ]
+    },
+    {
+      "period": "115000077",
+      "lotteryDate": "2026-03-27T00:00:00",
+      "drawNumberSize": [
+        8,
+        18,
+        24,
+        34,
+        35
+      ]
+    },
+    {
+      "period": "115000076",
+      "lotteryDate": "2026-03-26T00:00:00",
+      "drawNumberSize": [
+        14,
+        17,
+        20,
+        24,
+        37
+      ]
+    },
+    {
+      "period": "115000075",
+      "lotteryDate": "2026-03-25T00:00:00",
+      "drawNumberSize": [
+        3,
+        13,
+        31,
+        33,
+        36
+      ]
+    },
+    {
+      "period": "115000074",
+      "lotteryDate": "2026-03-24T00:00:00",
+      "drawNumberSize": [
+        10,
+        20,
+        28,
+        29,
+        36
+      ]
+    },
+    {
+      "period": "115000073",
+      "lotteryDate": "2026-03-23T00:00:00",
+      "drawNumberSize": [
+        7,
+        12,
+        24,
+        29,
+        35
+      ]
+    },
+    {
+      "period": "115000072",
+      "lotteryDate": "2026-03-21T00:00:00",
+      "drawNumberSize": [
+        7,
+        14,
+        15,
+        19,
+        22
+      ]
+    },
+    {
+      "period": "115000071",
+      "lotteryDate": "2026-03-20T00:00:00",
+      "drawNumberSize": [
+        3,
+        11,
+        15,
+        33,
+        39
+      ]
+    },
+    {
+      "period": "115000070",
+      "lotteryDate": "2026-03-19T00:00:00",
+      "drawNumberSize": [
+        5,
+        23,
+        25,
+        30,
+        37
+      ]
+    },
+    {
+      "period": "115000069",
+      "lotteryDate": "2026-03-18T00:00:00",
+      "drawNumberSize": [
+        21,
+        22,
+        31,
+        32,
+        35
+      ]
+    },
+    {
+      "period": "115000068",
+      "lotteryDate": "2026-03-17T00:00:00",
+      "drawNumberSize": [
+        11,
+        13,
+        19,
+        22,
+        27
+      ]
+    },
+    {
+      "period": "115000067",
+      "lotteryDate": "2026-03-16T00:00:00",
+      "drawNumberSize": [
+        17,
+        19,
+        21,
+        29,
+        34
+      ]
+    },
+    {
+      "period": "115000066",
+      "lotteryDate": "2026-03-14T00:00:00",
+      "drawNumberSize": [
+        8,
+        10,
+        18,
+        20,
+        34
+      ]
+    },
+    {
+      "period": "115000065",
+      "lotteryDate": "2026-03-13T00:00:00",
+      "drawNumberSize": [
+        2,
+        5,
+        11,
+        12,
+        15
+      ]
+    },
+    {
+      "period": "115000064",
+      "lotteryDate": "2026-03-12T00:00:00",
+      "drawNumberSize": [
+        4,
+        5,
+        7,
+        23,
+        35
+      ]
+    },
+    {
+      "period": "115000063",
+      "lotteryDate": "2026-03-11T00:00:00",
+      "drawNumberSize": [
+        5,
+        15,
+        26,
+        37,
+        38
+      ]
+    },
+    {
+      "period": "115000062",
+      "lotteryDate": "2026-03-10T00:00:00",
+      "drawNumberSize": [
+        11,
+        12,
+        14,
+        17,
+        32
+      ]
+    },
+    {
+      "period": "115000061",
+      "lotteryDate": "2026-03-09T00:00:00",
+      "drawNumberSize": [
+        7,
+        12,
+        15,
+        32,
+        38
+      ]
+    },
+    {
+      "period": "115000060",
+      "lotteryDate": "2026-03-07T00:00:00",
+      "drawNumberSize": [
+        15,
+        17,
+        18,
+        34,
+        36
+      ]
+    },
+    {
+      "period": "115000059",
+      "lotteryDate": "2026-03-06T00:00:00",
+      "drawNumberSize": [
+        19,
+        24,
+        29,
+        32,
+        34
+      ]
+    },
+    {
+      "period": "115000058",
+      "lotteryDate": "2026-03-05T00:00:00",
+      "drawNumberSize": [
+        1,
+        4,
+        8,
+        12,
+        36
+      ]
+    },
+    {
+      "period": "115000057",
+      "lotteryDate": "2026-03-04T00:00:00",
+      "drawNumberSize": [
+        4,
+        8,
+        12,
+        16,
+        17
+      ]
+    },
+    {
+      "period": "115000056",
+      "lotteryDate": "2026-03-03T00:00:00",
+      "drawNumberSize": [
+        2,
+        19,
+        21,
+        32,
+        35
+      ]
+    },
+    {
+      "period": "115000055",
+      "lotteryDate": "2026-03-02T00:00:00",
+      "drawNumberSize": [
+        3,
+        12,
+        20,
+        21,
+        27
+      ]
+    },
+    {
+      "period": "115000054",
+      "lotteryDate": "2026-03-01T00:00:00",
+      "drawNumberSize": [
+        2,
+        8,
+        15,
+        29,
+        31
+      ]
+    }
+  ],
+  "updatedAt": "2026-04-01T05:32:35.340Z",
   "sourceMonth": "2026-03"
 }
