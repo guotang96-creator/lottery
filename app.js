@@ -825,7 +825,7 @@
 
     els.favoritesList.innerHTML = favorites.map((item, idx) => {
       const numsNum = (item.numbers || []).map((n) => Number(n));
-      const ballsHtml = numsNum.map((n) => `<span class="ball active">${pad2(n)}</span>`).join("");
+      const ballsHtml = numsNum.map((n) => `<span class="ball ${getBallRangeClass(n)} active">${pad2(n)}</span>`).join("");
       return `
         <div class="analysis-item">
           <span class="label">收藏 ${idx + 1}</span>
