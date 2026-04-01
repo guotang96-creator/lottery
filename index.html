@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>今彩539 AI 預測系統 V3.7</title>
+  <title>今彩539 AI 預測系統 V3.8</title>
   <meta name="theme-color" content="#0f172a" />
-  <meta name="description" content="今彩539 AI 預測系統｜分享圖片版" />
+  <meta name="description" content="今彩539 AI 預測系統｜分享圖片穩定版" />
 
-  <link rel="manifest" href="manifest.json?v=46" />
+  <link rel="manifest" href="manifest.json?v=47" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="icon" type="image/png" href="favicon.png" />
   <link rel="stylesheet" href="style.css" />
@@ -19,14 +19,13 @@
         <div class="brand-icon">539</div>
         <div class="brand-text">
           <h1>今彩539 AI 預測系統</h1>
-          <p>V3.7｜資料正常 <span class="status-dot">●</span></p>
+          <p>V3.8｜資料正常 <span class="status-dot">●</span></p>
           <small>最後更新：<span id="lastUpdateText">2026-03-31 20:05</span></small>
         </div>
       </div>
     </header>
 
     <main class="main-content">
-      <!-- 首頁 -->
       <section class="page-section" id="page-home">
         <section class="card">
           <div class="card-header">
@@ -114,7 +113,6 @@
         </section>
       </section>
 
-      <!-- 預測 -->
       <section class="page-section hidden" id="page-predict">
         <section class="card">
           <div class="card-header">
@@ -208,7 +206,7 @@
             <img
               id="sharePreviewImage"
               alt="分享圖片預覽"
-              style="width:100%;border-radius:20px;border:1px solid #dbe4f0;display:block;"
+              style="width:100%;border-radius:20px;border:1px solid #dbe4f0;display:block;background:#fff;"
             />
           </div>
 
@@ -218,7 +216,6 @@
         </section>
       </section>
 
-      <!-- 歷史 -->
       <section class="page-section hidden" id="page-history">
         <section class="card">
           <div class="card-header">
@@ -322,7 +319,6 @@
         </section>
       </section>
 
-      <!-- 收藏 -->
       <section class="page-section hidden" id="page-favorites">
         <section class="card">
           <div class="card-header">
@@ -333,7 +329,6 @@
         </section>
       </section>
 
-      <!-- 回測 -->
       <section class="page-section hidden" id="page-backtest">
         <section class="card">
           <div class="card-header">
@@ -468,7 +463,6 @@
         </section>
       </section>
 
-      <!-- 設定 -->
       <section class="page-section hidden" id="page-settings">
         <section class="card">
           <div class="card-header">
@@ -478,7 +472,7 @@
           <div class="analysis-list">
             <div class="analysis-item">
               <span class="label">系統版本</span>
-              <strong id="appVersionText">V3.7｜今彩539 專用版｜分享圖片版</strong>
+              <strong id="appVersionText">V3.8｜今彩539 專用版｜分享圖片穩定版</strong>
             </div>
             <div class="analysis-item">
               <span class="label">資料來源</span>
@@ -509,11 +503,11 @@
     </nav>
   </div>
 
-  <script src="app.js?v=46"></script>
+  <script src="app.js?v=47"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./service-worker.js?v=46").catch(console.error);
+        navigator.serviceWorker.register("./service-worker.js?v=47").catch(console.error);
       });
     }
   </script>
