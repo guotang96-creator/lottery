@@ -1181,8 +1181,8 @@
     if (!els.backtestResultsList) return;
 
     els.backtestResultsList.innerHTML = results.map((item, idx) => {
-      const predBalls = item.predicted.map((n) => `<span class="ball active">${pad2(n)}</span>`).join("");
-      const actualBalls = item.actual.map((n) => `<span class="ball">${pad2(n)}</span>`).join("");
+      const predBalls = item.predicted.map((n) => `<span class="ball ${getBallRangeClass(n)} active">${pad2(n)}</span>`).join("");
+const actualBalls = item.actual.map((n) => `<span class="ball ${getBallRangeClass(n)}">${pad2(n)}</span>`).join("");
       const payout = getPayoutByHit(item.hitCount);
 
       return `
