@@ -479,7 +479,117 @@
       tailText: tails.slice(0, 2).map(([tail]) => `${tail}尾`).join("、")
     };
   }
+function getVisualHistorySource() {
+  const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
 
+  if (Array.isArray(latest?.recent50) && latest.recent50.length) {
+    return latest.recent50.map((item) => uniqueSorted(item.numbers || []));
+  }
+
+  if (Array.isArray(latest?.recent5) && latest.recent5.length) {
+    return latest.recent5.map((item) => uniqueSorted(item.numbers || []));
+  }
+
+  return sampleHistory(50, latest.numbers);
+}
+
+function renderBarList(container, rows, maxValue) {
+  if (!container) return;
+
+  container.innerHTML = rows.map((row) => {
+    const width = maxValue > 0 ? Math.max(6, (row.value / maxValue) * 100) : 0;
+    return `
+      <div class="viz-row">
+        <div class="viz-label">${row.label}</div>
+        <div class="viz-bar-wrap">
+          <div class="viz-bar" style="width:${width}%"></div>
+        </div>
+        <div class="viz-value">${row.value}</div>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderHeatmap(history) {
+  if (!els.heatmapList) return;
+
+  const freq = getFrequency(history);
+  const top10 = [...freq.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+    .slice(0, 10)
+    .map(([num, count]) => ({
+      label: pad2(num),
+      value: count
+    }));
+
+  const maxValue = top10.length ? top10[0].value : 0;
+  renderBarList(els.heatmapList, top10, maxValue);
+}
+
+function renderTailChart(history) {
+  if (!els.tailChartList) return;
+
+  const tails = getTailGroups(history)
+    .map(([tail, count]) => ({
+      label: `${tail}尾`,
+      value: count
+    }));
+
+  const maxValue = tails.length ? tails[0].value : 0;
+  renderBarList(els.tailChartList, tails, maxValue);
+}
+
+function renderOddEvenChart(history) {
+  if (!els.oddEvenChart) return;
+
+  let odd = 0;
+  let even = 0;
+
+  history.forEach((draw) => {
+    draw.forEach((num) => {
+      if (num % 2 === 0) even += 1;
+      else odd += 1;
+    });
+  });
+
+  const rows = [
+    { label: "奇數", value: odd },
+    { label: "偶數", value: even }
+  ];
+
+  const maxValue = Math.max(odd, even, 1);
+  renderBarList(els.oddEvenChart, rows, maxValue);
+}
+
+function renderBigSmallChart(history) {
+  if (!els.bigSmallChart) return;
+
+  let small = 0; // 01-19
+  let big = 0;   // 20-39
+
+  history.forEach((draw) => {
+    draw.forEach((num) => {
+      if (num >= 1 && num <= 19) small += 1;
+      else if (num >= 20 && num <= 39) big += 1;
+    });
+  });
+
+  const rows = [
+    { label: "小區", value: small },
+    { label: "大區", value: big }
+  ];
+
+  const maxValue = Math.max(small, big, 1);
+  renderBarList(els.bigSmallChart, rows, maxValue);
+}
+
+function renderVisualAnalysis() {
+  const history = getVisualHistorySource();
+  renderHeatmap(history);
+  renderTailChart(history);
+  renderOddEvenChart(history);
+  renderBigSmallChart(history);
+}
   function calcHitStats(records) {
     if (!records.length) return { avg: "0顆", max: "0顆", bestMode: "均衡型" };
 
