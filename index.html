@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>今彩539 AI 預測系統 V3.6</title>
+  <title>今彩539 AI 預測系統 V3.7</title>
   <meta name="theme-color" content="#0f172a" />
-  <meta name="description" content="今彩539 AI 預測系統｜最佳模式提示＋盈虧模擬版" />
+  <meta name="description" content="今彩539 AI 預測系統｜分享圖片版" />
 
-  <link rel="manifest" href="manifest.json?v=45" />
+  <link rel="manifest" href="manifest.json?v=46" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="icon" type="image/png" href="favicon.png" />
   <link rel="stylesheet" href="style.css" />
@@ -19,19 +19,21 @@
         <div class="brand-icon">539</div>
         <div class="brand-text">
           <h1>今彩539 AI 預測系統</h1>
-          <p>V3.6｜資料正常 <span class="status-dot">●</span></p>
+          <p>V3.7｜資料正常 <span class="status-dot">●</span></p>
           <small>最後更新：<span id="lastUpdateText">2026-03-31 20:05</span></small>
         </div>
       </div>
     </header>
 
     <main class="main-content">
+      <!-- 首頁 -->
       <section class="page-section" id="page-home">
         <section class="card">
           <div class="card-header">
             <h2>539 資料狀態</h2>
             <button class="text-btn" id="btnDataStatus">查看詳細資料狀態</button>
           </div>
+
           <div class="info-grid">
             <div class="info-item">
               <span class="label">最新期數</span>
@@ -57,6 +59,7 @@
             <h2>本期最新開獎摘要</h2>
             <button class="text-btn" id="btnRecent5">查看最近5期</button>
           </div>
+
           <div class="latest-result">
             <div class="balls-row" id="latestBalls"></div>
             <div class="sub-note">第 <span id="latestDrawNo">115000001</span> 期</div>
@@ -67,6 +70,7 @@
           <div class="card-header">
             <h2>AI 推薦結果預覽</h2>
           </div>
+
           <div class="recommend-box">
             <div class="recommend-row">
               <span class="recommend-title">推薦1</span>
@@ -92,6 +96,7 @@
             <h2>最近命中追蹤</h2>
             <button class="text-btn" id="btnHitTrack">進入命中追蹤</button>
           </div>
+
           <div class="track-grid">
             <div class="track-item">
               <span class="label">最近5次平均</span>
@@ -109,6 +114,7 @@
         </section>
       </section>
 
+      <!-- 預測 -->
       <section class="page-section hidden" id="page-predict">
         <section class="card">
           <div class="card-header">
@@ -152,6 +158,7 @@
           <div class="action-row" style="margin-top:12px;">
             <button class="primary-btn" id="btnPredict">立即預測</button>
             <button class="secondary-btn" id="btnCopyAllPredict">複製全部</button>
+            <button class="secondary-btn" id="btnGenerateShareCard">生成分享圖</button>
           </div>
         </section>
 
@@ -167,6 +174,7 @@
           <div class="card-header">
             <h2>預測摘要</h2>
           </div>
+
           <div class="analysis-list">
             <div class="analysis-item">
               <span class="label">熱門號</span>
@@ -186,8 +194,31 @@
             </div>
           </div>
         </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>分享圖片預覽</h2>
+            <button class="text-btn" id="btnCloseSharePreview">清除預覽</button>
+          </div>
+
+          <div id="sharePreviewWrap" style="display:none;">
+            <div style="margin-bottom:12px;color:#64748b;font-size:14px;font-weight:700;">
+              長按下方圖片可儲存或分享
+            </div>
+            <img
+              id="sharePreviewImage"
+              alt="分享圖片預覽"
+              style="width:100%;border-radius:20px;border:1px solid #dbe4f0;display:block;"
+            />
+          </div>
+
+          <div id="sharePreviewEmpty" style="color:#64748b;font-size:15px;font-weight:700;">
+            尚未生成分享圖片
+          </div>
+        </section>
       </section>
 
+      <!-- 歷史 -->
       <section class="page-section hidden" id="page-history">
         <section class="card">
           <div class="card-header">
@@ -269,6 +300,7 @@
             <h2>分析摘要</h2>
             <button class="text-btn" id="btnFullAnalysis">看完整分析</button>
           </div>
+
           <div class="analysis-list">
             <div class="analysis-item">
               <span class="label">熱門號</span>
@@ -290,6 +322,7 @@
         </section>
       </section>
 
+      <!-- 收藏 -->
       <section class="page-section hidden" id="page-favorites">
         <section class="card">
           <div class="card-header">
@@ -300,6 +333,7 @@
         </section>
       </section>
 
+      <!-- 回測 -->
       <section class="page-section hidden" id="page-backtest">
         <section class="card">
           <div class="card-header">
@@ -348,6 +382,7 @@
           <div class="card-header">
             <h2>最佳模式提示</h2>
           </div>
+
           <div class="analysis-list">
             <div class="analysis-item">
               <span class="label">最佳模式</span>
@@ -364,6 +399,7 @@
           <div class="card-header">
             <h2>回測摘要</h2>
           </div>
+
           <div class="info-grid">
             <div class="info-item">
               <span class="label">平均命中</span>
@@ -388,6 +424,7 @@
           <div class="card-header">
             <h2>盈虧模擬</h2>
           </div>
+
           <div class="info-grid">
             <div class="info-item">
               <span class="label">總投注</span>
@@ -412,6 +449,7 @@
           <div class="card-header">
             <h2>命中分佈</h2>
           </div>
+
           <div class="analysis-list">
             <div class="analysis-item"><span class="label">0顆</span><strong id="hitCount0">0次</strong></div>
             <div class="analysis-item"><span class="label">1顆</span><strong id="hitCount1">0次</strong></div>
@@ -430,15 +468,17 @@
         </section>
       </section>
 
+      <!-- 設定 -->
       <section class="page-section hidden" id="page-settings">
         <section class="card">
           <div class="card-header">
             <h2>系統設定</h2>
           </div>
+
           <div class="analysis-list">
             <div class="analysis-item">
               <span class="label">系統版本</span>
-              <strong id="appVersionText">V3.6｜今彩539 專用版｜最佳模式提示＋盈虧模擬版</strong>
+              <strong id="appVersionText">V3.7｜今彩539 專用版｜分享圖片版</strong>
             </div>
             <div class="analysis-item">
               <span class="label">資料來源</span>
@@ -469,11 +509,11 @@
     </nav>
   </div>
 
-  <script src="app.js?v=45"></script>
+  <script src="app.js?v=46"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./service-worker.js?v=45").catch(console.error);
+        navigator.serviceWorker.register("./service-worker.js?v=46").catch(console.error);
       });
     }
   </script>
