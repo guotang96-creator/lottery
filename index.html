@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>今彩539 AI 預測系統 V3.0</title>
+  <title>今彩539 AI 預測系統 V3.1</title>
   <meta name="theme-color" content="#0f172a" />
-  <meta name="description" content="今彩539 AI 預測系統｜收藏頁版" />
+  <meta name="description" content="今彩539 AI 預測系統｜回測命中率頁版" />
 
-  <link rel="manifest" href="manifest.json?v=31" />
+  <link rel="manifest" href="manifest.json?v=33" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="icon" type="image/png" href="favicon.png" />
   <link rel="stylesheet" href="style.css" />
@@ -19,7 +19,7 @@
         <div class="brand-icon">539</div>
         <div class="brand-text">
           <h1>今彩539 AI 預測系統</h1>
-          <p>V3.0｜資料正常 <span class="status-dot">●</span></p>
+          <p>V3.1｜資料正常 <span class="status-dot">●</span></p>
           <small>最後更新：<span id="lastUpdateText">2026-03-31 20:05</span></small>
         </div>
       </div>
@@ -59,13 +59,7 @@
             <button class="text-btn" id="btnRecent5">查看最近5期</button>
           </div>
           <div class="latest-result">
-            <div class="balls-row" id="latestBalls">
-              <span class="ball">05</span>
-              <span class="ball">12</span>
-              <span class="ball">21</span>
-              <span class="ball">33</span>
-              <span class="ball">39</span>
-            </div>
+            <div class="balls-row" id="latestBalls"></div>
             <div class="sub-note">第 <span id="latestDrawNo">115000001</span> 期</div>
           </div>
         </section>
@@ -77,13 +71,7 @@
           <div class="recommend-box">
             <div class="recommend-row">
               <span class="recommend-title">推薦1</span>
-              <div class="balls-row" id="recommendBalls1">
-                <span class="ball active">08</span>
-                <span class="ball active">13</span>
-                <span class="ball active">19</span>
-                <span class="ball active">27</span>
-                <span class="ball active">31</span>
-              </div>
+              <div class="balls-row" id="recommendBalls1"></div>
             </div>
 
             <div class="recommend-meta">
@@ -108,11 +96,11 @@
           <div class="track-grid">
             <div class="track-item">
               <span class="label">最近5次平均</span>
-              <strong id="avgHit">1.8顆</strong>
+              <strong id="avgHit">0顆</strong>
             </div>
             <div class="track-item">
               <span class="label">最高命中</span>
-              <strong id="maxHit">3顆</strong>
+              <strong id="maxHit">0顆</strong>
             </div>
             <div class="track-item">
               <span class="label">最佳模式</span>
@@ -184,19 +172,19 @@
           <div class="analysis-list">
             <div class="analysis-item">
               <span class="label">熱門號</span>
-              <strong id="hotNums">08 19 31</strong>
+              <strong id="hotNums">-</strong>
             </div>
             <div class="analysis-item">
               <span class="label">冷門號</span>
-              <strong id="coldNums">04 17 26</strong>
+              <strong id="coldNums">-</strong>
             </div>
             <div class="analysis-item">
               <span class="label">拖號組</span>
-              <strong id="dragNums">08→19、13→27</strong>
+              <strong id="dragNums">-</strong>
             </div>
             <div class="analysis-item">
               <span class="label">尾數強勢</span>
-              <strong id="tailNums">1尾、9尾</strong>
+              <strong id="tailNums">-</strong>
             </div>
           </div>
         </section>
@@ -220,19 +208,19 @@
           <div class="analysis-list">
             <div class="analysis-item">
               <span class="label">熱門號</span>
-              <strong id="historyHotNums">08 19 31</strong>
+              <strong id="historyHotNums">-</strong>
             </div>
             <div class="analysis-item">
               <span class="label">冷門號</span>
-              <strong id="historyColdNums">04 17 26</strong>
+              <strong id="historyColdNums">-</strong>
             </div>
             <div class="analysis-item">
               <span class="label">拖號組</span>
-              <strong id="historyDragNums">08→19、13→27</strong>
+              <strong id="historyDragNums">-</strong>
             </div>
             <div class="analysis-item">
               <span class="label">尾數強勢</span>
-              <strong id="historyTailNums">1尾、9尾</strong>
+              <strong id="historyTailNums">-</strong>
             </div>
           </div>
         </section>
@@ -249,6 +237,87 @@
         </section>
       </section>
 
+      <!-- 回測 -->
+      <section class="page-section hidden" id="page-backtest">
+        <section class="card">
+          <div class="card-header">
+            <h2>回測命中率</h2>
+          </div>
+
+          <div class="form-grid">
+            <label class="field">
+              <span>回測期數</span>
+              <select id="backtestCount">
+                <option value="10">10期</option>
+                <option value="20" selected>20期</option>
+                <option value="30">30期</option>
+                <option value="50">50期</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>回測模式</span>
+              <select id="backtestMode">
+                <option value="balanced" selected>均衡型</option>
+                <option value="hot">熱號型</option>
+                <option value="cold">冷號型</option>
+                <option value="tail">尾數型</option>
+                <option value="drag">拖號型</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="action-row" style="margin-top:12px;">
+            <button class="primary-btn" id="btnRunBacktest">開始回測</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>回測摘要</h2>
+          </div>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="label">平均命中</span>
+              <strong id="backtestAvgHit">0.0顆</strong>
+            </div>
+            <div class="info-item">
+              <span class="label">最高命中</span>
+              <strong id="backtestMaxHit">0顆</strong>
+            </div>
+            <div class="info-item">
+              <span class="label">總期數</span>
+              <strong id="backtestTotal">0期</strong>
+            </div>
+            <div class="info-item">
+              <span class="label">模式</span>
+              <strong id="backtestModeText">均衡型</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>命中分佈</h2>
+          </div>
+          <div class="analysis-list">
+            <div class="analysis-item"><span class="label">0顆</span><strong id="hitCount0">0次</strong></div>
+            <div class="analysis-item"><span class="label">1顆</span><strong id="hitCount1">0次</strong></div>
+            <div class="analysis-item"><span class="label">2顆</span><strong id="hitCount2">0次</strong></div>
+            <div class="analysis-item"><span class="label">3顆</span><strong id="hitCount3">0次</strong></div>
+            <div class="analysis-item"><span class="label">4顆</span><strong id="hitCount4">0次</strong></div>
+            <div class="analysis-item"><span class="label">5顆</span><strong id="hitCount5">0次</strong></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>回測明細</h2>
+          </div>
+          <div id="backtestResultsList" class="analysis-list"></div>
+        </section>
+      </section>
+
       <!-- 設定 -->
       <section class="page-section hidden" id="page-settings">
         <section class="card">
@@ -258,7 +327,7 @@
           <div class="analysis-list">
             <div class="analysis-item">
               <span class="label">系統版本</span>
-              <strong id="appVersionText">V3.0｜今彩539 專用版｜收藏頁版</strong>
+              <strong id="appVersionText">V3.1｜今彩539 專用版｜回測命中率頁版</strong>
             </div>
             <div class="analysis-item">
               <span class="label">資料來源</span>
@@ -279,20 +348,21 @@
       </section>
     </main>
 
-    <nav class="bottom-nav">
+    <nav class="bottom-nav bottom-nav-6">
       <button class="nav-btn active" data-page="home">首頁</button>
       <button class="nav-btn" data-page="predict">預測</button>
       <button class="nav-btn" data-page="history">歷史</button>
       <button class="nav-btn" data-page="favorites">收藏</button>
+      <button class="nav-btn" data-page="backtest">回測</button>
       <button class="nav-btn" data-page="settings">設定</button>
     </nav>
   </div>
 
-  <script src="app.js?v=32"></script>
+  <script src="app.js?v=33"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./service-worker.js?v=31").catch(console.error);
+        navigator.serviceWorker.register("./service-worker.js?v=33").catch(console.error);
       });
     }
   </script>
