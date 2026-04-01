@@ -1,12 +1,12 @@
 (() => {
-  const APP_VERSION = "V3.2｜今彩539 專用版｜視覺化分析完整版";
+  const APP_VERSION = "V3.3｜今彩539 專用版｜視覺化穩定版";
 
   const STORAGE_KEYS = {
-    favorites: "jincai539_favorites_v32",
-    history: "jincai539_predict_history_v32",
-    latest: "jincai539_latest_result_v32",
-    status: "jincai539_data_status_v32",
-    settings: "jincai539_user_settings_v32"
+    favorites: "jincai539_favorites_v33",
+    history: "jincai539_predict_history_v33",
+    latest: "jincai539_latest_result_v33",
+    status: "jincai539_data_status_v33",
+    settings: "jincai539_user_settings_v33"
   };
 
   const JSON_CANDIDATES = [
@@ -721,13 +721,14 @@
 
     container.innerHTML = rows.map((row) => {
       const width = maxValue > 0 ? Math.max(8, (row.value / maxValue) * 100) : 0;
+
       return `
-        <div class="viz-row">
-          <div class="viz-label">${row.label}</div>
-          <div class="viz-bar-wrap">
-            <div class="viz-bar" style="width:${width}%"></div>
+        <div style="display:grid;grid-template-columns:56px 1fr 42px;gap:8px;align-items:center;margin:10px 0;">
+          <div style="font-size:15px;font-weight:800;color:#0f172a;">${row.label}</div>
+          <div style="height:16px;border-radius:999px;background:#e5edf7;overflow:hidden;border:1px solid #d6e0eb;">
+            <div style="height:100%;width:${width}%;border-radius:999px;background:linear-gradient(135deg,#2563eb,#60a5fa);"></div>
           </div>
-          <div class="viz-value">${row.value}</div>
+          <div style="text-align:right;font-size:14px;font-weight:800;color:#334155;">${row.value}</div>
         </div>
       `;
     }).join("");
@@ -735,6 +736,7 @@
 
   function renderHeatmap(history) {
     if (!els.heatmapList) return;
+
     const freq = getFrequency(history);
     const top10 = [...freq.entries()]
       .sort((a, b) => b[1] - a[1] || a[0] - b[0])
@@ -743,16 +745,19 @@
         label: pad2(num),
         value: count
       }));
+
     const maxValue = top10.length ? top10[0].value : 1;
     renderBarList(els.heatmapList, top10, maxValue);
   }
 
   function renderTailChart(history) {
     if (!els.tailChartList) return;
+
     const tails = getTailGroups(history).map(([tail, count]) => ({
       label: `${tail}尾`,
       value: count
     }));
+
     const maxValue = tails.length ? tails[0].value : 1;
     renderBarList(els.tailChartList, tails, maxValue);
   }
