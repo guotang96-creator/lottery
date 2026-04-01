@@ -66,6 +66,11 @@
   const $ = (selector) => document.querySelector(selector);
 
   const els = {
+    btnRefreshVisual: $("#btnRefreshVisual"),
+    heatmapList: $("#heatmapList"),
+    tailChartList: $("#tailChartList"),
+    oddEvenChart: $("#oddEvenChart"),
+    bigSmallChart: $("#bigSmallChart"),
     lastUpdateText: $("#lastUpdateText"),
     latestPeriod: $("#latestPeriod"),
     latestDate: $("#latestDate"),
