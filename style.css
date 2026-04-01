@@ -496,7 +496,21 @@ button {
     padding-left: 10px;
     padding-right: 10px;
   }
+  .bottom-nav.bottom-nav-6 {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
 
+@media (max-width: 520px) {
+  .bottom-nav.bottom-nav-6 {
+    gap: 6px;
+  }
+
+  .bottom-nav.bottom-nav-6 .nav-btn {
+    font-size: 14px;
+    min-height: 50px;
+    padding: 0 4px;
+  }
+}
   .nav-btn {
     min-height: 52px;
     font-size: 15px;
