@@ -501,7 +501,7 @@
   return "range-4";
 }
 
-function renderBalls(container, numbers, active = false) {
+  function renderBalls(container, numbers, active = false) {
   if (!container) return;
 
   container.innerHTML = (numbers || [])
