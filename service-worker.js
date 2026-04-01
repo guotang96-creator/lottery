@@ -1,10 +1,10 @@
-const CACHE_NAME = "jincai539-v32";
+const CACHE_NAME = "jincai539-v33";
 const ASSETS = [
   "./",
   "./index.html",
   "./style.css",
-  "./app.js?v=32",
-  "./manifest.json?v=32"
+  "./app.js?v=33",
+  "./manifest.json?v=33"
 ];
 
 self.addEventListener("install", (event) => {
