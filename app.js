@@ -493,12 +493,24 @@
     return Math.min(98, score);
   }
 
-  function renderBalls(container, numbers, active = false) {
-    if (!container) return;
-    container.innerHTML = (numbers || [])
-      .map((num) => `<span class="ball${active ? " active" : ""}">${pad2(num)}</span>`)
-      .join("");
-  }
+  function getBallRangeClass(num) {
+  const n = Number(num);
+  if (n >= 1 && n <= 10) return "range-1";
+  if (n >= 11 && n <= 20) return "range-2";
+  if (n >= 21 && n <= 30) return "range-3";
+  return "range-4";
+}
+
+function renderBalls(container, numbers, active = false) {
+  if (!container) return;
+
+  container.innerHTML = (numbers || [])
+    .map((num) => {
+      const rangeClass = getBallRangeClass(num);
+      return `<span class="ball ${rangeClass}${active ? " active" : ""}">${pad2(num)}</span>`;
+    })
+    .join("");
+}
 
   function formatNums(nums) {
     return (nums || []).map(pad2).join(" ");
