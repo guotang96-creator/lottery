@@ -1,12 +1,12 @@
 (() => {
-  const APP_VERSION = "V3.4｜今彩539 專用版｜視覺化手機優化版";
+  const APP_VERSION = "V3.5｜今彩539 專用版｜拖號查詢完整版";
 
   const STORAGE_KEYS = {
-    favorites: "jincai539_favorites_v34",
-    history: "jincai539_predict_history_v34",
-    latest: "jincai539_latest_result_v34",
-    status: "jincai539_data_status_v34",
-    settings: "jincai539_user_settings_v34"
+    favorites: "jincai539_favorites_v35",
+    history: "jincai539_predict_history_v35",
+    latest: "jincai539_latest_result_v35",
+    status: "jincai539_data_status_v35",
+    settings: "jincai539_user_settings_v35"
   };
 
   const JSON_CANDIDATES = [
@@ -105,6 +105,13 @@
     btnHistoryRefresh: $("#btnHistoryRefresh"),
     btnRefreshFavorites: $("#btnRefreshFavorites"),
     btnRefreshVisual: $("#btnRefreshVisual"),
+
+    btnUseLatestDrag: $("#btnUseLatestDrag"),
+    dragQueryNumber: $("#dragQueryNumber"),
+    dragQueryScope: $("#dragQueryScope"),
+    btnRunDragQuery: $("#btnRunDragQuery"),
+    dragQuerySummary: $("#dragQuerySummary"),
+    dragQueryResults: $("#dragQueryResults"),
 
     appVersionText: $("#appVersionText"),
     dataSourceText: $("#dataSourceText"),
@@ -736,28 +743,21 @@
 
   function renderHeatmap(history) {
     if (!els.heatmapList) return;
-
     const freq = getFrequency(history);
     const top10 = [...freq.entries()]
       .sort((a, b) => b[1] - a[1] || a[0] - b[0])
       .slice(0, 10)
-      .map(([num, count]) => ({
-        label: pad2(num),
-        value: count
-      }));
-
+      .map(([num, count]) => ({ label: pad2(num), value: count }));
     const maxValue = top10.length ? top10[0].value : 1;
     renderBarList(els.heatmapList, top10, maxValue);
   }
 
   function renderTailChart(history) {
     if (!els.tailChartList) return;
-
     const tails = getTailGroups(history).map(([tail, count]) => ({
       label: `${tail}尾`,
       value: count
     }));
-
     const maxValue = tails.length ? tails[0].value : 1;
     renderBarList(els.tailChartList, tails, maxValue);
   }
@@ -814,6 +814,111 @@
     renderTailChart(history);
     renderOddEvenChart(history);
     renderBigSmallChart(history);
+  }
+
+  function getDragQueryRows(scope) {
+    const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
+    const rows =
+      Array.isArray(latest?.recent50) && latest.recent50.length
+        ? latest.recent50
+        : Array.isArray(latest?.recent5)
+          ? latest.recent5
+          : [];
+
+    return rows.slice(0, Number(scope) || 50);
+  }
+
+  function fillLatestDragNumber() {
+    const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
+    const firstNum = Array.isArray(latest?.numbers) && latest.numbers.length ? latest.numbers[0] : "";
+    if (els.dragQueryNumber) {
+      els.dragQueryNumber.value = firstNum || "";
+    }
+  }
+
+  function renderDragQueryResultList(rows, maxCount) {
+    if (!els.dragQueryResults) return;
+
+    if (!rows.length) {
+      els.dragQueryResults.innerHTML = `
+        <div style="font-size:15px;font-weight:700;color:#64748b;">查無符合資料</div>
+      `;
+      return;
+    }
+
+    els.dragQueryResults.innerHTML = rows.map((row, index) => {
+      const width = maxCount > 0 ? Math.max(12, (row.count / maxCount) * 100) : 12;
+      return `
+        <div style="margin:14px 0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <div style="font-size:16px;font-weight:900;color:#0f172a;">Top ${index + 1}｜${pad2(row.number)}</div>
+            <div style="font-size:14px;font-weight:800;color:#334155;">${row.count}次｜${row.rate}%</div>
+          </div>
+          <div style="height:18px;border-radius:999px;background:#e5edf7;overflow:hidden;border:1px solid #d6e0eb;">
+            <div style="height:100%;width:${width}%;border-radius:999px;background:linear-gradient(135deg,#1d4ed8,#38bdf8);"></div>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function runDragQuery() {
+    const target = Number(els.dragQueryNumber?.value || 0);
+    const scope = Number(els.dragQueryScope?.value || 50);
+
+    if (!Number.isInteger(target) || target < 1 || target > 39) {
+      alert("請輸入 01～39 的號碼");
+      return;
+    }
+
+    const rows = getDragQueryRows(scope);
+    if (rows.length < 2) {
+      alert("目前資料不足，無法查詢拖號");
+      return;
+    }
+
+    let triggerCount = 0;
+    const nextFreq = new Map();
+
+    for (let i = 0; i < rows.length - 1; i++) {
+      const currentNums = uniqueSorted(rows[i].numbers || []);
+      const nextNums = uniqueSorted(rows[i + 1].numbers || []);
+
+      if (currentNums.includes(target)) {
+        triggerCount += 1;
+        nextNums.forEach((num) => {
+          nextFreq.set(num, (nextFreq.get(num) || 0) + 1);
+        });
+      }
+    }
+
+    if (!triggerCount) {
+      if (els.dragQuerySummary) {
+        els.dragQuerySummary.textContent = `最近 ${scope} 期內，${pad2(target)} 尚未出現在可分析區間`;
+      }
+      if (els.dragQueryResults) {
+        els.dragQueryResults.innerHTML = `<div style="font-size:15px;font-weight:700;color:#64748b;">查無拖號資料</div>`;
+      }
+      return;
+    }
+
+    const top5 = [...nextFreq.entries()]
+      .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+      .slice(0, 5)
+      .map(([number, count]) => ({
+        number,
+        count,
+        rate: ((count / triggerCount) * 100).toFixed(1)
+      }));
+
+    const maxCount = top5.length ? top5[0].count : 1;
+
+    if (els.dragQuerySummary) {
+      els.dragQuerySummary.textContent =
+        `${pad2(target)} 在最近 ${scope} 期可分析區間中出現 ${triggerCount} 次；下期常見拖號如下`;
+    }
+
+    renderDragQueryResultList(top5, maxCount);
   }
 
   async function copyAllPredictions() {
@@ -1083,6 +1188,7 @@
     renderRecent5List();
     renderFavoritesList();
     renderVisualAnalysis();
+    fillLatestDragNumber();
 
     const periods = Number(els.analysisPeriods?.value || 120);
     const currentMode = els.predictMode?.value || "balanced";
@@ -1114,6 +1220,10 @@
     if (els.btnHistoryRefresh) els.btnHistoryRefresh.addEventListener("click", showRecent5);
     if (els.btnRefreshFavorites) els.btnRefreshFavorites.addEventListener("click", renderFavoritesList);
     if (els.btnRefreshVisual) els.btnRefreshVisual.addEventListener("click", renderVisualAnalysis);
+
+    if (els.btnUseLatestDrag) els.btnUseLatestDrag.addEventListener("click", fillLatestDragNumber);
+    if (els.btnRunDragQuery) els.btnRunDragQuery.addEventListener("click", runDragQuery);
+
     if (els.btnRunBacktest) els.btnRunBacktest.addEventListener("click", runBacktest);
 
     if (els.btnGoPredict) els.btnGoPredict.addEventListener("click", () => switchPage("predict"));
@@ -1168,6 +1278,7 @@
       renderRecent5List();
       renderFavoritesList();
       renderVisualAnalysis();
+      fillLatestDragNumber();
 
       const periods = Number(els.analysisPeriods?.value || 120);
       if (els.historyCount) els.historyCount.textContent = `最近 ${periods} 期`;
@@ -1192,6 +1303,13 @@
             <strong>請選擇期數與模式後按「開始回測」</strong>
           </div>
         `;
+      }
+
+      if (els.dragQuerySummary) {
+        els.dragQuerySummary.textContent = "尚未查詢";
+      }
+      if (els.dragQueryResults) {
+        els.dragQueryResults.innerHTML = `<div style="font-size:15px;font-weight:700;color:#64748b;">請輸入號碼後查詢</div>`;
       }
 
       switchPage("home");
