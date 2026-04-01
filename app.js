@@ -1,12 +1,12 @@
 (() => {
-  const APP_VERSION = "V3.7｜今彩539 專用版｜分享圖片版";
+  const APP_VERSION = "V3.7｜今彩539 專用版｜分享圖片穩定版";
 
   const STORAGE_KEYS = {
-    favorites: "jincai539_favorites_v37",
-    history: "jincai539_predict_history_v37",
-    latest: "jincai539_latest_result_v37",
-    status: "jincai539_data_status_v37",
-    settings: "jincai539_user_settings_v37"
+    favorites: "jincai539_favorites_v47",
+    history: "jincai539_predict_history_v47",
+    latest: "jincai539_latest_result_v47",
+    status: "jincai539_data_status_v47",
+    settings: "jincai539_user_settings_v47"
   };
 
   const JSON_CANDIDATES = [
@@ -109,6 +109,7 @@
     btnGoPredict: $("#btnGoPredict"),
     btnCopyAllPredict: $("#btnCopyAllPredict"),
     btnPredictSummary: $("#btnPredictSummary"),
+
     btnGenerateShareCard: $("#btnGenerateShareCard"),
     btnCloseSharePreview: $("#btnCloseSharePreview"),
     sharePreviewWrap: $("#sharePreviewWrap"),
@@ -494,7 +495,9 @@
 
   function renderBalls(container, numbers, active = false) {
     if (!container) return;
-    container.innerHTML = (numbers || []).map((num) => `<span class="ball${active ? " active" : ""}">${pad2(num)}</span>`).join("");
+    container.innerHTML = (numbers || [])
+      .map((num) => `<span class="ball${active ? " active" : ""}">${pad2(num)}</span>`)
+      .join("");
   }
 
   function formatNums(nums) {
@@ -698,11 +701,13 @@
     const nums = (numbers || []).map((n) => pad2(n));
     const circles = nums.map((num, i) => {
       const x = 95 + i * 118;
+      const y = i === 4 ? 410 : 292;
+      const xx = i === 4 ? 95 : x;
       return `
         <g>
-          <circle cx="${x}" cy="292" r="42" fill="url(#ballGrad)" />
-          <circle cx="${x}" cy="292" r="42" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="2"/>
-          <text x="${x}" y="306" text-anchor="middle" font-size="30" font-weight="700" fill="#ffffff">${num}</text>
+          <circle cx="${xx}" cy="${y}" r="42" fill="url(#ballGrad)" />
+          <circle cx="${xx}" cy="${y}" r="42" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="2"/>
+          <text x="${xx}" y="${y + 14}" text-anchor="middle" font-size="30" font-weight="700" fill="#ffffff">${num}</text>
         </g>
       `;
     }).join("");
@@ -723,39 +728,33 @@
       <stop offset="0%" stop-color="#2563eb"/>
       <stop offset="100%" stop-color="#38bdf8"/>
     </linearGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="rgba(0,0,0,0.28)"/>
-    </filter>
   </defs>
 
   <rect width="750" height="960" fill="url(#bg)"/>
-
   <rect x="38" y="38" width="674" height="884" rx="34" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)"/>
 
   <text x="70" y="115" font-size="34" font-weight="700" fill="#ffffff">今彩539 AI 預測系統</text>
   <text x="70" y="160" font-size="22" font-weight="600" fill="#c7d7ff">推薦分享卡</text>
 
-  <rect x="70" y="195" width="610" height="225" rx="28" fill="url(#cardGrad)" filter="url(#shadow)" stroke="rgba(255,255,255,0.14)"/>
-
+  <rect x="70" y="195" width="610" height="300" rx="28" fill="url(#cardGrad)" stroke="rgba(255,255,255,0.14)"/>
   <text x="102" y="245" font-size="24" font-weight="700" fill="#dbe8ff">推薦號碼</text>
-
   ${circles}
 
-  <rect x="70" y="470" width="610" height="165" rx="28" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.10)"/>
-  <text x="102" y="525" font-size="24" font-weight="700" fill="#dbe8ff">預測資訊</text>
-  <text x="102" y="575" font-size="24" font-weight="600" fill="#ffffff">模式：${modeLabel}</text>
-  <text x="102" y="615" font-size="24" font-weight="600" fill="#ffffff">信心參考：${confidence}</text>
+  <rect x="70" y="540" width="610" height="150" rx="28" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.10)"/>
+  <text x="102" y="590" font-size="24" font-weight="700" fill="#dbe8ff">預測資訊</text>
+  <text x="102" y="635" font-size="24" font-weight="600" fill="#ffffff">模式：${modeLabel}</text>
+  <text x="102" y="675" font-size="24" font-weight="600" fill="#ffffff">信心參考：${confidence}</text>
 
-  <rect x="70" y="675" width="610" height="155" rx="28" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.10)"/>
-  <text x="102" y="730" font-size="24" font-weight="700" fill="#dbe8ff">資料資訊</text>
-  <text x="102" y="780" font-size="22" font-weight="600" fill="#ffffff">最後更新：${updatedAt}</text>
+  <rect x="70" y="730" width="610" height="120" rx="28" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.10)"/>
+  <text x="102" y="780" font-size="24" font-weight="700" fill="#dbe8ff">資料資訊</text>
+  <text x="102" y="822" font-size="22" font-weight="600" fill="#ffffff">最後更新：${updatedAt}</text>
 
-  <text x="375" y="890" text-anchor="middle" font-size="20" font-weight="600" fill="#b8cafb">guotang96-creator.github.io/lottery</text>
+  <text x="375" y="905" text-anchor="middle" font-size="20" font-weight="600" fill="#b8cafb">guotang96-creator.github.io/lottery</text>
 </svg>
     `.trim();
   }
 
-  async function generateShareCard() {
+  function generateShareCard() {
     const firstCard = document.querySelector("#predictResultsList .analysis-item");
     if (!firstCard) {
       alert("目前還沒有可分享的預測結果，請先按「立即預測」");
@@ -773,21 +772,24 @@
 
     const mode = els.predictMode?.value || "balanced";
     const modeLabel = MODE_LABELS[mode] || "均衡型";
-    const confidenceText = firstCard.textContent?.match(/信心參考：(\d+)/);
-    const confidence = confidenceText ? confidenceText[1] : "78";
+    const confidenceMatch = firstCard.textContent?.match(/信心參考：(\d+)/);
+    const confidence = confidenceMatch ? confidenceMatch[1] : "78";
     const updatedAt = els.lastUpdateText?.textContent || "";
 
     const svg = buildShareSvg(numbers, modeLabel, confidence, updatedAt);
-    const svgBlob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(svgBlob);
+    const encoded = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
 
-    const img = new Image();
-    img.onload = () => {
-      if (els.sharePreviewImage) els.sharePreviewImage.src = url;
-      if (els.sharePreviewWrap) els.sharePreviewWrap.style.display = "block";
-      if (els.sharePreviewEmpty) els.sharePreviewEmpty.style.display = "none";
-    };
-    img.src = url;
+    if (els.sharePreviewImage) {
+      els.sharePreviewImage.src = encoded;
+    }
+    if (els.sharePreviewWrap) {
+      els.sharePreviewWrap.style.display = "block";
+    }
+    if (els.sharePreviewEmpty) {
+      els.sharePreviewEmpty.style.display = "none";
+    }
+
+    alert("分享圖片已生成，往下可看到預覽圖");
   }
 
   function clearSharePreview() {
@@ -1512,9 +1514,7 @@
       if (els.simNetProfit) els.simNetProfit.textContent = "0元";
       if (els.simBetAmountText) els.simBetAmountText.textContent = "50元";
 
-      if (els.dragQuerySummary) {
-        els.dragQuerySummary.textContent = "尚未查詢";
-      }
+      if (els.dragQuerySummary) els.dragQuerySummary.textContent = "尚未查詢";
       if (els.dragQueryResults) {
         els.dragQueryResults.innerHTML = `<div style="font-size:15px;font-weight:700;color:#64748b;">請輸入號碼後查詢</div>`;
       }
