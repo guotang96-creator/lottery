@@ -1,12 +1,12 @@
 (() => {
-  const APP_VERSION = "V3.3｜今彩539 專用版｜視覺化穩定版";
+  const APP_VERSION = "V3.4｜今彩539 專用版｜視覺化手機優化版";
 
   const STORAGE_KEYS = {
-    favorites: "jincai539_favorites_v33",
-    history: "jincai539_predict_history_v33",
-    latest: "jincai539_latest_result_v33",
-    status: "jincai539_data_status_v33",
-    settings: "jincai539_user_settings_v33"
+    favorites: "jincai539_favorites_v34",
+    history: "jincai539_predict_history_v34",
+    latest: "jincai539_latest_result_v34",
+    status: "jincai539_data_status_v34",
+    settings: "jincai539_user_settings_v34"
   };
 
   const JSON_CANDIDATES = [
@@ -193,7 +193,6 @@
   function loadUserSettings() {
     const settings = readJSON(STORAGE_KEYS.settings, null);
     if (!settings) return;
-
     if (els.analysisPeriods && settings.analysisPeriods) els.analysisPeriods.value = settings.analysisPeriods;
     if (els.recommendCount && settings.recommendCount) els.recommendCount.value = settings.recommendCount;
     if (els.predictMode && settings.predictMode) els.predictMode.value = settings.predictMode;
@@ -257,9 +256,7 @@
           numbers: uniqueSorted(numbers.slice(0, 5)),
           recent5: normalizeRecentRows(raw.recent5 || raw.content?.recent5 || []),
           recent50: normalizeRecentRows(raw.recent50 || raw.content?.recent50 || raw.recent5 || []),
-          updatedAt: normalizeDateText(
-            raw.updatedAt || raw.generatedAt || item.updatedAt || new Date().toISOString()
-          ),
+          updatedAt: normalizeDateText(raw.updatedAt || raw.generatedAt || item.updatedAt || new Date().toISOString()),
           source: sourceUrl || "remote-json"
         };
       }
@@ -720,15 +717,18 @@
     if (!container) return;
 
     container.innerHTML = rows.map((row) => {
-      const width = maxValue > 0 ? Math.max(28, (row.value / maxValue) * 100) : 0;
+      const width = maxValue > 0 ? (row.value / maxValue) * 100 : 0;
+      const safeWidth = Math.max(12, width);
 
       return `
-        <div style="display:grid;grid-template-columns:56px 1fr 42px;gap:8px;align-items:center;margin:10px 0;">
-          <div style="font-size:15px;font-weight:800;color:#0f172a;">${row.label}</div>
-          <div style="height:16px;border-radius:999px;background:#e5edf7;overflow:hidden;border:1px solid #d6e0eb;">
-            <div style="height:100%;width:${width}%;border-radius:999px;background:linear-gradient(135deg,#2563eb,#60a5fa);"></div>
+        <div style="margin:12px 0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <div style="font-size:16px;font-weight:800;color:#0f172a;">${row.label}</div>
+            <div style="font-size:15px;font-weight:800;color:#334155;">${row.value}</div>
           </div>
-          <div style="text-align:right;font-size:14px;font-weight:800;color:#334155;">${row.value}</div>
+          <div style="height:18px;border-radius:999px;background:#e5edf7;overflow:hidden;border:1px solid #d6e0eb;">
+            <div style="height:100%;width:${safeWidth}%;border-radius:999px;background:linear-gradient(135deg,#2563eb,#60a5fa);"></div>
+          </div>
         </div>
       `;
     }).join("");
