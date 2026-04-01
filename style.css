@@ -543,3 +543,54 @@ img#sharePreviewImage {
     inset 0 -3px 0 rgba(255,255,255,0.16),
     0 8px 20px rgba(239, 68, 68, 0.28);
 }
+.ball.range-1,
+.ball.active.range-1 {
+  background: linear-gradient(135deg, #22c55e, #4ade80) !important;
+  color: #ffffff !important;
+  border-color: rgba(255,255,255,0.22) !important;
+}
+
+.ball.range-2,
+.ball.active.range-2 {
+  background: linear-gradient(135deg, #3b82f6, #60a5fa) !important;
+  color: #ffffff !important;
+  border-color: rgba(255,255,255,0.22) !important;
+}
+
+.ball.range-3,
+.ball.active.range-3 {
+  background: linear-gradient(135deg, #f59e0b, #fbbf24) !important;
+  color: #ffffff !important;
+  border-color: rgba(255,255,255,0.22) !important;
+}
+
+.ball.range-4,
+.ball.active.range-4 {
+  background: linear-gradient(135deg, #ef4444, #f87171) !important;
+  color: #ffffff !important;
+  border-color: rgba(255,255,255,0.22) !important;
+}
+
+.ball.active.range-1 {
+  box-shadow:
+    inset 0 -3px 0 rgba(255,255,255,0.16),
+    0 8px 20px rgba(34, 197, 94, 0.28) !important;
+}
+
+.ball.active.range-2 {
+  box-shadow:
+    inset 0 -3px 0 rgba(255,255,255,0.16),
+    0 8px 20px rgba(59, 130, 246, 0.28) !important;
+}
+
+.ball.active.range-3 {
+  box-shadow:
+    inset 0 -3px 0 rgba(255,255,255,0.16),
+    0 8px 20px rgba(245, 158, 11, 0.28) !important;
+}
+
+.ball.active.range-4 {
+  box-shadow:
+    inset 0 -3px 0 rgba(255,255,255,0.16),
+    0 8px 20px rgba(239, 68, 68, 0.28) !important;
+}
