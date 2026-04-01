@@ -1,12 +1,12 @@
 (() => {
-  const APP_VERSION = "V3.6｜今彩539 專用版｜最佳模式提示＋盈虧模擬版";
+  const APP_VERSION = "V3.7｜今彩539 專用版｜分享圖片版";
 
   const STORAGE_KEYS = {
-    favorites: "jincai539_favorites_v36",
-    history: "jincai539_predict_history_v36",
-    latest: "jincai539_latest_result_v36",
-    status: "jincai539_data_status_v36",
-    settings: "jincai539_user_settings_v36"
+    favorites: "jincai539_favorites_v37",
+    history: "jincai539_predict_history_v37",
+    latest: "jincai539_latest_result_v37",
+    status: "jincai539_data_status_v37",
+    settings: "jincai539_user_settings_v37"
   };
 
   const JSON_CANDIDATES = [
@@ -109,6 +109,12 @@
     btnGoPredict: $("#btnGoPredict"),
     btnCopyAllPredict: $("#btnCopyAllPredict"),
     btnPredictSummary: $("#btnPredictSummary"),
+    btnGenerateShareCard: $("#btnGenerateShareCard"),
+    btnCloseSharePreview: $("#btnCloseSharePreview"),
+    sharePreviewWrap: $("#sharePreviewWrap"),
+    sharePreviewImage: $("#sharePreviewImage"),
+    sharePreviewEmpty: $("#sharePreviewEmpty"),
+
     btnRecent5: $("#btnRecent5"),
     btnDataStatus: $("#btnDataStatus"),
     btnFullAnalysis: $("#btnFullAnalysis"),
@@ -686,6 +692,108 @@
         saveFavoriteNumbers(allPredictions[idx] || []);
       });
     });
+  }
+
+  function buildShareSvg(numbers, modeLabel, confidence, updatedAt) {
+    const nums = (numbers || []).map((n) => pad2(n));
+    const circles = nums.map((num, i) => {
+      const x = 95 + i * 118;
+      return `
+        <g>
+          <circle cx="${x}" cy="292" r="42" fill="url(#ballGrad)" />
+          <circle cx="${x}" cy="292" r="42" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="2"/>
+          <text x="${x}" y="306" text-anchor="middle" font-size="30" font-weight="700" fill="#ffffff">${num}</text>
+        </g>
+      `;
+    }).join("");
+
+    return `
+<svg xmlns="http://www.w3.org/2000/svg" width="750" height="960" viewBox="0 0 750 960">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#08142f"/>
+      <stop offset="55%" stop-color="#0f1f4d"/>
+      <stop offset="100%" stop-color="#132d6b"/>
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.16)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0.08)"/>
+    </linearGradient>
+    <linearGradient id="ballGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="rgba(0,0,0,0.28)"/>
+    </filter>
+  </defs>
+
+  <rect width="750" height="960" fill="url(#bg)"/>
+
+  <rect x="38" y="38" width="674" height="884" rx="34" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)"/>
+
+  <text x="70" y="115" font-size="34" font-weight="700" fill="#ffffff">今彩539 AI 預測系統</text>
+  <text x="70" y="160" font-size="22" font-weight="600" fill="#c7d7ff">推薦分享卡</text>
+
+  <rect x="70" y="195" width="610" height="225" rx="28" fill="url(#cardGrad)" filter="url(#shadow)" stroke="rgba(255,255,255,0.14)"/>
+
+  <text x="102" y="245" font-size="24" font-weight="700" fill="#dbe8ff">推薦號碼</text>
+
+  ${circles}
+
+  <rect x="70" y="470" width="610" height="165" rx="28" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.10)"/>
+  <text x="102" y="525" font-size="24" font-weight="700" fill="#dbe8ff">預測資訊</text>
+  <text x="102" y="575" font-size="24" font-weight="600" fill="#ffffff">模式：${modeLabel}</text>
+  <text x="102" y="615" font-size="24" font-weight="600" fill="#ffffff">信心參考：${confidence}</text>
+
+  <rect x="70" y="675" width="610" height="155" rx="28" fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.10)"/>
+  <text x="102" y="730" font-size="24" font-weight="700" fill="#dbe8ff">資料資訊</text>
+  <text x="102" y="780" font-size="22" font-weight="600" fill="#ffffff">最後更新：${updatedAt}</text>
+
+  <text x="375" y="890" text-anchor="middle" font-size="20" font-weight="600" fill="#b8cafb">guotang96-creator.github.io/lottery</text>
+</svg>
+    `.trim();
+  }
+
+  async function generateShareCard() {
+    const firstCard = document.querySelector("#predictResultsList .analysis-item");
+    if (!firstCard) {
+      alert("目前還沒有可分享的預測結果，請先按「立即預測」");
+      return;
+    }
+
+    const numbers = [...firstCard.querySelectorAll(".ball")]
+      .map((el) => Number(el.textContent?.trim()))
+      .filter((v) => Number.isFinite(v));
+
+    if (!numbers.length) {
+      alert("找不到推薦號碼");
+      return;
+    }
+
+    const mode = els.predictMode?.value || "balanced";
+    const modeLabel = MODE_LABELS[mode] || "均衡型";
+    const confidenceText = firstCard.textContent?.match(/信心參考：(\d+)/);
+    const confidence = confidenceText ? confidenceText[1] : "78";
+    const updatedAt = els.lastUpdateText?.textContent || "";
+
+    const svg = buildShareSvg(numbers, modeLabel, confidence, updatedAt);
+    const svgBlob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+
+    const img = new Image();
+    img.onload = () => {
+      if (els.sharePreviewImage) els.sharePreviewImage.src = url;
+      if (els.sharePreviewWrap) els.sharePreviewWrap.style.display = "block";
+      if (els.sharePreviewEmpty) els.sharePreviewEmpty.style.display = "none";
+    };
+    img.src = url;
+  }
+
+  function clearSharePreview() {
+    if (els.sharePreviewWrap) els.sharePreviewWrap.style.display = "none";
+    if (els.sharePreviewImage) els.sharePreviewImage.removeAttribute("src");
+    if (els.sharePreviewEmpty) els.sharePreviewEmpty.style.display = "block";
   }
 
   function renderFavoritesList() {
@@ -1319,6 +1427,8 @@
     if (els.btnGoPredict) els.btnGoPredict.addEventListener("click", () => switchPage("predict"));
     if (els.btnCopyAllPredict) els.btnCopyAllPredict.addEventListener("click", copyAllPredictions);
     if (els.btnPredictSummary) els.btnPredictSummary.addEventListener("click", showPredictSummary);
+    if (els.btnGenerateShareCard) els.btnGenerateShareCard.addEventListener("click", generateShareCard);
+    if (els.btnCloseSharePreview) els.btnCloseSharePreview.addEventListener("click", clearSharePreview);
 
     if (els.btnClearFavorites) {
       els.btnClearFavorites.addEventListener("click", () => {
@@ -1409,6 +1519,7 @@
         els.dragQueryResults.innerHTML = `<div style="font-size:15px;font-weight:700;color:#64748b;">請輸入號碼後查詢</div>`;
       }
 
+      clearSharePreview();
       switchPage("home");
     } catch (err) {
       console.error("init error:", err);
