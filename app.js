@@ -1,12 +1,12 @@
 (() => {
-  const APP_VERSION = "V3.5｜今彩539 專用版｜拖號查詢完整版";
+  const APP_VERSION = "V3.6｜今彩539 專用版｜最佳模式提示＋盈虧模擬版";
 
   const STORAGE_KEYS = {
-    favorites: "jincai539_favorites_v35",
-    history: "jincai539_predict_history_v35",
-    latest: "jincai539_latest_result_v35",
-    status: "jincai539_data_status_v35",
-    settings: "jincai539_user_settings_v35"
+    favorites: "jincai539_favorites_v36",
+    history: "jincai539_predict_history_v36",
+    latest: "jincai539_latest_result_v36",
+    status: "jincai539_data_status_v36",
+    settings: "jincai539_user_settings_v36"
   };
 
   const JSON_CANDIDATES = [
@@ -61,6 +61,17 @@
     cold: "冷號型",
     tail: "尾數型",
     drag: "拖號型"
+  };
+
+  const MODE_LIST = ["balanced", "hot", "cold", "tail", "drag"];
+
+  const PAYOUT_TABLE = {
+    0: 0,
+    1: 0,
+    2: 50,
+    3: 300,
+    4: 8000,
+    5: 8000000
   };
 
   const $ = (selector) => document.querySelector(selector);
@@ -132,6 +143,7 @@
 
     backtestCount: $("#backtestCount"),
     backtestMode: $("#backtestMode"),
+    betAmount: $("#betAmount"),
     btnRunBacktest: $("#btnRunBacktest"),
     backtestAvgHit: $("#backtestAvgHit"),
     backtestMaxHit: $("#backtestMaxHit"),
@@ -144,6 +156,13 @@
     hitCount4: $("#hitCount4"),
     hitCount5: $("#hitCount5"),
     backtestResultsList: $("#backtestResultsList"),
+
+    bestBacktestMode: $("#bestBacktestMode"),
+    bestBacktestSuggestion: $("#bestBacktestSuggestion"),
+    simTotalBet: $("#simTotalBet"),
+    simTotalReturn: $("#simTotalReturn"),
+    simNetProfit: $("#simNetProfit"),
+    simBetAmountText: $("#simBetAmountText"),
 
     navButtons: document.querySelectorAll(".nav-btn"),
     pages: {
@@ -476,6 +495,10 @@
     return (nums || []).map(pad2).join(" ");
   }
 
+  function formatMoney(value) {
+    return `${Number(value || 0).toLocaleString("zh-TW")}元`;
+  }
+
   function renderLatest(latest) {
     if (!latest) latest = DEFAULT_LATEST;
     if (els.lastUpdateText) els.lastUpdateText.textContent = latest.updatedAt || DEFAULT_LATEST.updatedAt;
@@ -531,6 +554,10 @@
   function compareHit(predicted, actual) {
     const actualSet = new Set(actual);
     return predicted.filter((n) => actualSet.has(n)).length;
+  }
+
+  function getPayoutByHit(hitCount) {
+    return PAYOUT_TABLE[hitCount] || 0;
   }
 
   function savePredictRecord(record) {
@@ -921,6 +948,61 @@
     renderDragQueryResultList(top5, maxCount);
   }
 
+  function evaluateModePerformance(rows, mode, sampleWindow = 20) {
+    const results = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      const actualRow = rows[i];
+      const historyRows = rows.slice(i + 1, i + 1 + sampleWindow).map((r) => uniqueSorted(r.numbers || []));
+      const history = historyRows.length ? historyRows : MOCK_HISTORY.slice(0, 20).map((r) => uniqueSorted(r));
+      const predicted = predictNumbers(mode, history);
+      const actual = uniqueSorted(actualRow.numbers || []);
+      const hitCount = compareHit(predicted, actual);
+
+      results.push({ hitCount });
+    }
+
+    const total = results.length || 1;
+    const avgHit = results.reduce((sum, row) => sum + row.hitCount, 0) / total;
+    const maxHit = results.length ? Math.max(...results.map((r) => r.hitCount)) : 0;
+
+    return {
+      mode,
+      avgHit,
+      maxHit
+    };
+  }
+
+  function findBestBacktestMode(rows) {
+    const rankings = MODE_LIST.map((mode) => evaluateModePerformance(rows, mode, 20))
+      .sort((a, b) => b.avgHit - a.avgHit || b.maxHit - a.maxHit);
+
+    return rankings[0] || { mode: "balanced", avgHit: 0, maxHit: 0 };
+  }
+
+  function renderBestModeSuggestion(best) {
+    if (els.bestBacktestMode) {
+      els.bestBacktestMode.textContent =
+        `${MODE_LABELS[best.mode] || best.mode}｜平均 ${(best.avgHit || 0).toFixed(1)} 顆｜最高 ${best.maxHit || 0} 顆`;
+    }
+
+    if (els.bestBacktestSuggestion) {
+      els.bestBacktestSuggestion.textContent =
+        `根據本次回測，建議本次優先參考「${MODE_LABELS[best.mode] || best.mode}」模式`;
+    }
+  }
+
+  function renderProfitSimulation(results, betAmount) {
+    const totalBet = results.length * betAmount;
+    const totalReturn = results.reduce((sum, row) => sum + getPayoutByHit(row.hitCount), 0);
+    const net = totalReturn - totalBet;
+
+    if (els.simTotalBet) els.simTotalBet.textContent = formatMoney(totalBet);
+    if (els.simTotalReturn) els.simTotalReturn.textContent = formatMoney(totalReturn);
+    if (els.simNetProfit) els.simNetProfit.textContent = formatMoney(net);
+    if (els.simBetAmountText) els.simBetAmountText.textContent = formatMoney(betAmount);
+  }
+
   async function copyAllPredictions() {
     const cards = [...document.querySelectorAll("#predictResultsList .analysis-item")];
     if (!cards.length) {
@@ -979,6 +1061,8 @@
     els.backtestResultsList.innerHTML = results.map((item, idx) => {
       const predBalls = item.predicted.map((n) => `<span class="ball active">${pad2(n)}</span>`).join("");
       const actualBalls = item.actual.map((n) => `<span class="ball">${pad2(n)}</span>`).join("");
+      const payout = getPayoutByHit(item.hitCount);
+
       return `
         <div class="analysis-item">
           <span class="label">${idx + 1}. 第${item.period}期｜${item.date}</span>
@@ -988,6 +1072,7 @@
           <div class="balls-row" style="margin-top:12px;">${actualBalls}</div>
           <strong style="margin-top:10px;">實際：${formatNums(item.actual)}</strong>
           <strong style="margin-top:10px;">命中：${item.hitCount} 顆</strong>
+          <strong style="margin-top:10px;">模擬回收：${formatMoney(payout)}</strong>
         </div>
       `;
     }).join("");
@@ -996,6 +1081,7 @@
   function runBacktest() {
     const count = Number(els.backtestCount?.value || 20);
     const mode = els.backtestMode?.value || "balanced";
+    const betAmount = Number(els.betAmount?.value || 50);
 
     const rows = getBacktestSourceRows().slice(0, count);
     if (!rows.length) {
@@ -1045,6 +1131,10 @@
     if (els.hitCount5) els.hitCount5.textContent = `${distribution[5] || 0}次`;
 
     renderBacktestResults(results, mode);
+
+    const best = findBestBacktestMode(rows);
+    renderBestModeSuggestion(best);
+    renderProfitSimulation(results, betAmount);
 
     alert(
       `回測完成\n\n模式：${MODE_LABELS[mode] || mode}\n回測期數：${total}期\n平均命中：${avg}顆\n最高命中：${max}顆`
@@ -1304,6 +1394,13 @@
           </div>
         `;
       }
+
+      if (els.bestBacktestMode) els.bestBacktestMode.textContent = "尚未分析";
+      if (els.bestBacktestSuggestion) els.bestBacktestSuggestion.textContent = "請先執行回測";
+      if (els.simTotalBet) els.simTotalBet.textContent = "0元";
+      if (els.simTotalReturn) els.simTotalReturn.textContent = "0元";
+      if (els.simNetProfit) els.simNetProfit.textContent = "0元";
+      if (els.simBetAmountText) els.simBetAmountText.textContent = "50元";
 
       if (els.dragQuerySummary) {
         els.dragQuerySummary.textContent = "尚未查詢";
