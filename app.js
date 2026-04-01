@@ -1,12 +1,12 @@
 (() => {
-  const APP_VERSION = "V3.0｜今彩539 專用版｜收藏頁版";
+  const APP_VERSION = "V3.1｜今彩539 專用版｜回測命中率頁版";
 
   const STORAGE_KEYS = {
-    favorites: "jincai539_favorites_v30",
-    history: "jincai539_predict_history_v30",
-    latest: "jincai539_latest_result_v30",
-    status: "jincai539_data_status_v30",
-    settings: "jincai539_user_settings_v30"
+    favorites: "jincai539_favorites_v31",
+    history: "jincai539_predict_history_v31",
+    latest: "jincai539_latest_result_v31",
+    status: "jincai539_data_status_v31",
+    settings: "jincai539_user_settings_v31"
   };
 
   const JSON_CANDIDATES = [
@@ -27,6 +27,7 @@
     date: "2026-03-31",
     numbers: [5, 12, 21, 33, 39],
     recent5: [],
+    recent50: [],
     updatedAt: "2026-03-31 20:05",
     source: "fallback-local"
   };
@@ -116,12 +117,28 @@
     favoritesList: $("#favoritesList"),
     predictResultsList: $("#predictResultsList"),
 
+    backtestCount: $("#backtestCount"),
+    backtestMode: $("#backtestMode"),
+    btnRunBacktest: $("#btnRunBacktest"),
+    backtestAvgHit: $("#backtestAvgHit"),
+    backtestMaxHit: $("#backtestMaxHit"),
+    backtestTotal: $("#backtestTotal"),
+    backtestModeText: $("#backtestModeText"),
+    hitCount0: $("#hitCount0"),
+    hitCount1: $("#hitCount1"),
+    hitCount2: $("#hitCount2"),
+    hitCount3: $("#hitCount3"),
+    hitCount4: $("#hitCount4"),
+    hitCount5: $("#hitCount5"),
+    backtestResultsList: $("#backtestResultsList"),
+
     navButtons: document.querySelectorAll(".nav-btn"),
     pages: {
       home: $("#page-home"),
       predict: $("#page-predict"),
       history: $("#page-history"),
       favorites: $("#page-favorites"),
+      backtest: $("#page-backtest"),
       settings: $("#page-settings")
     }
   };
@@ -147,7 +164,7 @@
     try {
       const raw = localStorage.getItem(key);
       return raw ? JSON.parse(raw) : fallback;
-    } catch (err) {
+    } catch {
       return fallback;
     }
   }
@@ -155,9 +172,7 @@
   function writeJSON(key, value) {
     try {
       localStorage.setItem(key, JSON.stringify(value));
-    } catch (err) {
-      console.warn("localStorage 寫入失敗", err);
-    }
+    } catch {}
   }
 
   function saveUserSettings() {
@@ -173,15 +188,9 @@
     const settings = readJSON(STORAGE_KEYS.settings, null);
     if (!settings) return;
 
-    if (els.analysisPeriods && settings.analysisPeriods) {
-      els.analysisPeriods.value = settings.analysisPeriods;
-    }
-    if (els.recommendCount && settings.recommendCount) {
-      els.recommendCount.value = settings.recommendCount;
-    }
-    if (els.predictMode && settings.predictMode) {
-      els.predictMode.value = settings.predictMode;
-    }
+    if (els.analysisPeriods && settings.analysisPeriods) els.analysisPeriods.value = settings.analysisPeriods;
+    if (els.recommendCount && settings.recommendCount) els.recommendCount.value = settings.recommendCount;
+    if (els.predictMode && settings.predictMode) els.predictMode.value = settings.predictMode;
   }
 
   function normalizeDateText(value) {
@@ -202,25 +211,13 @@
 
   function normalizeRecentRows(rows) {
     if (!Array.isArray(rows)) return [];
-
-    return rows
-      .map((item) => {
-        const period = item.period || item.drawTerm || item.issue || item.term || item.drawNo || "";
-        const date = normalizeDateOnly(item.lotteryDate || item.drawDate || item.dDate || item.date || "");
-        const numbers = toIntArray(
-          item.drawNumberSize || item.drawNumbers || item.numbers || item.orderNumbers || item.num || []
-        );
-
-        if (!period || numbers.length < 5) return null;
-
-        return {
-          period: String(period),
-          date,
-          numbers: uniqueSorted(numbers.slice(0, 5))
-        };
-      })
-      .filter(Boolean)
-      .slice(0, 5);
+    return rows.map((item) => {
+      const period = item.period || item.drawTerm || item.issue || item.term || item.drawNo || "";
+      const date = normalizeDateOnly(item.lotteryDate || item.drawDate || item.dDate || item.date || "");
+      const numbers = toIntArray(item.drawNumberSize || item.drawNumbers || item.numbers || item.orderNumbers || item.num || []);
+      if (!period || numbers.length < 5) return null;
+      return { period: String(period), date, numbers: uniqueSorted(numbers.slice(0, 5)) };
+    }).filter(Boolean);
   }
 
   function normalizeLatestFromAny(raw, sourceUrl = "") {
@@ -229,36 +226,23 @@
     const candidates = [];
     if (raw.content?.daily539) candidates.push(raw.content.daily539);
     if (raw.daily539) candidates.push(raw.daily539);
-    if (raw.content?.latest?.daily539) candidates.push(raw.content.latest.daily539);
-    if (raw.latest?.daily539) candidates.push(raw.latest.daily539);
-    if (raw.content?.lottery?.daily539) candidates.push(raw.content.lottery.daily539);
-    if (Array.isArray(raw.content?.daily539Res) && raw.content.daily539Res.length) candidates.push(raw.content.daily539Res[0]);
-    if (Array.isArray(raw.daily539Res) && raw.daily539Res.length) candidates.push(raw.daily539Res[0]);
-    if (Array.isArray(raw.data) && raw.data.length) candidates.push(raw.data[0]);
-    if (Array.isArray(raw.results) && raw.results.length) candidates.push(raw.results[0]);
     if (raw.period || raw.lotteryDate || raw.drawNumberSize || raw.numbers) candidates.push(raw);
 
     for (const item of candidates) {
       if (!item || typeof item !== "object") continue;
 
       const period = item.period || item.drawTerm || item.issue || item.term || item.drawNo || "";
-      const date =
-        normalizeDateOnly(item.lotteryDate || item.drawDate || item.dDate || item.date || "") || DEFAULT_LATEST.date;
-      const numbers = toIntArray(
-        item.drawNumberSize || item.drawNumbers || item.numbers || item.orderNumbers || item.num || []
-      );
+      const date = normalizeDateOnly(item.lotteryDate || item.drawDate || item.dDate || item.date || "") || DEFAULT_LATEST.date;
+      const numbers = toIntArray(item.drawNumberSize || item.drawNumbers || item.numbers || item.orderNumbers || item.num || []);
 
       if (period && numbers.length >= 5) {
         return {
           period: String(period),
           date,
           numbers: uniqueSorted(numbers.slice(0, 5)),
-          recent5: normalizeRecentRows(
-            raw.recent5 || raw.content?.recent5 || raw.content?.daily539Res || raw.daily539Res || []
-          ),
-          updatedAt: normalizeDateText(
-            raw.updatedAt || raw.generatedAt || raw.lastUpdated || item.updatedAt || item.generatedAt || new Date().toISOString()
-          ),
+          recent5: normalizeRecentRows(raw.recent5 || raw.content?.recent5 || []),
+          recent50: normalizeRecentRows(raw.recent50 || raw.content?.recent50 || raw.recent5 || []),
+          updatedAt: normalizeDateText(raw.updatedAt || raw.generatedAt || item.updatedAt || new Date().toISOString()),
           source: sourceUrl || "remote-json"
         };
       }
@@ -283,41 +267,21 @@
           writeJSON(STORAGE_KEYS.status, {
             ok: true,
             source: url,
-            total: Number(els.analysisPeriods?.value || 120),
             version: APP_VERSION
           });
           return normalized;
         }
-      } catch (err) {
-        console.warn(`讀取失敗：${url}`, err);
-      }
+      } catch {}
     }
 
     const local = readJSON(STORAGE_KEYS.latest, null);
-    if (local) {
-      writeJSON(STORAGE_KEYS.status, {
-        ok: true,
-        source: local.source || "local-cache",
-        total: Number(els.analysisPeriods?.value || 120),
-        version: APP_VERSION
-      });
-      return local;
-    }
-
+    if (local) return local;
     writeJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
-    writeJSON(STORAGE_KEYS.status, {
-      ok: false,
-      source: "fallback-local",
-      total: Number(els.analysisPeriods?.value || 120),
-      version: APP_VERSION
-    });
     return DEFAULT_LATEST;
   }
 
   function getRecentFiveDraws(latest) {
-    if (Array.isArray(latest?.recent5) && latest.recent5.length) {
-      return latest.recent5.slice(0, 5);
-    }
+    if (Array.isArray(latest?.recent5) && latest.recent5.length) return latest.recent5.slice(0, 5);
 
     const rows = [];
     if (Array.isArray(latest?.numbers) && latest.numbers.length >= 5) {
@@ -327,28 +291,23 @@
         numbers: uniqueSorted(latest.numbers.slice(0, 5))
       });
     }
+    return rows;
+  }
 
-    for (const item of MOCK_HISTORY) {
-      if (rows.length >= 5) break;
-      const normalized = uniqueSorted(item);
-      const alreadyExists = rows.some((row) => row.numbers.join(",") === normalized.join(","));
-      if (!alreadyExists) {
-        rows.push({
-          period: "",
-          date: "",
-          numbers: normalized
-        });
-      }
-    }
-
-    return rows.slice(0, 5);
+  function getBacktestSourceRows() {
+    const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
+    if (Array.isArray(latest?.recent50) && latest.recent50.length) return latest.recent50;
+    if (Array.isArray(latest?.recent5) && latest.recent5.length) return latest.recent5;
+    return [];
   }
 
   function sampleHistory(periods, latestNumbers = null) {
     const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
-    const recentReal = Array.isArray(latest?.recent5)
-      ? latest.recent5.map((item) => uniqueSorted(item.numbers || []))
-      : [];
+    const recentReal = Array.isArray(latest?.recent50) && latest.recent50.length
+      ? latest.recent50.map((item) => uniqueSorted(item.numbers || []))
+      : Array.isArray(latest?.recent5)
+        ? latest.recent5.map((item) => uniqueSorted(item.numbers || []))
+        : [];
 
     const size = Math.min(Number(periods) || 120, 500);
     const source = [];
@@ -369,13 +328,7 @@
   function getFrequency(history) {
     const freq = new Map();
     for (let i = 1; i <= 39; i++) freq.set(i, 0);
-
-    history.forEach((draw) => {
-      draw.forEach((num) => {
-        freq.set(num, (freq.get(num) || 0) + 1);
-      });
-    });
-
+    history.forEach((draw) => draw.forEach((num) => freq.set(num, (freq.get(num) || 0) + 1)));
     return freq;
   }
 
@@ -391,21 +344,16 @@
 
   function getHotAndCold(freq) {
     const entries = [...freq.entries()];
-    const hot = [...entries].sort((a, b) => b[1] - a[1] || a[0] - b[0]).slice(0, 8).map(([n]) => n);
-    const cold = [...entries].sort((a, b) => a[1] - b[1] || a[0] - b[0]).slice(0, 8).map(([n]) => n);
-    return { hot, cold };
+    return {
+      hot: [...entries].sort((a, b) => b[1] - a[1] || a[0] - b[0]).slice(0, 8).map(([n]) => n),
+      cold: [...entries].sort((a, b) => a[1] - b[1] || a[0] - b[0]).slice(0, 8).map(([n]) => n)
+    };
   }
 
   function getTailGroups(history) {
     const tails = new Map();
     for (let i = 0; i <= 9; i++) tails.set(i, 0);
-
-    history.forEach((draw) => {
-      draw.forEach((num) => {
-        tails.set(num % 10, (tails.get(num % 10) || 0) + 1);
-      });
-    });
-
+    history.forEach((draw) => draw.forEach((num) => tails.set(num % 10, (tails.get(num % 10) || 0) + 1)));
     return [...tails.entries()].sort((a, b) => b[1] - a[1]);
   }
 
@@ -413,29 +361,20 @@
     const tails = getTailGroups(history);
     const topTails = tails.slice(0, 3).map(([tail]) => tail);
     const pool = [];
-
-    for (let i = 1; i <= 39; i++) {
-      if (topTails.includes(i % 10)) pool.push(i);
-    }
-
+    for (let i = 1; i <= 39; i++) if (topTails.includes(i % 10)) pool.push(i);
     return pool.slice(0, count);
   }
 
   function getDragPairs(history) {
     const pairs = new Map();
-
     for (let i = 0; i < history.length - 1; i++) {
       const current = history[i];
       const next = history[i + 1];
-
-      current.forEach((a) => {
-        next.forEach((b) => {
-          const key = `${a}->${b}`;
-          pairs.set(key, (pairs.get(key) || 0) + 1);
-        });
-      });
+      current.forEach((a) => next.forEach((b) => {
+        const key = `${a}->${b}`;
+        pairs.set(key, (pairs.get(key) || 0) + 1);
+      }));
     }
-
     return [...pairs.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10).map(([key, count]) => ({ key, count }));
   }
 
@@ -446,7 +385,6 @@
   function fillToFive(base) {
     const picked = [...base];
     const used = new Set(picked);
-
     const candidates = shuffle(Array.from({ length: 39 }, (_, i) => i + 1));
     for (const n of candidates) {
       if (!used.has(n)) {
@@ -455,7 +393,6 @@
       }
       if (picked.length >= 5) break;
     }
-
     return uniqueSorted(picked).slice(0, 5);
   }
 
@@ -464,7 +401,6 @@
     const cold = getColdNumbers(history, 12);
     const tailPool = getStrongTailNumbers(history, 15);
     const dragPairs = getDragPairs(history);
-
     let result = [];
 
     if (mode === "hot") {
@@ -495,40 +431,35 @@
   function estimateConfidence(numbers, history, mode) {
     const hot = getHotNumbers(history, 12);
     const tails = getTailGroups(history).slice(0, 3).map(([tail]) => tail);
-
     let score = 60;
     numbers.forEach((n) => {
       if (hot.includes(n)) score += 4;
       if (tails.includes(n % 10)) score += 2;
     });
-
     if (mode === "hot") score += 6;
     if (mode === "tail") score += 4;
     if (mode === "drag") score += 5;
     if (mode === "balanced") score += 3;
     if (mode === "cold") score += 2;
-
     return Math.min(98, score);
   }
 
   function renderBalls(container, numbers, active = false) {
     if (!container) return;
-    container.innerHTML = numbers.map((num) => `<span class="ball${active ? " active" : ""}">${pad2(num)}</span>`).join("");
+    container.innerHTML = (numbers || []).map((num) => `<span class="ball${active ? " active" : ""}">${pad2(num)}</span>`).join("");
+  }
+
+  function formatNums(nums) {
+    return (nums || []).map(pad2).join(" ");
   }
 
   function renderLatest(latest) {
     if (!latest) latest = DEFAULT_LATEST;
-
     if (els.lastUpdateText) els.lastUpdateText.textContent = latest.updatedAt || DEFAULT_LATEST.updatedAt;
     if (els.latestPeriod) els.latestPeriod.textContent = latest.period || DEFAULT_LATEST.period;
     if (els.latestDate) els.latestDate.textContent = latest.date || DEFAULT_LATEST.date;
     if (els.latestDrawNo) els.latestDrawNo.textContent = latest.period || DEFAULT_LATEST.period;
-
     renderBalls(els.latestBalls, latest.numbers || DEFAULT_LATEST.numbers, false);
-  }
-
-  function formatNums(nums) {
-    return nums.map(pad2).join(" ");
   }
 
   function getAnalysisSummary(history) {
@@ -536,7 +467,6 @@
     const { hot, cold } = getHotAndCold(freq);
     const tails = getTailGroups(history);
     const drags = getDragPairs(history);
-
     return {
       hotText: formatNums(hot.slice(0, 3)),
       coldText: formatNums(cold.slice(0, 3)),
@@ -546,9 +476,7 @@
   }
 
   function calcHitStats(records) {
-    if (!records.length) {
-      return { avg: "0顆", max: "0顆", bestMode: "均衡型" };
-    }
+    if (!records.length) return { avg: "0顆", max: "0顆", bestMode: "均衡型" };
 
     const recent = records.slice(-5);
     const hitCounts = recent.map((r) => r.hitCount || 0);
@@ -566,7 +494,6 @@
 
     let bestMode = "均衡型";
     let bestScore = -1;
-
     for (const [mode, val] of modeMap.entries()) {
       const score = val.total / val.count;
       if (score > bestScore) {
@@ -615,19 +542,17 @@
       alert("目前沒有可複製的號碼");
       return;
     }
-
     try {
       await navigator.clipboard.writeText(text);
       alert(`已複製：${text}`);
-    } catch (err) {
+    } catch {
       alert(`複製失敗，請手動複製：${text}`);
     }
   }
 
   function deleteFavorite(id) {
     const oldFavorites = readJSON(STORAGE_KEYS.favorites, []);
-    const filtered = oldFavorites.filter((item) => item.id !== id);
-    writeJSON(STORAGE_KEYS.favorites, filtered);
+    writeJSON(STORAGE_KEYS.favorites, oldFavorites.filter((item) => item.id !== id));
     renderFavoritesList();
     alert("已刪除這組收藏");
   }
@@ -642,7 +567,6 @@
 
   function updateAnalysisViews(history) {
     const summary = getAnalysisSummary(history);
-
     if (els.hotNums) els.hotNums.textContent = summary.hotText;
     if (els.coldNums) els.coldNums.textContent = summary.coldText;
     if (els.dragNums) els.dragNums.textContent = summary.dragText;
@@ -683,25 +607,22 @@
   function renderPredictResults(allPredictions, mode, confidence) {
     if (!els.predictResultsList) return;
 
-    els.predictResultsList.innerHTML = allPredictions
-      .map((nums, idx) => {
-        const ballsHtml = nums.map((n) => `<span class="ball active">${pad2(n)}</span>`).join("");
-
-        return `
-          <div class="analysis-item">
-            <span class="label">推薦${idx + 1}</span>
-            <div class="balls-row" style="margin-top:8px;">${ballsHtml}</div>
-            <strong style="margin-top:10px; display:block;">模式：${MODE_LABELS[mode] || "均衡型"}</strong>
-            <strong style="margin-top:6px; display:block;">號碼：${formatNums(nums)}</strong>
-            <strong style="margin-top:6px; display:block;">信心參考：${confidence}</strong>
-            <div class="action-row" style="margin-top:12px;">
-              <button class="secondary-btn" data-copy-index="${idx}">複製這組</button>
-              <button class="secondary-btn" data-save-index="${idx}">收藏這組</button>
-            </div>
+    els.predictResultsList.innerHTML = allPredictions.map((nums, idx) => {
+      const ballsHtml = nums.map((n) => `<span class="ball active">${pad2(n)}</span>`).join("");
+      return `
+        <div class="analysis-item">
+          <span class="label">推薦${idx + 1}</span>
+          <div class="balls-row" style="margin-top:8px;">${ballsHtml}</div>
+          <strong style="margin-top:10px; display:block;">模式：${MODE_LABELS[mode] || "均衡型"}</strong>
+          <strong style="margin-top:6px; display:block;">號碼：${formatNums(nums)}</strong>
+          <strong style="margin-top:6px; display:block;">信心參考：${confidence}</strong>
+          <div class="action-row" style="margin-top:12px;">
+            <button class="secondary-btn" data-copy-index="${idx}">複製這組</button>
+            <button class="secondary-btn" data-save-index="${idx}">收藏這組</button>
           </div>
-        `;
-      })
-      .join("");
+        </div>
+      `;
+    }).join("");
 
     els.predictResultsList.querySelectorAll("[data-copy-index]").forEach((btn) => {
       btn.addEventListener("click", async () => {
@@ -720,7 +641,6 @@
 
   function renderFavoritesList() {
     if (!els.favoritesList) return;
-
     const favorites = readJSON(STORAGE_KEYS.favorites, []);
     if (!favorites.length) {
       els.favoritesList.innerHTML = `
@@ -732,26 +652,22 @@
       return;
     }
 
-    els.favoritesList.innerHTML = favorites
-      .map((item, idx) => {
-        const numbers = (item.numbers || []).map((n) => Number(n));
-        const ballsHtml = numbers.map((n) => `<span class="ball active">${pad2(n)}</span>`).join("");
-        const timeText = normalizeDateText(item.createdAt || "");
-
-        return `
-          <div class="analysis-item">
-            <span class="label">收藏 ${idx + 1}</span>
-            <div class="balls-row" style="margin-top:8px;">${ballsHtml}</div>
-            <strong style="margin-top:10px; display:block;">號碼：${(item.numbers || []).join(" ")}</strong>
-            <strong style="margin-top:6px; display:block;">收藏時間：${timeText}</strong>
-            <div class="action-row" style="margin-top:12px;">
-              <button class="secondary-btn" data-fav-copy="${item.id}">複製</button>
-              <button class="secondary-btn" data-fav-delete="${item.id}">刪除</button>
-            </div>
+    els.favoritesList.innerHTML = favorites.map((item, idx) => {
+      const numsNum = (item.numbers || []).map((n) => Number(n));
+      const ballsHtml = numsNum.map((n) => `<span class="ball active">${pad2(n)}</span>`).join("");
+      return `
+        <div class="analysis-item">
+          <span class="label">收藏 ${idx + 1}</span>
+          <div class="balls-row" style="margin-top:8px;">${ballsHtml}</div>
+          <strong style="margin-top:10px; display:block;">號碼：${(item.numbers || []).join(" ")}</strong>
+          <strong style="margin-top:6px; display:block;">收藏時間：${normalizeDateText(item.createdAt || "")}</strong>
+          <div class="action-row" style="margin-top:12px;">
+            <button class="secondary-btn" data-fav-copy="${item.id}">複製</button>
+            <button class="secondary-btn" data-fav-delete="${item.id}">刪除</button>
           </div>
-        `;
-      })
-      .join("");
+        </div>
+      `;
+    }).join("");
 
     favorites.forEach((item) => {
       const copyBtn = els.favoritesList.querySelector(`[data-fav-copy="${item.id}"]`);
@@ -759,11 +675,9 @@
 
       if (copyBtn) {
         copyBtn.addEventListener("click", async () => {
-          const nums = (item.numbers || []).map((n) => Number(n));
-          await copyNumbers(nums);
+          await copyNumbers((item.numbers || []).map((n) => Number(n)));
         });
       }
-
       if (deleteBtn) {
         deleteBtn.addEventListener("click", () => deleteFavorite(item.id));
       }
@@ -777,60 +691,125 @@
       return;
     }
 
-    const text = cards
-      .map((card, idx) => {
-        const balls = [...card.querySelectorAll(".ball")]
-          .map((el) => el.textContent?.trim())
-          .filter(Boolean)
-          .join(" ");
-        return `推薦${idx + 1}：${balls}`;
-      })
-      .join("\n");
+    const text = cards.map((card, idx) => {
+      const balls = [...card.querySelectorAll(".ball")].map((el) => el.textContent?.trim()).filter(Boolean).join(" ");
+      return `推薦${idx + 1}：${balls}`;
+    }).join("\n");
 
     try {
       await navigator.clipboard.writeText(text);
       alert(`已複製全部推薦：\n\n${text}`);
-    } catch (err) {
+    } catch {
       alert(`複製失敗，請手動複製：\n\n${text}`);
     }
   }
 
   function showPredictSummary() {
-    const hot = els.hotNums?.textContent || "";
-    const cold = els.coldNums?.textContent || "";
-    const drag = els.dragNums?.textContent || "";
-    const tail = els.tailNums?.textContent || "";
-
     alert(
       `預測摘要\n\n` +
-      `熱門號：${hot}\n` +
-      `冷門號：${cold}\n` +
-      `拖號組：${drag}\n` +
-      `尾數強勢：${tail}`
+      `熱門號：${els.hotNums?.textContent || ""}\n` +
+      `冷門號：${els.coldNums?.textContent || ""}\n` +
+      `拖號組：${els.dragNums?.textContent || ""}\n` +
+      `尾數強勢：${els.tailNums?.textContent || ""}`
     );
   }
 
   function renderRecent5List() {
     if (!els.recent5List) return;
-
     const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
     const history = getRecentFiveDraws(latest);
 
-    els.recent5List.innerHTML = history
-      .map((draw, idx) => {
-        const nums = formatNums(draw.numbers || []);
-        const periodText = draw.period ? `第${draw.period}期` : `參考第${idx + 1}筆`;
-        const dateText = draw.date || "-";
+    els.recent5List.innerHTML = history.map((draw, idx) => {
+      const nums = formatNums(draw.numbers || []);
+      const periodText = draw.period ? `第${draw.period}期` : `參考第${idx + 1}筆`;
+      const dateText = draw.date || "-";
+      return `
+        <div class="analysis-item">
+          <span class="label">${periodText}</span>
+          <strong>${dateText}</strong>
+          <strong style="margin-top:6px;">${nums}</strong>
+        </div>
+      `;
+    }).join("");
+  }
 
-        return `
-          <div class="analysis-item">
-            <span class="label">${periodText}</span>
-            <strong>${dateText}</strong>
-            <strong style="margin-top:6px;">${nums}</strong>
-          </div>
-        `;
-      })
-      .join("");
+  function renderBacktestResults(results, mode) {
+    if (!els.backtestResultsList) return;
+
+    els.backtestResultsList.innerHTML = results.map((item, idx) => {
+      const predBalls = item.predicted.map((n) => `<span class="ball active">${pad2(n)}</span>`).join("");
+      const actualBalls = item.actual.map((n) => `<span class="ball">${pad2(n)}</span>`).join("");
+      return `
+        <div class="analysis-item">
+          <span class="label">${idx + 1}. 第${item.period}期｜${item.date}</span>
+          <strong style="margin-bottom:8px;">模式：${MODE_LABELS[mode] || mode}</strong>
+          <div class="balls-row" style="margin-top:8px;">${predBalls}</div>
+          <strong style="margin-top:10px;">預測：${formatNums(item.predicted)}</strong>
+          <div class="balls-row" style="margin-top:12px;">${actualBalls}</div>
+          <strong style="margin-top:10px;">實際：${formatNums(item.actual)}</strong>
+          <strong style="margin-top:10px;">命中：${item.hitCount} 顆</strong>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function runBacktest() {
+    const count = Number(els.backtestCount?.value || 20);
+    const mode = els.backtestMode?.value || "balanced";
+
+    const rows = getBacktestSourceRows().slice(0, count);
+    if (!rows.length) {
+      alert("目前沒有足夠的 recent50 資料可回測");
+      return;
+    }
+
+    const results = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      const actualRow = rows[i];
+      const historyRows = rows.slice(i + 1, i + 21).map((r) => uniqueSorted(r.numbers || []));
+      const history = historyRows.length ? historyRows : MOCK_HISTORY.slice(0, 20).map((r) => uniqueSorted(r));
+
+      const predicted = predictNumbers(mode, history);
+      const actual = uniqueSorted(actualRow.numbers || []);
+      const hitCount = compareHit(predicted, actual);
+
+      results.push({
+        period: actualRow.period || "",
+        date: actualRow.date || "",
+        predicted,
+        actual,
+        hitCount
+      });
+    }
+
+    const total = results.length;
+    const hitCounts = results.map((r) => r.hitCount);
+    const avg = total ? (hitCounts.reduce((a, b) => a + b, 0) / total).toFixed(1) : "0.0";
+    const max = total ? Math.max(...hitCounts) : 0;
+
+    const distribution = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    hitCounts.forEach((n) => {
+      distribution[n] = (distribution[n] || 0) + 1;
+    });
+
+    if (els.backtestAvgHit) els.backtestAvgHit.textContent = `${avg}顆`;
+    if (els.backtestMaxHit) els.backtestMaxHit.textContent = `${max}顆`;
+    if (els.backtestTotal) els.backtestTotal.textContent = `${total}期`;
+    if (els.backtestModeText) els.backtestModeText.textContent = MODE_LABELS[mode] || mode;
+
+    if (els.hitCount0) els.hitCount0.textContent = `${distribution[0] || 0}次`;
+    if (els.hitCount1) els.hitCount1.textContent = `${distribution[1] || 0}次`;
+    if (els.hitCount2) els.hitCount2.textContent = `${distribution[2] || 0}次`;
+    if (els.hitCount3) els.hitCount3.textContent = `${distribution[3] || 0}次`;
+    if (els.hitCount4) els.hitCount4.textContent = `${distribution[4] || 0}次`;
+    if (els.hitCount5) els.hitCount5.textContent = `${distribution[5] || 0}次`;
+
+    renderBacktestResults(results, mode);
+
+    alert(
+      `回測完成\n\n模式：${MODE_LABELS[mode] || mode}\n回測期數：${total}期\n平均命中：${avg}顆\n最高命中：${max}顆`
+    );
   }
 
   function switchPage(page) {
@@ -857,8 +836,7 @@
     const allPredictions = [];
 
     for (let i = 0; i < recommendCount; i++) {
-      const nums = predictNumbers(mode, history);
-      allPredictions.push(nums);
+      allPredictions.push(predictNumbers(mode, history));
     }
 
     const primary = allPredictions[0];
@@ -876,9 +854,7 @@
       hitCount
     });
 
-    if (els.historyCount) {
-      els.historyCount.textContent = `最近 ${periods} 期`;
-    }
+    if (els.historyCount) els.historyCount.textContent = `最近 ${periods} 期`;
 
     updateDashboard(primary, confidence, mode, history);
     renderPredictResults(allPredictions, mode, confidence);
@@ -892,19 +868,13 @@
     const balls = [...document.querySelectorAll("#recommendBalls1 .ball")]
       .map((el) => el.textContent?.trim())
       .filter(Boolean);
-
-    const text = balls.join(" ");
-
-    if (!text) {
-      alert("目前沒有可複製的號碼");
-      return;
-    }
+    if (!balls.length) return alert("目前沒有可複製的號碼");
 
     try {
-      await navigator.clipboard.writeText(text);
-      alert(`已複製：${text}`);
-    } catch (err) {
-      alert(`複製失敗，請手動複製：${text}`);
+      await navigator.clipboard.writeText(balls.join(" "));
+      alert(`已複製：${balls.join(" ")}`);
+    } catch {
+      alert(`複製失敗，請手動複製：${balls.join(" ")}`);
     }
   }
 
@@ -913,22 +883,18 @@
       .map((el) => el.textContent?.trim())
       .filter(Boolean)
       .map((v) => Number(v));
-
     saveFavoriteNumbers(balls);
   }
 
   function showRecent5() {
     const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
     const history = getRecentFiveDraws(latest);
-
-    const text = history
-      .map((draw, idx) => {
-        const nums = formatNums(draw.numbers || []);
-        const dateText = draw.date ? `｜${draw.date}` : "";
-        const periodText = draw.period ? `第${draw.period}期` : `參考第${idx + 1}筆`;
-        return `${idx + 1}. ${periodText}${dateText}｜${nums}`;
-      })
-      .join("\n");
+    const text = history.map((draw, idx) => {
+      const nums = formatNums(draw.numbers || []);
+      const dateText = draw.date ? `｜${draw.date}` : "";
+      const periodText = draw.period ? `第${draw.period}期` : `參考第${idx + 1}筆`;
+      return `${idx + 1}. ${periodText}${dateText}｜${nums}`;
+    }).join("\n");
 
     alert(`最近 5 期開獎\n\n${text}`);
   }
@@ -938,7 +904,6 @@
     const status = readJSON(STORAGE_KEYS.status, {
       ok: true,
       source: "local-cache",
-      total: 120,
       version: APP_VERSION
     });
 
@@ -950,7 +915,6 @@
       `最新號碼：${formatNums(latest.numbers || [])}\n` +
       `最後更新：${latest.updatedAt}\n` +
       `資料來源：${status.source || "local-cache"}\n` +
-      `資料筆數：${status.total || 120}\n` +
       `狀態：${status.ok ? "正常" : "異常"}`
     );
   }
@@ -968,10 +932,7 @@
 
   function showHitTrack() {
     const records = readJSON(STORAGE_KEYS.history, []);
-    if (!records.length) {
-      alert("目前還沒有命中追蹤資料");
-      return;
-    }
+    if (!records.length) return alert("目前還沒有命中追蹤資料");
 
     const recent = records.slice(-5);
     const text = recent
@@ -979,10 +940,7 @@
       .join("\n");
 
     const stats = calcHitStats(records);
-
-    alert(
-      `最近命中追蹤\n\n${text}\n\n平均：${stats.avg}\n最高：${stats.max}\n最佳模式：${stats.bestMode}`
-    );
+    alert(`最近命中追蹤\n\n${text}\n\n平均：${stats.avg}\n最高：${stats.max}\n最佳模式：${stats.bestMode}`);
   }
 
   async function reloadData() {
@@ -1006,9 +964,7 @@
 
   function bindNav() {
     els.navButtons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        switchPage(btn.dataset.page);
-      });
+      btn.addEventListener("click", () => switchPage(btn.dataset.page));
     });
   }
 
@@ -1022,18 +978,11 @@
     if (els.btnHitTrack) els.btnHitTrack.addEventListener("click", showHitTrack);
     if (els.btnHistoryRefresh) els.btnHistoryRefresh.addEventListener("click", showRecent5);
     if (els.btnRefreshFavorites) els.btnRefreshFavorites.addEventListener("click", renderFavoritesList);
+    if (els.btnRunBacktest) els.btnRunBacktest.addEventListener("click", runBacktest);
 
-    if (els.btnGoPredict) {
-      els.btnGoPredict.addEventListener("click", () => switchPage("predict"));
-    }
-
-    if (els.btnCopyAllPredict) {
-      els.btnCopyAllPredict.addEventListener("click", copyAllPredictions);
-    }
-
-    if (els.btnPredictSummary) {
-      els.btnPredictSummary.addEventListener("click", showPredictSummary);
-    }
+    if (els.btnGoPredict) els.btnGoPredict.addEventListener("click", () => switchPage("predict"));
+    if (els.btnCopyAllPredict) els.btnCopyAllPredict.addEventListener("click", copyAllPredictions);
+    if (els.btnPredictSummary) els.btnPredictSummary.addEventListener("click", showPredictSummary);
 
     if (els.btnClearFavorites) {
       els.btnClearFavorites.addEventListener("click", () => {
@@ -1050,20 +999,16 @@
       });
     }
 
-    if (els.btnReloadData) {
-      els.btnReloadData.addEventListener("click", reloadData);
-    }
+    if (els.btnReloadData) els.btnReloadData.addEventListener("click", reloadData);
 
     if (els.analysisPeriods) {
       els.analysisPeriods.addEventListener("change", saveUserSettings);
       els.analysisPeriods.addEventListener("input", saveUserSettings);
     }
-
     if (els.recommendCount) {
       els.recommendCount.addEventListener("change", saveUserSettings);
       els.recommendCount.addEventListener("input", saveUserSettings);
     }
-
     if (els.predictMode) {
       els.predictMode.addEventListener("change", saveUserSettings);
       els.predictMode.addEventListener("input", saveUserSettings);
@@ -1088,9 +1033,7 @@
       renderFavoritesList();
 
       const periods = Number(els.analysisPeriods?.value || 120);
-      if (els.historyCount) {
-        els.historyCount.textContent = `最近 ${periods} 期`;
-      }
+      if (els.historyCount) els.historyCount.textContent = `最近 ${periods} 期`;
 
       const currentMode = els.predictMode?.value || "balanced";
       const history = sampleHistory(periods, latest.numbers);
@@ -1103,6 +1046,16 @@
       if (els.appVersionText) els.appVersionText.textContent = APP_VERSION;
       if (els.dataSourceText) els.dataSourceText.textContent = latest.source || "latest.json";
       if (els.currentModeText) els.currentModeText.textContent = MODE_LABELS[currentMode] || "均衡型";
+
+      if (els.backtestModeText) els.backtestModeText.textContent = "均衡型";
+      if (els.backtestResultsList) {
+        els.backtestResultsList.innerHTML = `
+          <div class="analysis-item">
+            <span class="label">尚未開始回測</span>
+            <strong>請選擇期數與模式後按「開始回測」</strong>
+          </div>
+        `;
+      }
 
       switchPage("home");
     } catch (err) {
