@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>今彩539 AI 預測系統 V3.5</title>
+  <title>今彩539 AI 預測系統 V3.6</title>
   <meta name="theme-color" content="#0f172a" />
-  <meta name="description" content="今彩539 AI 預測系統｜拖號查詢完整版" />
+  <meta name="description" content="今彩539 AI 預測系統｜最佳模式提示＋盈虧模擬版" />
 
-  <link rel="manifest" href="manifest.json?v=44" />
+  <link rel="manifest" href="manifest.json?v=45" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="icon" type="image/png" href="favicon.png" />
   <link rel="stylesheet" href="style.css" />
@@ -19,14 +19,13 @@
         <div class="brand-icon">539</div>
         <div class="brand-text">
           <h1>今彩539 AI 預測系統</h1>
-          <p>V3.5｜資料正常 <span class="status-dot">●</span></p>
+          <p>V3.6｜資料正常 <span class="status-dot">●</span></p>
           <small>最後更新：<span id="lastUpdateText">2026-03-31 20:05</span></small>
         </div>
       </div>
     </header>
 
     <main class="main-content">
-      <!-- 首頁 -->
       <section class="page-section" id="page-home">
         <section class="card">
           <div class="card-header">
@@ -110,7 +109,6 @@
         </section>
       </section>
 
-      <!-- 預測 -->
       <section class="page-section hidden" id="page-predict">
         <section class="card">
           <div class="card-header">
@@ -190,7 +188,6 @@
         </section>
       </section>
 
-      <!-- 歷史 -->
       <section class="page-section hidden" id="page-history">
         <section class="card">
           <div class="card-header">
@@ -293,7 +290,6 @@
         </section>
       </section>
 
-      <!-- 收藏 -->
       <section class="page-section hidden" id="page-favorites">
         <section class="card">
           <div class="card-header">
@@ -304,7 +300,6 @@
         </section>
       </section>
 
-      <!-- 回測 -->
       <section class="page-section hidden" id="page-backtest">
         <section class="card">
           <div class="card-header">
@@ -332,10 +327,36 @@
                 <option value="drag">拖號型</option>
               </select>
             </label>
+
+            <label class="field">
+              <span>每期投注金額</span>
+              <select id="betAmount">
+                <option value="50" selected>50元</option>
+                <option value="100">100元</option>
+                <option value="200">200元</option>
+                <option value="500">500元</option>
+              </select>
+            </label>
           </div>
 
           <div class="action-row" style="margin-top:12px;">
             <button class="primary-btn" id="btnRunBacktest">開始回測</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>最佳模式提示</h2>
+          </div>
+          <div class="analysis-list">
+            <div class="analysis-item">
+              <span class="label">最佳模式</span>
+              <strong id="bestBacktestMode">尚未分析</strong>
+            </div>
+            <div class="analysis-item">
+              <span class="label">建議</span>
+              <strong id="bestBacktestSuggestion">請先執行回測</strong>
+            </div>
           </div>
         </section>
 
@@ -365,6 +386,30 @@
 
         <section class="card">
           <div class="card-header">
+            <h2>盈虧模擬</h2>
+          </div>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="label">總投注</span>
+              <strong id="simTotalBet">0元</strong>
+            </div>
+            <div class="info-item">
+              <span class="label">總回收</span>
+              <strong id="simTotalReturn">0元</strong>
+            </div>
+            <div class="info-item">
+              <span class="label">淨損益</span>
+              <strong id="simNetProfit">0元</strong>
+            </div>
+            <div class="info-item">
+              <span class="label">每期金額</span>
+              <strong id="simBetAmountText">50元</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
             <h2>命中分佈</h2>
           </div>
           <div class="analysis-list">
@@ -385,7 +430,6 @@
         </section>
       </section>
 
-      <!-- 設定 -->
       <section class="page-section hidden" id="page-settings">
         <section class="card">
           <div class="card-header">
@@ -394,7 +438,7 @@
           <div class="analysis-list">
             <div class="analysis-item">
               <span class="label">系統版本</span>
-              <strong id="appVersionText">V3.5｜今彩539 專用版｜拖號查詢完整版</strong>
+              <strong id="appVersionText">V3.6｜今彩539 專用版｜最佳模式提示＋盈虧模擬版</strong>
             </div>
             <div class="analysis-item">
               <span class="label">資料來源</span>
@@ -425,11 +469,11 @@
     </nav>
   </div>
 
-  <script src="app.js?v=44"></script>
+  <script src="app.js?v=45"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./service-worker.js?v=44").catch(console.error);
+        navigator.serviceWorker.register("./service-worker.js?v=45").catch(console.error);
       });
     }
   </script>
