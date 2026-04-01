@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>今彩539 AI 預測系統 V3.1</title>
+  <title>今彩539 AI 預測系統 V3.5</title>
   <meta name="theme-color" content="#0f172a" />
-  <meta name="description" content="今彩539 AI 預測系統｜回測命中率頁版" />
+  <meta name="description" content="今彩539 AI 預測系統｜拖號查詢完整版" />
 
-  <link rel="manifest" href="manifest.json?v=33" />
+  <link rel="manifest" href="manifest.json?v=44" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="icon" type="image/png" href="favicon.png" />
   <link rel="stylesheet" href="style.css" />
@@ -19,7 +19,7 @@
         <div class="brand-icon">539</div>
         <div class="brand-text">
           <h1>今彩539 AI 預測系統</h1>
-          <p>V3.1｜資料正常 <span class="status-dot">●</span></p>
+          <p>V3.5｜資料正常 <span class="status-dot">●</span></p>
           <small>最後更新：<span id="lastUpdateText">2026-03-31 20:05</span></small>
         </div>
       </div>
@@ -202,34 +202,73 @@
 
         <section class="card">
           <div class="card-header">
-            <section class="card">
-  <div class="card-header">
-    <h2>數據視覺化分析</h2>
-    <button class="text-btn" id="btnRefreshVisual">重新分析</button>
-  </div>
+            <h2>數據視覺化分析</h2>
+            <button class="text-btn" id="btnRefreshVisual">重新分析</button>
+          </div>
 
-  <div class="analysis-list">
-    <div class="analysis-item">
-      <span class="label">最近號碼熱度（前10強）</span>
-      <div id="heatmapList" class="viz-list"></div>
-    </div>
+          <div class="analysis-list">
+            <div class="analysis-item">
+              <span class="label">最近號碼熱度（前10強）</span>
+              <div id="heatmapList"></div>
+            </div>
 
-    <div class="analysis-item">
-      <span class="label">尾數分佈</span>
-      <div id="tailChartList" class="viz-list"></div>
-    </div>
+            <div class="analysis-item">
+              <span class="label">尾數分佈</span>
+              <div id="tailChartList"></div>
+            </div>
 
-    <div class="analysis-item">
-      <span class="label">奇偶比</span>
-      <div id="oddEvenChart" class="viz-list"></div>
-    </div>
+            <div class="analysis-item">
+              <span class="label">奇偶比</span>
+              <div id="oddEvenChart"></div>
+            </div>
 
-    <div class="analysis-item">
-      <span class="label">大小比（01-19 / 20-39）</span>
-      <div id="bigSmallChart" class="viz-list"></div>
-    </div>
-  </div>
-</section>
+            <div class="analysis-item">
+              <span class="label">大小比（01-19 / 20-39）</span>
+              <div id="bigSmallChart"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h2>拖號查詢工具</h2>
+            <button class="text-btn" id="btnUseLatestDrag">帶入最新號碼</button>
+          </div>
+
+          <div class="form-grid">
+            <label class="field">
+              <span>查詢號碼</span>
+              <input id="dragQueryNumber" type="number" min="1" max="39" placeholder="輸入 01～39" />
+            </label>
+
+            <label class="field">
+              <span>查詢範圍</span>
+              <select id="dragQueryScope">
+                <option value="20">最近20期</option>
+                <option value="30">最近30期</option>
+                <option value="50" selected>最近50期</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="action-row" style="margin-top:12px;">
+            <button class="primary-btn" id="btnRunDragQuery">開始查詢</button>
+          </div>
+
+          <div class="analysis-list" style="margin-top:16px;">
+            <div class="analysis-item">
+              <span class="label">查詢摘要</span>
+              <strong id="dragQuerySummary">尚未查詢</strong>
+            </div>
+            <div class="analysis-item">
+              <span class="label">拖號 Top 5</span>
+              <div id="dragQueryResults"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
             <h2>分析摘要</h2>
             <button class="text-btn" id="btnFullAnalysis">看完整分析</button>
           </div>
@@ -355,7 +394,7 @@
           <div class="analysis-list">
             <div class="analysis-item">
               <span class="label">系統版本</span>
-              <strong id="appVersionText">V3.1｜今彩539 專用版｜回測命中率頁版</strong>
+              <strong id="appVersionText">V3.5｜今彩539 專用版｜拖號查詢完整版</strong>
             </div>
             <div class="analysis-item">
               <span class="label">資料來源</span>
@@ -386,11 +425,11 @@
     </nav>
   </div>
 
-  <script src="app.js?v=43"></script>
+  <script src="app.js?v=44"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./service-worker.js?v=33").catch(console.error);
+        navigator.serviceWorker.register("./service-worker.js?v=44").catch(console.error);
       });
     }
   </script>
