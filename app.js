@@ -678,7 +678,7 @@
     if (!els.predictResultsList) return;
 
     els.predictResultsList.innerHTML = allPredictions.map((nums, idx) => {
-      const ballsHtml = nums.map((n) => `<span class="ball active">${pad2(n)}</span>`).join("");
+      const ballsHtml = nums.map((n) => `<span class="ball ${getBallRangeClass(n)} active">${pad2(n)}</span>`).join("");
       return `
         <div class="analysis-item">
           <span class="label">推薦${idx + 1}</span>
