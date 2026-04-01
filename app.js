@@ -1147,7 +1147,7 @@ function renderVisualAnalysis() {
       renderLatest(latest);
       renderRecent5List();
       renderFavoritesList();
-
+      renderVisualAnalysis();
       const periods = Number(els.analysisPeriods?.value || 120);
       if (els.historyCount) els.historyCount.textContent = `最近 ${periods} 期`;
 
