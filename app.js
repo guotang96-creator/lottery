@@ -1,12 +1,12 @@
 (() => {
-  const APP_VERSION = "V3.1｜今彩539 專用版｜回測命中率頁版";
+  const APP_VERSION = "V3.2｜今彩539 專用版｜視覺化分析完整版";
 
   const STORAGE_KEYS = {
-    favorites: "jincai539_favorites_v31",
-    history: "jincai539_predict_history_v31",
-    latest: "jincai539_latest_result_v31",
-    status: "jincai539_data_status_v31",
-    settings: "jincai539_user_settings_v31"
+    favorites: "jincai539_favorites_v32",
+    history: "jincai539_predict_history_v32",
+    latest: "jincai539_latest_result_v32",
+    status: "jincai539_data_status_v32",
+    settings: "jincai539_user_settings_v32"
   };
 
   const JSON_CANDIDATES = [
@@ -66,11 +66,6 @@
   const $ = (selector) => document.querySelector(selector);
 
   const els = {
-    btnRefreshVisual: $("#btnRefreshVisual"),
-    heatmapList: $("#heatmapList"),
-    tailChartList: $("#tailChartList"),
-    oddEvenChart: $("#oddEvenChart"),
-    bigSmallChart: $("#bigSmallChart"),
     lastUpdateText: $("#lastUpdateText"),
     latestPeriod: $("#latestPeriod"),
     latestDate: $("#latestDate"),
@@ -109,6 +104,7 @@
     btnHitTrack: $("#btnHitTrack"),
     btnHistoryRefresh: $("#btnHistoryRefresh"),
     btnRefreshFavorites: $("#btnRefreshFavorites"),
+    btnRefreshVisual: $("#btnRefreshVisual"),
 
     appVersionText: $("#appVersionText"),
     dataSourceText: $("#dataSourceText"),
@@ -121,6 +117,11 @@
     recent5List: $("#recent5List"),
     favoritesList: $("#favoritesList"),
     predictResultsList: $("#predictResultsList"),
+
+    heatmapList: $("#heatmapList"),
+    tailChartList: $("#tailChartList"),
+    oddEvenChart: $("#oddEvenChart"),
+    bigSmallChart: $("#bigSmallChart"),
 
     backtestCount: $("#backtestCount"),
     backtestMode: $("#backtestMode"),
@@ -219,9 +220,15 @@
     return rows.map((item) => {
       const period = item.period || item.drawTerm || item.issue || item.term || item.drawNo || "";
       const date = normalizeDateOnly(item.lotteryDate || item.drawDate || item.dDate || item.date || "");
-      const numbers = toIntArray(item.drawNumberSize || item.drawNumbers || item.numbers || item.orderNumbers || item.num || []);
+      const numbers = toIntArray(
+        item.drawNumberSize || item.drawNumbers || item.numbers || item.orderNumbers || item.num || []
+      );
       if (!period || numbers.length < 5) return null;
-      return { period: String(period), date, numbers: uniqueSorted(numbers.slice(0, 5)) };
+      return {
+        period: String(period),
+        date,
+        numbers: uniqueSorted(numbers.slice(0, 5))
+      };
     }).filter(Boolean);
   }
 
@@ -237,8 +244,11 @@
       if (!item || typeof item !== "object") continue;
 
       const period = item.period || item.drawTerm || item.issue || item.term || item.drawNo || "";
-      const date = normalizeDateOnly(item.lotteryDate || item.drawDate || item.dDate || item.date || "") || DEFAULT_LATEST.date;
-      const numbers = toIntArray(item.drawNumberSize || item.drawNumbers || item.numbers || item.orderNumbers || item.num || []);
+      const date =
+        normalizeDateOnly(item.lotteryDate || item.drawDate || item.dDate || item.date || "") || DEFAULT_LATEST.date;
+      const numbers = toIntArray(
+        item.drawNumberSize || item.drawNumbers || item.numbers || item.orderNumbers || item.num || []
+      );
 
       if (period && numbers.length >= 5) {
         return {
@@ -247,7 +257,9 @@
           numbers: uniqueSorted(numbers.slice(0, 5)),
           recent5: normalizeRecentRows(raw.recent5 || raw.content?.recent5 || []),
           recent50: normalizeRecentRows(raw.recent50 || raw.content?.recent50 || raw.recent5 || []),
-          updatedAt: normalizeDateText(raw.updatedAt || raw.generatedAt || item.updatedAt || new Date().toISOString()),
+          updatedAt: normalizeDateText(
+            raw.updatedAt || raw.generatedAt || item.updatedAt || new Date().toISOString()
+          ),
           source: sourceUrl || "remote-json"
         };
       }
@@ -281,6 +293,7 @@
 
     const local = readJSON(STORAGE_KEYS.latest, null);
     if (local) return local;
+
     writeJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
     return DEFAULT_LATEST;
   }
@@ -308,11 +321,12 @@
 
   function sampleHistory(periods, latestNumbers = null) {
     const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
-    const recentReal = Array.isArray(latest?.recent50) && latest.recent50.length
-      ? latest.recent50.map((item) => uniqueSorted(item.numbers || []))
-      : Array.isArray(latest?.recent5)
-        ? latest.recent5.map((item) => uniqueSorted(item.numbers || []))
-        : [];
+    const recentReal =
+      Array.isArray(latest?.recent50) && latest.recent50.length
+        ? latest.recent50.map((item) => uniqueSorted(item.numbers || []))
+        : Array.isArray(latest?.recent5)
+          ? latest.recent5.map((item) => uniqueSorted(item.numbers || []))
+          : [];
 
     const size = Math.min(Number(periods) || 120, 500);
     const source = [];
@@ -479,117 +493,7 @@
       tailText: tails.slice(0, 2).map(([tail]) => `${tail}尾`).join("、")
     };
   }
-function getVisualHistorySource() {
-  const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
 
-  if (Array.isArray(latest?.recent50) && latest.recent50.length) {
-    return latest.recent50.map((item) => uniqueSorted(item.numbers || []));
-  }
-
-  if (Array.isArray(latest?.recent5) && latest.recent5.length) {
-    return latest.recent5.map((item) => uniqueSorted(item.numbers || []));
-  }
-
-  return sampleHistory(50, latest.numbers);
-}
-
-function renderBarList(container, rows, maxValue) {
-  if (!container) return;
-
-  container.innerHTML = rows.map((row) => {
-    const width = maxValue > 0 ? Math.max(6, (row.value / maxValue) * 100) : 0;
-    return `
-      <div class="viz-row">
-        <div class="viz-label">${row.label}</div>
-        <div class="viz-bar-wrap">
-          <div class="viz-bar" style="width:${width}%"></div>
-        </div>
-        <div class="viz-value">${row.value}</div>
-      </div>
-    `;
-  }).join("");
-}
-
-function renderHeatmap(history) {
-  if (!els.heatmapList) return;
-
-  const freq = getFrequency(history);
-  const top10 = [...freq.entries()]
-    .sort((a, b) => b[1] - a[1] || a[0] - b[0])
-    .slice(0, 10)
-    .map(([num, count]) => ({
-      label: pad2(num),
-      value: count
-    }));
-
-  const maxValue = top10.length ? top10[0].value : 0;
-  renderBarList(els.heatmapList, top10, maxValue);
-}
-
-function renderTailChart(history) {
-  if (!els.tailChartList) return;
-
-  const tails = getTailGroups(history)
-    .map(([tail, count]) => ({
-      label: `${tail}尾`,
-      value: count
-    }));
-
-  const maxValue = tails.length ? tails[0].value : 0;
-  renderBarList(els.tailChartList, tails, maxValue);
-}
-
-function renderOddEvenChart(history) {
-  if (!els.oddEvenChart) return;
-
-  let odd = 0;
-  let even = 0;
-
-  history.forEach((draw) => {
-    draw.forEach((num) => {
-      if (num % 2 === 0) even += 1;
-      else odd += 1;
-    });
-  });
-
-  const rows = [
-    { label: "奇數", value: odd },
-    { label: "偶數", value: even }
-  ];
-
-  const maxValue = Math.max(odd, even, 1);
-  renderBarList(els.oddEvenChart, rows, maxValue);
-}
-
-function renderBigSmallChart(history) {
-  if (!els.bigSmallChart) return;
-
-  let small = 0; // 01-19
-  let big = 0;   // 20-39
-
-  history.forEach((draw) => {
-    draw.forEach((num) => {
-      if (num >= 1 && num <= 19) small += 1;
-      else if (num >= 20 && num <= 39) big += 1;
-    });
-  });
-
-  const rows = [
-    { label: "小區", value: small },
-    { label: "大區", value: big }
-  ];
-
-  const maxValue = Math.max(small, big, 1);
-  renderBarList(els.bigSmallChart, rows, maxValue);
-}
-
-function renderVisualAnalysis() {
-  const history = getVisualHistorySource();
-  renderHeatmap(history);
-  renderTailChart(history);
-  renderOddEvenChart(history);
-  renderBigSmallChart(history);
-}
   function calcHitStats(records) {
     if (!records.length) return { avg: "0顆", max: "0顆", bestMode: "均衡型" };
 
@@ -686,7 +590,6 @@ function renderVisualAnalysis() {
     if (els.coldNums) els.coldNums.textContent = summary.coldText;
     if (els.dragNums) els.dragNums.textContent = summary.dragText;
     if (els.tailNums) els.tailNums.textContent = summary.tailText;
-
     if (els.historyHotNums) els.historyHotNums.textContent = summary.hotText;
     if (els.historyColdNums) els.historyColdNums.textContent = summary.coldText;
     if (els.historyDragNums) els.historyDragNums.textContent = summary.dragText;
@@ -799,6 +702,115 @@ function renderVisualAnalysis() {
     });
   }
 
+  function getVisualHistorySource() {
+    const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
+
+    if (Array.isArray(latest?.recent50) && latest.recent50.length) {
+      return latest.recent50.map((item) => uniqueSorted(item.numbers || []));
+    }
+
+    if (Array.isArray(latest?.recent5) && latest.recent5.length) {
+      return latest.recent5.map((item) => uniqueSorted(item.numbers || []));
+    }
+
+    return sampleHistory(50, latest.numbers);
+  }
+
+  function renderBarList(container, rows, maxValue) {
+    if (!container) return;
+
+    container.innerHTML = rows.map((row) => {
+      const width = maxValue > 0 ? Math.max(8, (row.value / maxValue) * 100) : 0;
+      return `
+        <div class="viz-row">
+          <div class="viz-label">${row.label}</div>
+          <div class="viz-bar-wrap">
+            <div class="viz-bar" style="width:${width}%"></div>
+          </div>
+          <div class="viz-value">${row.value}</div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function renderHeatmap(history) {
+    if (!els.heatmapList) return;
+    const freq = getFrequency(history);
+    const top10 = [...freq.entries()]
+      .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+      .slice(0, 10)
+      .map(([num, count]) => ({
+        label: pad2(num),
+        value: count
+      }));
+    const maxValue = top10.length ? top10[0].value : 1;
+    renderBarList(els.heatmapList, top10, maxValue);
+  }
+
+  function renderTailChart(history) {
+    if (!els.tailChartList) return;
+    const tails = getTailGroups(history).map(([tail, count]) => ({
+      label: `${tail}尾`,
+      value: count
+    }));
+    const maxValue = tails.length ? tails[0].value : 1;
+    renderBarList(els.tailChartList, tails, maxValue);
+  }
+
+  function renderOddEvenChart(history) {
+    if (!els.oddEvenChart) return;
+
+    let odd = 0;
+    let even = 0;
+
+    history.forEach((draw) => {
+      draw.forEach((num) => {
+        if (num % 2 === 0) even += 1;
+        else odd += 1;
+      });
+    });
+
+    renderBarList(
+      els.oddEvenChart,
+      [
+        { label: "奇數", value: odd },
+        { label: "偶數", value: even }
+      ],
+      Math.max(odd, even, 1)
+    );
+  }
+
+  function renderBigSmallChart(history) {
+    if (!els.bigSmallChart) return;
+
+    let small = 0;
+    let big = 0;
+
+    history.forEach((draw) => {
+      draw.forEach((num) => {
+        if (num >= 1 && num <= 19) small += 1;
+        else if (num >= 20 && num <= 39) big += 1;
+      });
+    });
+
+    renderBarList(
+      els.bigSmallChart,
+      [
+        { label: "小區", value: small },
+        { label: "大區", value: big }
+      ],
+      Math.max(small, big, 1)
+    );
+  }
+
+  function renderVisualAnalysis() {
+    const history = getVisualHistorySource();
+    renderHeatmap(history);
+    renderTailChart(history);
+    renderOddEvenChart(history);
+    renderBigSmallChart(history);
+  }
+
   async function copyAllPredictions() {
     const cards = [...document.querySelectorAll("#predictResultsList .analysis-item")];
     if (!cards.length) {
@@ -807,7 +819,10 @@ function renderVisualAnalysis() {
     }
 
     const text = cards.map((card, idx) => {
-      const balls = [...card.querySelectorAll(".ball")].map((el) => el.textContent?.trim()).filter(Boolean).join(" ");
+      const balls = [...card.querySelectorAll(".ball")]
+        .map((el) => el.textContent?.trim())
+        .filter(Boolean)
+        .join(" ");
       return `推薦${idx + 1}：${balls}`;
     }).join("\n");
 
@@ -884,7 +899,6 @@ function renderVisualAnalysis() {
       const actualRow = rows[i];
       const historyRows = rows.slice(i + 1, i + 21).map((r) => uniqueSorted(r.numbers || []));
       const history = historyRows.length ? historyRows : MOCK_HISTORY.slice(0, 20).map((r) => uniqueSorted(r));
-
       const predicted = predictNumbers(mode, history);
       const actual = uniqueSorted(actualRow.numbers || []);
       const hitCount = compareHit(predicted, actual);
@@ -1063,6 +1077,7 @@ function renderVisualAnalysis() {
     renderLatest(latest);
     renderRecent5List();
     renderFavoritesList();
+    renderVisualAnalysis();
 
     const periods = Number(els.analysisPeriods?.value || 120);
     const currentMode = els.predictMode?.value || "balanced";
@@ -1084,7 +1099,6 @@ function renderVisualAnalysis() {
   }
 
   function bindActions() {
-    if (els.btnRefreshVisual) els.btnRefreshVisual.addEventListener("click", renderVisualAnalysis);
     if (els.btnPredict) els.btnPredict.addEventListener("click", generatePrediction);
     if (els.btnCopy) els.btnCopy.addEventListener("click", copyPrediction);
     if (els.btnSave) els.btnSave.addEventListener("click", saveFavorite);
@@ -1094,6 +1108,7 @@ function renderVisualAnalysis() {
     if (els.btnHitTrack) els.btnHitTrack.addEventListener("click", showHitTrack);
     if (els.btnHistoryRefresh) els.btnHistoryRefresh.addEventListener("click", showRecent5);
     if (els.btnRefreshFavorites) els.btnRefreshFavorites.addEventListener("click", renderFavoritesList);
+    if (els.btnRefreshVisual) els.btnRefreshVisual.addEventListener("click", renderVisualAnalysis);
     if (els.btnRunBacktest) els.btnRunBacktest.addEventListener("click", runBacktest);
 
     if (els.btnGoPredict) els.btnGoPredict.addEventListener("click", () => switchPage("predict"));
@@ -1148,6 +1163,7 @@ function renderVisualAnalysis() {
       renderRecent5List();
       renderFavoritesList();
       renderVisualAnalysis();
+
       const periods = Number(els.analysisPeriods?.value || 120);
       if (els.historyCount) els.historyCount.textContent = `最近 ${periods} 期`;
 
