@@ -202,6 +202,34 @@
 
         <section class="card">
           <div class="card-header">
+            <section class="card">
+  <div class="card-header">
+    <h2>數據視覺化分析</h2>
+    <button class="text-btn" id="btnRefreshVisual">重新分析</button>
+  </div>
+
+  <div class="analysis-list">
+    <div class="analysis-item">
+      <span class="label">最近號碼熱度（前10強）</span>
+      <div id="heatmapList" class="viz-list"></div>
+    </div>
+
+    <div class="analysis-item">
+      <span class="label">尾數分佈</span>
+      <div id="tailChartList" class="viz-list"></div>
+    </div>
+
+    <div class="analysis-item">
+      <span class="label">奇偶比</span>
+      <div id="oddEvenChart" class="viz-list"></div>
+    </div>
+
+    <div class="analysis-item">
+      <span class="label">大小比（01-19 / 20-39）</span>
+      <div id="bigSmallChart" class="viz-list"></div>
+    </div>
+  </div>
+</section>
             <h2>分析摘要</h2>
             <button class="text-btn" id="btnFullAnalysis">看完整分析</button>
           </div>
