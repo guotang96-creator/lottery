@@ -1,12 +1,12 @@
 (() => {
-  const APP_VERSION = "V2.9｜今彩539 專用版｜單組操作完整版";
+  const APP_VERSION = "V3.0｜今彩539 專用版｜收藏頁版";
 
   const STORAGE_KEYS = {
-    favorites: "jincai539_favorites_v29",
-    history: "jincai539_predict_history_v29",
-    latest: "jincai539_latest_result_v29",
-    status: "jincai539_data_status_v29",
-    settings: "jincai539_user_settings_v29"
+    favorites: "jincai539_favorites_v30",
+    history: "jincai539_predict_history_v30",
+    latest: "jincai539_latest_result_v30",
+    status: "jincai539_data_status_v30",
+    settings: "jincai539_user_settings_v30"
   };
 
   const JSON_CANDIDATES = [
@@ -102,6 +102,7 @@
     btnFullAnalysis: $("#btnFullAnalysis"),
     btnHitTrack: $("#btnHitTrack"),
     btnHistoryRefresh: $("#btnHistoryRefresh"),
+    btnRefreshFavorites: $("#btnRefreshFavorites"),
 
     appVersionText: $("#appVersionText"),
     dataSourceText: $("#dataSourceText"),
@@ -112,6 +113,7 @@
     btnReloadData: $("#btnReloadData"),
 
     recent5List: $("#recent5List"),
+    favoritesList: $("#favoritesList"),
     predictResultsList: $("#predictResultsList"),
 
     navButtons: document.querySelectorAll(".nav-btn"),
@@ -119,6 +121,7 @@
       home: $("#page-home"),
       predict: $("#page-predict"),
       history: $("#page-history"),
+      favorites: $("#page-favorites"),
       settings: $("#page-settings")
     }
   };
@@ -224,7 +227,6 @@
     if (!raw || typeof raw !== "object") return null;
 
     const candidates = [];
-
     if (raw.content?.daily539) candidates.push(raw.content.daily539);
     if (raw.daily539) candidates.push(raw.daily539);
     if (raw.content?.latest?.daily539) candidates.push(raw.content.latest.daily539);
@@ -603,6 +605,7 @@
 
     oldFavorites.unshift(newItem);
     writeJSON(STORAGE_KEYS.favorites, oldFavorites.slice(0, 100));
+    renderFavoritesList();
     alert(`已收藏：${balls.join(" ")}`);
   }
 
@@ -619,6 +622,14 @@
     } catch (err) {
       alert(`複製失敗，請手動複製：${text}`);
     }
+  }
+
+  function deleteFavorite(id) {
+    const oldFavorites = readJSON(STORAGE_KEYS.favorites, []);
+    const filtered = oldFavorites.filter((item) => item.id !== id);
+    writeJSON(STORAGE_KEYS.favorites, filtered);
+    renderFavoritesList();
+    alert("已刪除這組收藏");
   }
 
   function getModeMeta(mode) {
@@ -704,6 +715,58 @@
         const idx = Number(btn.dataset.saveIndex);
         saveFavoriteNumbers(allPredictions[idx] || []);
       });
+    });
+  }
+
+  function renderFavoritesList() {
+    if (!els.favoritesList) return;
+
+    const favorites = readJSON(STORAGE_KEYS.favorites, []);
+    if (!favorites.length) {
+      els.favoritesList.innerHTML = `
+        <div class="analysis-item">
+          <span class="label">目前尚無收藏</span>
+          <strong>你可以在預測頁點「收藏這組」</strong>
+        </div>
+      `;
+      return;
+    }
+
+    els.favoritesList.innerHTML = favorites
+      .map((item, idx) => {
+        const numbers = (item.numbers || []).map((n) => Number(n));
+        const ballsHtml = numbers.map((n) => `<span class="ball active">${pad2(n)}</span>`).join("");
+        const timeText = normalizeDateText(item.createdAt || "");
+
+        return `
+          <div class="analysis-item">
+            <span class="label">收藏 ${idx + 1}</span>
+            <div class="balls-row" style="margin-top:8px;">${ballsHtml}</div>
+            <strong style="margin-top:10px; display:block;">號碼：${(item.numbers || []).join(" ")}</strong>
+            <strong style="margin-top:6px; display:block;">收藏時間：${timeText}</strong>
+            <div class="action-row" style="margin-top:12px;">
+              <button class="secondary-btn" data-fav-copy="${item.id}">複製</button>
+              <button class="secondary-btn" data-fav-delete="${item.id}">刪除</button>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+
+    favorites.forEach((item) => {
+      const copyBtn = els.favoritesList.querySelector(`[data-fav-copy="${item.id}"]`);
+      const deleteBtn = els.favoritesList.querySelector(`[data-fav-delete="${item.id}"]`);
+
+      if (copyBtn) {
+        copyBtn.addEventListener("click", async () => {
+          const nums = (item.numbers || []).map((n) => Number(n));
+          await copyNumbers(nums);
+        });
+      }
+
+      if (deleteBtn) {
+        deleteBtn.addEventListener("click", () => deleteFavorite(item.id));
+      }
     });
   }
 
@@ -900,7 +963,6 @@
     const sorted = [...freq.entries()].sort((a, b) => b[1] - a[1]);
 
     const top10 = sorted.slice(0, 10).map(([n, c]) => `${pad2(n)}（${c}次）`).join("\n");
-
     alert(`完整分析\n\n最近 ${periods} 期熱門號 Top 10：\n${top10}`);
   }
 
@@ -927,6 +989,7 @@
     const latest = await loadLatestFromCandidates();
     renderLatest(latest);
     renderRecent5List();
+    renderFavoritesList();
 
     const periods = Number(els.analysisPeriods?.value || 120);
     const currentMode = els.predictMode?.value || "balanced";
@@ -958,6 +1021,7 @@
     if (els.btnFullAnalysis) els.btnFullAnalysis.addEventListener("click", showFullAnalysis);
     if (els.btnHitTrack) els.btnHitTrack.addEventListener("click", showHitTrack);
     if (els.btnHistoryRefresh) els.btnHistoryRefresh.addEventListener("click", showRecent5);
+    if (els.btnRefreshFavorites) els.btnRefreshFavorites.addEventListener("click", renderFavoritesList);
 
     if (els.btnGoPredict) {
       els.btnGoPredict.addEventListener("click", () => switchPage("predict"));
@@ -974,6 +1038,7 @@
     if (els.btnClearFavorites) {
       els.btnClearFavorites.addEventListener("click", () => {
         localStorage.removeItem(STORAGE_KEYS.favorites);
+        renderFavoritesList();
         alert("收藏已清除");
       });
     }
@@ -1007,9 +1072,7 @@
     window.addEventListener("pagehide", saveUserSettings);
     window.addEventListener("beforeunload", saveUserSettings);
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "hidden") {
-        saveUserSettings();
-      }
+      if (document.visibilityState === "hidden") saveUserSettings();
     });
   }
 
@@ -1022,6 +1085,7 @@
       const latest = await loadLatestFromCandidates();
       renderLatest(latest);
       renderRecent5List();
+      renderFavoritesList();
 
       const periods = Number(els.analysisPeriods?.value || 120);
       if (els.historyCount) {
