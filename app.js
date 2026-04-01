@@ -1084,6 +1084,7 @@ function renderVisualAnalysis() {
   }
 
   function bindActions() {
+    if (els.btnRefreshVisual) els.btnRefreshVisual.addEventListener("click", renderVisualAnalysis);
     if (els.btnPredict) els.btnPredict.addEventListener("click", generatePrediction);
     if (els.btnCopy) els.btnCopy.addEventListener("click", copyPrediction);
     if (els.btnSave) els.btnSave.addEventListener("click", saveFavorite);
