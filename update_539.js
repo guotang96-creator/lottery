@@ -6,6 +6,11 @@ function getMonthText(date = new Date()) {
   return `${y}-${m}`;
 }
 
+function getPreviousMonthText(date = new Date()) {
+  const d = new Date(date.getFullYear(), date.getMonth() - 1, 1);
+  return getMonthText(d);
+}
+
 function normalizeRow(row) {
   return {
     period: String(row.period || ""),
@@ -14,8 +19,7 @@ function normalizeRow(row) {
   };
 }
 
-async function main() {
-  const month = getMonthText();
+async function fetch539ByMonth(month) {
   const url = `https://api.taiwanlottery.com/TLCAPIWeB/Lottery/Daily539Result?period&month=${month}&endMonth=${month}&pageNum=1&pageSize=50`;
 
   const res = await fetch(url, {
@@ -25,14 +29,37 @@ async function main() {
   });
 
   if (!res.ok) {
-    throw new Error(`HTTP ${res.status}`);
+    throw new Error(`HTTP ${res.status}（${month}）`);
   }
 
   const data = await res.json();
   const rows = data?.content?.daily539Res || [];
 
+  return rows;
+}
+
+async function main() {
+  const now = new Date();
+  const currentMonth = getMonthText(now);
+  const previousMonth = getPreviousMonthText(now);
+
+  let rows = [];
+  let usedMonth = currentMonth;
+
+  try {
+    rows = await fetch539ByMonth(currentMonth);
+  } catch (err) {
+    console.error(`抓取當月失敗：${currentMonth}`, err);
+  }
+
   if (!rows.length) {
-    throw new Error("找不到 539 資料");
+    console.log(`當月 ${currentMonth} 尚無資料，改抓上月 ${previousMonth}`);
+    rows = await fetch539ByMonth(previousMonth);
+    usedMonth = previousMonth;
+  }
+
+  if (!rows.length) {
+    throw new Error(`找不到 539 資料（當月：${currentMonth}，上月：${previousMonth}）`);
   }
 
   const latest = rows[0];
@@ -41,7 +68,8 @@ async function main() {
   const output = {
     daily539: normalizeRow(latest),
     recent5,
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
+    sourceMonth: usedMonth
   };
 
   fs.writeFileSync("latest.json", JSON.stringify(output, null, 2), "utf8");
