@@ -1536,7 +1536,9 @@
   }
 
   async function reloadData() {
+  try {
     const latest = await loadLatestFromCandidates();
+
     renderLatest(latest);
     renderRecent5List();
     renderFavoritesList();
@@ -1552,9 +1554,12 @@
     updateDashboard(primary, confidence, currentMode, history);
     renderPredictResults([primary], currentMode, confidence);
 
-    if (els.dataSourceText) els.dataSourceText.textContent = latest.source || "latest.json";
-    showDialog("資料已重新載入", "資料更新");
+    showDialog("latest.json 已重新載入", "資料更新");
+  } catch (err) {
+    console.error("reloadData error:", err);
+    showDialog("資料重新載入失敗，已保留目前畫面資料", "資料更新");
   }
+}
 
   function switchToPredictPage() {
     switchPage("predict");
