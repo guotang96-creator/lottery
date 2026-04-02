@@ -2,10 +2,10 @@ const CACHE_NAME = "lottery-cache-v54";
 
 const ASSETS = [
   "./",
-  "./index.html?v=51",
-  "./style.css?v=51",
-  "./app.js?v=51",
-  "./manifest.json?v=51",
+  "./index.html?v=54",
+  "./style.css?v=54",
+  "./app.js?v=54",
+  "./manifest.json?v=54",
   "./latest.json",
   "./favicon.png",
   "./icon-192.png",
@@ -14,8 +14,13 @@ const ASSETS = [
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
+
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS)).catch(() => Promise.resolve())
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(ASSETS))
+      .catch((err) => {
+        console.warn("SW install cache failed:", err);
+      })
   );
 });
 
@@ -28,6 +33,7 @@ self.addEventListener("activate", (event) => {
             if (key !== CACHE_NAME) {
               return caches.delete(key);
             }
+            return Promise.resolve();
           })
         )
       )
@@ -36,22 +42,45 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  const { request } = event;
+  const request = event.request;
+
   if (request.method !== "GET") return;
 
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      const fetchPromise = fetch(request)
+  const url = new URL(request.url);
+
+  // 只處理同網域資源
+  if (url.origin !== location.origin) return;
+
+  // JSON 走網路優先，避免資料卡住
+  if (
+    url.pathname.endsWith("/latest.json") ||
+    url.pathname.endsWith("latest.json") ||
+    url.pathname.endsWith("539_api.json")
+  ) {
+    event.respondWith(
+      fetch(request)
         .then((response) => {
           const cloned = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, cloned);
-          });
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, cloned));
           return response;
         })
-        .catch(() => cached);
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
 
-      return cached || fetchPromise;
+  // 其他靜態檔走快取優先
+  event.respondWith(
+    caches.match(request).then((cached) => {
+      if (cached) return cached;
+
+      return fetch(request)
+        .then((response) => {
+          const cloned = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, cloned));
+          return response;
+        })
+        .catch(() => caches.match("./index.html?v=54"));
     })
   );
 });
