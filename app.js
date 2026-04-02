@@ -409,42 +409,56 @@
 }
 
   async function loadLatestFromCandidates() {
-    for (const url of JSON_CANDIDATES) {
-      try {
-        const data = await fetchJSON(url);
-        const normalized = normalizeLatestFromAny(data, url);
-        if (normalized) {
-          writeJSON(STORAGE_KEYS.latest, normalized);
-          writeJSON(STORAGE_KEYS.status, {
-            ok: true,
-            source: url,
-            version: APP_VERSION
-          });
-          return normalized;
-        }
-      } catch {}
+  let lastError = null;
+
+  for (const url of JSON_CANDIDATES) {
+    try {
+      const raw = await fetchJSON(url);
+      const normalized = normalizeLatestFromAny(raw, url);
+
+      if (normalized && normalized.period && normalized.numbers?.length >= 5) {
+        writeJSON(STORAGE_KEYS.latest, normalized);
+        writeJSON(STORAGE_KEYS.status, {
+          ok: true,
+          source: url,
+          version: APP_VERSION,
+          updatedAt: getTaiwanDateTime()
+        });
+        return normalized;
+      }
+    } catch (err) {
+      lastError = err;
+      console.warn("loadLatestFromCandidates failed:", url, err);
     }
-
-    const local = readJSON(STORAGE_KEYS.latest, null);
-    if (local) return local;
-
-    writeJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
-    return DEFAULT_LATEST;
   }
 
-  function getRecentFiveDraws(latest) {
-    if (Array.isArray(latest?.recent5) && latest.recent5.length) return latest.recent5.slice(0, 5);
+  const local = readJSON(STORAGE_KEYS.latest, null);
+  const normalizedLocal = normalizeLatestFromAny(local || {}, "local-cache");
 
-    const rows = [];
-    if (Array.isArray(latest?.numbers) && latest.numbers.length >= 5) {
-      rows.push({
-        period: latest.period || "",
-        date: latest.date || "",
-        numbers: uniqueSorted(latest.numbers.slice(0, 5))
-      });
-    }
-    return rows;
+  if (normalizedLocal && normalizedLocal.period && normalizedLocal.numbers?.length >= 5) {
+    writeJSON(STORAGE_KEYS.status, {
+      ok: true,
+      source: "local-cache",
+      version: APP_VERSION,
+      updatedAt: getTaiwanDateTime(),
+      fallback: true
+    });
+    return normalizedLocal;
   }
+
+  const fallback = getSafeDefaultLatest();
+
+  writeJSON(STORAGE_KEYS.latest, fallback);
+  writeJSON(STORAGE_KEYS.status, {
+    ok: false,
+    source: "fallback-default",
+    version: APP_VERSION,
+    updatedAt: getTaiwanDateTime(),
+    error: lastError ? String(lastError.message || lastError) : "unknown"
+  });
+
+  return fallback;
+}
 
   function sampleHistory(periods, latestNumbers = null) {
     const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
