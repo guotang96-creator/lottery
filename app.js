@@ -1,5 +1,5 @@
 (() => {
-  const APP_VERSION = "V3.7｜今彩539 專用版｜分享圖片穩定版";
+  const APP_VERSION = "V3.8.1｜今彩539 專用版｜回測期數修正版";
 
   const STORAGE_KEYS = {
     favorites: "jincai539_favorites_v47",
@@ -342,13 +342,6 @@
     return rows;
   }
 
-  function getBacktestSourceRows() {
-    const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
-    if (Array.isArray(latest?.recent50) && latest.recent50.length) return latest.recent50;
-    if (Array.isArray(latest?.recent5) && latest.recent5.length) return latest.recent5;
-    return [];
-  }
-
   function sampleHistory(periods, latestNumbers = null) {
     const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
     const recentReal =
@@ -494,23 +487,23 @@
   }
 
   function getBallRangeClass(num) {
-  const n = Number(num);
-  if (n >= 1 && n <= 10) return "range-1";
-  if (n >= 11 && n <= 20) return "range-2";
-  if (n >= 21 && n <= 30) return "range-3";
-  return "range-4";
-}
+    const n = Number(num);
+    if (n >= 1 && n <= 10) return "range-1";
+    if (n >= 11 && n <= 20) return "range-2";
+    if (n >= 21 && n <= 30) return "range-3";
+    return "range-4";
+  }
 
   function renderBalls(container, numbers, active = false) {
-  if (!container) return;
+    if (!container) return;
 
-  container.innerHTML = (numbers || [])
-    .map((num) => {
-      const rangeClass = getBallRangeClass(num);
-      return `<span class="ball ${rangeClass}${active ? " active" : ""}">${pad2(num)}</span>`;
-    })
-    .join("");
-}
+    container.innerHTML = (numbers || [])
+      .map((num) => {
+        const rangeClass = getBallRangeClass(num);
+        return `<span class="ball ${rangeClass}${active ? " active" : ""}">${pad2(num)}</span>`;
+      })
+      .join("");
+  }
 
   function formatNums(nums) {
     return (nums || []).map(pad2).join(" ");
@@ -1182,7 +1175,7 @@
 
     els.backtestResultsList.innerHTML = results.map((item, idx) => {
       const predBalls = item.predicted.map((n) => `<span class="ball ${getBallRangeClass(n)} active">${pad2(n)}</span>`).join("");
-const actualBalls = item.actual.map((n) => `<span class="ball ${getBallRangeClass(n)}">${pad2(n)}</span>`).join("");
+      const actualBalls = item.actual.map((n) => `<span class="ball ${getBallRangeClass(n)}">${pad2(n)}</span>`).join("");
       const payout = getPayoutByHit(item.hitCount);
 
       return `
@@ -1200,14 +1193,62 @@ const actualBalls = item.actual.map((n) => `<span class="ball ${getBallRangeClas
     }).join("");
   }
 
+  function getBacktestSourceRows() {
+    const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
+
+    let rows = [];
+
+    if (Array.isArray(latest?.recent50) && latest.recent50.length) {
+      rows = latest.recent50;
+    } else if (Array.isArray(latest?.recent5) && latest.recent5.length) {
+      rows = latest.recent5;
+    }
+
+    const normalized = (rows || [])
+      .map((item, idx) => {
+        const numbers = uniqueSorted(
+          toIntArray(item?.numbers || item?.drawNumberSize || item?.drawNumbers || [])
+        ).slice(0, 5);
+
+        if (numbers.length < 5) return null;
+
+        return {
+          period: String(item?.period || item?.drawTerm || item?.issue || `mock_${idx + 1}`),
+          date: normalizeDateOnly(item?.date || item?.lotteryDate || item?.drawDate || ""),
+          numbers
+        };
+      })
+      .filter(Boolean);
+
+    if (normalized.length < 10) {
+      const fallback = sampleHistory(60, latest?.numbers || DEFAULT_LATEST.numbers).map((nums, idx) => ({
+        period: `sim_${idx + 1}`,
+        date: "",
+        numbers: uniqueSorted(nums).slice(0, 5)
+      }));
+
+      return fallback;
+    }
+
+    return normalized;
+  }
+
   function runBacktest() {
-    const count = Number(els.backtestCount?.value || 20);
+    const requestedCount = Number(els.backtestCount?.value || 20);
     const mode = els.backtestMode?.value || "balanced";
     const betAmount = Number(els.betAmount?.value || 50);
 
-    const rows = getBacktestSourceRows().slice(0, count);
+    const sourceRows = getBacktestSourceRows();
+    if (!sourceRows.length) {
+      alert("目前沒有可用資料可回測");
+      return;
+    }
+
+    const actualCount = Math.min(requestedCount, sourceRows.length);
+    const rows = sourceRows.slice(0, actualCount);
+
     if (!rows.length) {
-      alert("目前沒有足夠的 recent50 資料可回測");
+      alert("目前沒有足夠資料可回測");
       return;
     }
 
@@ -1215,8 +1256,16 @@ const actualBalls = item.actual.map((n) => `<span class="ball ${getBallRangeClas
 
     for (let i = 0; i < rows.length; i++) {
       const actualRow = rows[i];
-      const historyRows = rows.slice(i + 1, i + 21).map((r) => uniqueSorted(r.numbers || []));
-      const history = historyRows.length ? historyRows : MOCK_HISTORY.slice(0, 20).map((r) => uniqueSorted(r));
+
+      const historyRows = sourceRows
+        .slice(i + 1, i + 21)
+        .map((r) => uniqueSorted(r.numbers || []));
+
+      const history =
+        historyRows.length >= 5
+          ? historyRows
+          : MOCK_HISTORY.slice(0, 20).map((r) => uniqueSorted(r));
+
       const predicted = predictNumbers(mode, history);
       const actual = uniqueSorted(actualRow.numbers || []);
       const hitCount = compareHit(predicted, actual);
@@ -1259,7 +1308,7 @@ const actualBalls = item.actual.map((n) => `<span class="ball ${getBallRangeClas
     renderProfitSimulation(results, betAmount);
 
     alert(
-      `回測完成\n\n模式：${MODE_LABELS[mode] || mode}\n回測期數：${total}期\n平均命中：${avg}顆\n最高命中：${max}顆`
+      `回測完成\n\n模式：${MODE_LABELS[mode] || mode}\n要求期數：${requestedCount}期\n實際回測：${total}期\n平均命中：${avg}顆\n最高命中：${max}顆`
     );
   }
 
