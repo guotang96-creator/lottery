@@ -1476,7 +1476,7 @@ function bindDialog() {
     renderPredictResults([primary], currentMode, confidence);
 
     if (els.dataSourceText) els.dataSourceText.textContent = latest.source || "latest.json";
-    alert("資料已重新載入");
+    showDialog("資料已重新載入", "資料更新");
   }
 
   function bindNav() {
