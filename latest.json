@@ -1,16 +1,27 @@
 {
   "daily539": {
-    "period": "115000081",
-    "lotteryDate": "2026-04-01T00:00:00",
+    "period": "115000082",
+    "lotteryDate": "2026-04-02T00:00:00",
     "drawNumberSize": [
-      3,
-      10,
-      11,
+      1,
+      9,
       13,
-      23
+      18,
+      21
     ]
   },
   "recent5": [
+    {
+      "period": "115000082",
+      "lotteryDate": "2026-04-02T00:00:00",
+      "drawNumberSize": [
+        1,
+        9,
+        13,
+        18,
+        21
+      ]
+    },
     {
       "period": "115000081",
       "lotteryDate": "2026-04-01T00:00:00",
@@ -25,6 +36,17 @@
   ],
   "recent50": [
     {
+      "period": "115000082",
+      "lotteryDate": "2026-04-02T00:00:00",
+      "drawNumberSize": [
+        1,
+        9,
+        13,
+        18,
+        21
+      ]
+    },
+    {
       "period": "115000081",
       "lotteryDate": "2026-04-01T00:00:00",
       "drawNumberSize": [
@@ -36,6 +58,6 @@
       ]
     }
   ],
-  "updatedAt": "2026-04-02T13:26:36.113Z",
+  "updatedAt": "2026-04-02T15:44:47.421Z",
   "sourceMonth": "2026-04"
 }
