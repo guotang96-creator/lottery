@@ -1,12 +1,12 @@
 (() => {
-  const APP_VERSION = "V3.8.3｜今彩539 專用版｜穩定修復版";
+  const APP_VERSION = "V3.8.4｜今彩539 專用版｜收藏時間修正版";
 
   const STORAGE_KEYS = {
-    favorites: "jincai539_favorites_v48",
-    history: "jincai539_predict_history_v48",
-    latest: "jincai539_latest_result_v48",
-    status: "jincai539_data_status_v48",
-    settings: "jincai539_user_settings_v48"
+    favorites: "jincai539_favorites_v49",
+    history: "jincai539_predict_history_v49",
+    latest: "jincai539_latest_result_v49",
+    status: "jincai539_data_status_v49",
+    settings: "jincai539_user_settings_v49"
   };
 
   const JSON_CANDIDATES = [
@@ -254,12 +254,41 @@
   function normalizeDateText(value) {
     if (!value) return "";
     if (typeof value !== "string") value = String(value);
+
+    if (value.includes("T") && value.endsWith("Z")) {
+      const utcDate = new Date(value);
+      const taiwan = new Date(utcDate.getTime() + 8 * 60 * 60 * 1000);
+
+      const y = taiwan.getUTCFullYear();
+      const m = String(taiwan.getUTCMonth() + 1).padStart(2, "0");
+      const d = String(taiwan.getUTCDate()).padStart(2, "0");
+      const hh = String(taiwan.getUTCHours()).padStart(2, "0");
+      const mm = String(taiwan.getUTCMinutes()).padStart(2, "0");
+      const ss = String(taiwan.getUTCSeconds()).padStart(2, "0");
+
+      return `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
+    }
+
     return value.replace("T00:00:00", "").replace("T", " ").slice(0, 19);
   }
 
   function normalizeDateOnly(value) {
     const text = normalizeDateText(value);
     return text ? text.slice(0, 10) : "";
+  }
+
+  function getTaiwanDateTime() {
+    const now = new Date();
+    const taiwanTime = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+
+    const y = taiwanTime.getUTCFullYear();
+    const m = String(taiwanTime.getUTCMonth() + 1).padStart(2, "0");
+    const d = String(taiwanTime.getUTCDate()).padStart(2, "0");
+    const hh = String(taiwanTime.getUTCHours()).padStart(2, "0");
+    const mm = String(taiwanTime.getUTCMinutes()).padStart(2, "0");
+    const ss = String(taiwanTime.getUTCSeconds()).padStart(2, "0");
+
+    return `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
   }
 
   function toIntArray(arr) {
@@ -626,7 +655,7 @@
     const oldFavorites = readJSON(STORAGE_KEYS.favorites, []);
     const newItem = {
       id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      createdAt: getTaiwanDateTime(),.toISOString(),
+      createdAt: getTaiwanDateTime(),
       numbers: balls
     };
 
@@ -688,8 +717,8 @@
     if (els.maxHit) els.maxHit.textContent = stats.max;
     if (els.bestMode) els.bestMode.textContent = stats.bestMode || MODE_LABELS[mode] || "均衡型";
 
-    const meta = getModeMeta(mode);
     const metaBox = document.querySelector(".recommend-meta");
+    const meta = getModeMeta(mode);
     if (metaBox) {
       metaBox.innerHTML = `
         <span>信心：<strong>${confidence}</strong></span>
@@ -1360,7 +1389,7 @@
     const hitCount = compareHit(primary, latest.numbers || DEFAULT_LATEST.numbers);
 
     savePredictRecord({
-      createdAt: new Date().toISOString(),
+      createdAt: getTaiwanDateTime(),
       mode,
       modeLabel,
       periods,
@@ -1478,21 +1507,25 @@
   function bindActions() {
     els.predictButtons.forEach((btn) => btn.addEventListener("click", generatePrediction));
 
-    if (els.btnCopy) els.btnCopy.addEventListener("click", async () => {
-      const balls = [...document.querySelectorAll("#recommendBalls1 .ball")]
-        .map((el) => el.textContent?.trim())
-        .filter(Boolean)
-        .map(Number);
-      await copyNumbers(balls);
-    });
+    if (els.btnCopy) {
+      els.btnCopy.addEventListener("click", async () => {
+        const balls = [...document.querySelectorAll("#recommendBalls1 .ball")]
+          .map((el) => el.textContent?.trim())
+          .filter(Boolean)
+          .map(Number);
+        await copyNumbers(balls);
+      });
+    }
 
-    if (els.btnSave) els.btnSave.addEventListener("click", () => {
-      const balls = [...document.querySelectorAll("#recommendBalls1 .ball")]
-        .map((el) => el.textContent?.trim())
-        .filter(Boolean)
-        .map(Number);
-      saveFavoriteNumbers(balls);
-    });
+    if (els.btnSave) {
+      els.btnSave.addEventListener("click", () => {
+        const balls = [...document.querySelectorAll("#recommendBalls1 .ball")]
+          .map((el) => el.textContent?.trim())
+          .filter(Boolean)
+          .map(Number);
+        saveFavoriteNumbers(balls);
+      });
+    }
 
     if (els.btnRecent5) els.btnRecent5.addEventListener("click", showRecent5);
     if (els.btnDataStatus) els.btnDataStatus.addEventListener("click", showDataStatus);
