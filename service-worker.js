@@ -1,4 +1,4 @@
-const CACHE_NAME = "lottery-cache-v51";
+const CACHE_NAME = "lottery-cache-v54";
 
 const ASSETS = [
   "./",
