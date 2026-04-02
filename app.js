@@ -626,7 +626,7 @@
     const oldFavorites = readJSON(STORAGE_KEYS.favorites, []);
     const newItem = {
       id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      createdAt: new Date().toISOString(),
+      createdAt: getTaiwanDateTime(),.toISOString(),
       numbers: balls
     };
 
