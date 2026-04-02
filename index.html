@@ -283,6 +283,17 @@
     <button class="nav-btn" data-page="settings">設定</button>
   </nav>
 
+  <div id="appDialog" class="app-dialog hidden">
+    <div class="app-dialog-backdrop" data-dialog-close="1"></div>
+    <div class="app-dialog-box">
+      <div id="appDialogTitle" class="app-dialog-title">系統訊息</div>
+      <div id="appDialogMessage" class="app-dialog-message">-</div>
+      <div class="app-dialog-actions">
+        <button id="appDialogConfirm" class="primary-btn">確定</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
