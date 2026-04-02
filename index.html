@@ -6,10 +6,10 @@
   <title>今彩539 AI 預測系統</title>
   <meta name="theme-color" content="#0f172a" />
   <meta name="description" content="今彩539 AI 預測系統｜預測、分析、拖號、回測、收藏" />
-  <link rel="manifest" href="manifest.json?v=54" />
+  <link rel="manifest" href="manifest.json?v=55" />
   <link rel="apple-touch-icon" href="icon-192.png" />
   <link rel="icon" href="favicon.png" />
-  <link rel="stylesheet" href="style.css?v=54" />
+  <link rel="stylesheet" href="style.css?v=55" />
 </head>
 <body>
   <div class="app-shell">
@@ -19,7 +19,7 @@
         <div class="hero-info">
           <h1>今彩539 AI 預測系統</h1>
           <div class="hero-subline">
-            <span id="appVersionText">V3.8.3</span>
+            <span id="appVersionText">V3.8.5</span>
             <span>｜</span>
             <span>資料正常</span>
             <span class="status-dot"></span>
@@ -44,7 +44,7 @@
         <div class="balls-row" id="recommendBalls1"></div>
         <div class="recommend-meta"></div>
         <div class="action-row">
-          <button id="btnPredict" class="primary-btn">立即預測</button>
+          <button id="btnPredictHome" class="primary-btn">立即預測</button>
           <button id="btnCopy" class="secondary-btn">複製號碼</button>
           <button id="btnSave" class="secondary-btn">收藏號碼</button>
         </div>
@@ -91,7 +91,7 @@
         </select>
 
         <div class="action-row">
-          <button id="btnPredict" class="primary-btn">立即預測</button>
+          <button id="btnPredictPage" class="primary-btn">立即預測</button>
           <button id="btnCopyAllPredict" class="secondary-btn">複製全部</button>
           <button id="btnPredictSummary" class="secondary-btn">預測摘要</button>
         </div>
@@ -284,23 +284,23 @@
   </nav>
 
   <div id="appDialog" class="app-dialog hidden">
-  <div class="app-dialog-backdrop" data-dialog-close="1"></div>
-  <div class="app-dialog-box">
-    <div id="appDialogTitle" class="app-dialog-title">系統訊息</div>
-    <div id="appDialogMessage" class="app-dialog-message">-</div>
-    <div class="app-dialog-actions">
-      <button id="appDialogConfirm" class="primary-btn">確定</button>
+    <div class="app-dialog-backdrop" data-dialog-close="1"></div>
+    <div class="app-dialog-box">
+      <div id="appDialogTitle" class="app-dialog-title">系統訊息</div>
+      <div id="appDialogMessage" class="app-dialog-message">-</div>
+      <div class="app-dialog-actions">
+        <button id="appDialogConfirm" class="primary-btn">確定</button>
+      </div>
     </div>
   </div>
-</div>
 
   <script src="app.js?v=55"></script>
-<script>
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./service-worker.js?v=55").catch(console.error);
-    });
-  }
-</script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js?v=55").catch(console.error);
+      });
+    }
+  </script>
 </body>
 </html>
