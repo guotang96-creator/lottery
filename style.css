@@ -445,3 +445,76 @@ img{
     font-size:15px;
   }
 }
+.app-dialog{
+  position:fixed;
+  inset:0;
+  z-index:3000;
+}
+
+.app-dialog.hidden{
+  display:none !important;
+}
+
+.app-dialog-backdrop{
+  position:absolute;
+  inset:0;
+  background:rgba(2,6,23,.52);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+}
+
+.app-dialog-box{
+  position:relative;
+  width:min(92vw, 420px);
+  margin:18vh auto 0;
+  background:linear-gradient(180deg, rgba(8,20,47,.96), rgba(10,28,70,.94));
+  color:#fff;
+  border:1px solid rgba(96,165,250,.35);
+  box-shadow:0 24px 50px rgba(0,0,0,.35);
+  border-radius:28px;
+  padding:22px 18px 18px;
+}
+
+.app-dialog-title{
+  font-size:28px;
+  font-weight:900;
+  line-height:1.2;
+  margin-bottom:14px;
+  word-break:break-word;
+}
+
+.app-dialog-message{
+  font-size:18px;
+  line-height:1.65;
+  color:#dbe7ff;
+  white-space:pre-line;
+  word-break:break-word;
+}
+
+.app-dialog-actions{
+  margin-top:22px;
+  display:flex;
+}
+
+.app-dialog-actions .primary-btn{
+  width:100%;
+  min-height:56px;
+  border-radius:20px;
+}
+
+@media (max-width:640px){
+  .app-dialog-box{
+    width:min(90vw, 390px);
+    margin:16vh auto 0;
+    padding:20px 16px 16px;
+    border-radius:24px;
+  }
+
+  .app-dialog-title{
+    font-size:24px;
+  }
+
+  .app-dialog-message{
+    font-size:17px;
+  }
+}
