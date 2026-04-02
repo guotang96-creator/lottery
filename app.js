@@ -1411,7 +1411,7 @@ function bindDialog() {
       return `${idx + 1}. ${periodText}${dateText}｜${nums}`;
     }).join("\n");
 
-    alert(`最近 5 期開獎\n\n${text}`);
+    showDialog(`最近 5 期開獎\n\n${text}`, "最近5期");
   }
 
   function showDataStatus() {
