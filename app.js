@@ -331,48 +331,63 @@
   }
 
   function normalizeLatestFromAny(raw, sourceUrl = "") {
-    if (!raw || typeof raw !== "object") return null;
+  if (!raw || typeof raw !== "object") return null;
 
-    const candidates = [];
-    if (raw.content?.daily539) candidates.push(raw.content.daily539);
-    if (raw.daily539) candidates.push(raw.daily539);
-    if (raw.period || raw.lotteryDate || raw.drawNumberSize || raw.numbers) candidates.push(raw);
+  const candidates = [];
 
-    for (const item of candidates) {
-      if (!item || typeof item !== "object") continue;
+  if (raw.content?.daily539) candidates.push(raw.content.daily539);
+  if (raw.daily539) candidates.push(raw.daily539);
+  if (raw.latest) candidates.push(raw.latest);
+  if (raw.period || raw.lotteryDate || raw.drawNumberSize || raw.numbers) candidates.push(raw);
 
-      const period = item.period || item.drawTerm || item.issue || item.term || item.drawNo || "";
-      const date =
-        normalizeDateOnly(item.lotteryDate || item.drawDate || item.dDate || item.date || "") || DEFAULT_LATEST.date;
-      const numbers = toIntArray(
-        item.drawNumberSize || item.drawNumbers || item.numbers || item.orderNumbers || item.num || []
+  for (const item of candidates) {
+    if (!item || typeof item !== "object") continue;
+
+    const period = item.period || item.drawTerm || item.issue || item.term || item.drawNo || "";
+    const date = normalizeDateOnly(
+      item.lotteryDate || item.drawDate || item.dDate || item.date || ""
+    );
+    const numbers = toIntArray(
+      item.drawNumberSize || item.drawNumbers || item.numbers || item.orderNumbers || item.num || []
+    );
+
+    if (period && numbers.length >= 5) {
+      const recent5 = normalizeRecentRows(
+        raw.recent5 ||
+        raw.content?.recent5 ||
+        item.recent5 ||
+        []
       );
-  function getSafeDefaultLatest() {
-  return {
-    period: DEFAULT_LATEST.period,
-    date: DEFAULT_LATEST.date,
-    numbers: [...DEFAULT_LATEST.numbers],
-    recent5: Array.isArray(DEFAULT_LATEST.recent5) ? [...DEFAULT_LATEST.recent5] : [],
-    recent50: Array.isArray(DEFAULT_LATEST.recent50) ? [...DEFAULT_LATEST.recent50] : [],
-    updatedAt: DEFAULT_LATEST.updatedAt,
-    source: DEFAULT_LATEST.source
-  };
-}
-      if (period && numbers.length >= 5) {
-        return {
-          period: String(period),
-          date,
-          numbers: uniqueSorted(numbers.slice(0, 5)),
-          recent5: normalizeRecentRows(raw.recent5 || raw.content?.recent5 || []),
-          recent50: normalizeRecentRows(raw.recent50 || raw.content?.recent50 || raw.recent5 || []),
-          updatedAt: normalizeDateText(raw.updatedAt || raw.generatedAt || item.updatedAt || new Date().toISOString()),
-          source: sourceUrl || "remote-json"
-        };
-      }
-    }
 
-    return null;
+      const recent50 = normalizeRecentRows(
+        raw.recent50 ||
+        raw.content?.recent50 ||
+        item.recent50 ||
+        raw.recent5 ||
+        raw.content?.recent5 ||
+        []
+      );
+
+      return {
+        period: String(period),
+        date: date || getSafeDefaultLatest().date,
+        numbers: uniqueSorted(numbers.slice(0, 5)),
+        recent5,
+        recent50,
+        updatedAt: normalizeDateText(
+          raw.updatedAt ||
+          raw.generatedAt ||
+          item.updatedAt ||
+          item.generatedAt ||
+          getTaiwanDateTime()
+        ),
+        source: sourceUrl || "remote-json"
+      };
+    }
   }
+
+  return null;
+}
 
   async function fetchJSON(url) {
     const res = await fetch(`${url}?t=${Date.now()}`, { cache: "no-store" });
