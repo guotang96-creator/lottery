@@ -1423,15 +1423,17 @@ function bindDialog() {
     });
 
     alert(
-      `資料狀態詳情\n\n` +
-      `版本：${status.version || APP_VERSION}\n` +
-      `最新期數：${latest.period}\n` +
-      `最新日期：${latest.date}\n` +
-      `最新號碼：${formatNums(latest.numbers || [])}\n` +
-      `最後更新：${latest.updatedAt}\n` +
-      `資料來源：${status.source || "local-cache"}\n` +
-      `狀態：${status.ok ? "正常" : "異常"}`
-    );
+      showDialog(
+  `資料狀態詳情\n\n` +
+  `版本：${status.version || APP_VERSION}\n` +
+  `最新期數：${latest.period}\n` +
+  `最新日期：${latest.date}\n` +
+  `最新號碼：${formatNums(latest.numbers || [])}\n` +
+  `最後更新：${latest.updatedAt}\n` +
+  `資料來源：${status.source || "local-cache"}\n` +
+  `狀態：${status.ok ? "正常" : "異常"}`,
+  "資料狀態"
+);
   }
 
   function showFullAnalysis() {
