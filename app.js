@@ -1658,22 +1658,20 @@
       loadUserSettings();
 
       const latest = await loadLatestFromCandidates();
-      renderLatest(latest);
-      renderRecent5List();
-      renderFavoritesList();
-      renderVisualAnalysis();
-      fillLatestDragNumber();
+renderLatest(latest);
+renderRecent5List();
+renderFavoritesList();
+renderVisualAnalysis();
+fillLatestDragNumber();
 
-      const periods = Number(els.analysisPeriods?.value || 120);
-      if (els.historyCount) els.historyCount.textContent = `最近 ${periods} 期`;
+const periods = Number(els.analysisPeriods?.value || 120);
+const currentMode = els.predictMode?.value || "balanced";
+const history = sampleHistory(periods, latest.numbers);
+const primary = predictNumbers(currentMode, history);
+const confidence = estimateConfidence(primary, history, currentMode);
 
-      const currentMode = els.predictMode?.value || "balanced";
-      const history = sampleHistory(periods, latest.numbers);
-      const primary = predictNumbers(currentMode, history);
-      const confidence = estimateConfidence(primary, history, currentMode);
-
-      updateDashboard(primary, confidence, currentMode, history);
-      renderPredictResults([primary], currentMode, confidence);
+updateDashboard(primary, confidence, currentMode, history);
+renderPredictResults([primary], currentMode, confidence);
 
       if (els.appVersionText) els.appVersionText.textContent = APP_VERSION;
       if (els.dataSourceText) els.dataSourceText.textContent = latest.source || "latest.json";
