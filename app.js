@@ -1,5 +1,5 @@
 (() => {
-  const APP_VERSION = "V3.8.1｜今彩539 專用版｜回測期數修正版";
+  const APP_VERSION = "V3.8.2｜今彩539 專用版｜回測修正＋快取更新版";
 
   const STORAGE_KEYS = {
     favorites: "jincai539_favorites_v47",
@@ -496,7 +496,6 @@
 
   function renderBalls(container, numbers, active = false) {
     if (!container) return;
-
     container.innerHTML = (numbers || [])
       .map((num) => {
         const rangeClass = getBallRangeClass(num);
@@ -784,15 +783,9 @@
     const svg = buildShareSvg(numbers, modeLabel, confidence, updatedAt);
     const encoded = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
 
-    if (els.sharePreviewImage) {
-      els.sharePreviewImage.src = encoded;
-    }
-    if (els.sharePreviewWrap) {
-      els.sharePreviewWrap.style.display = "block";
-    }
-    if (els.sharePreviewEmpty) {
-      els.sharePreviewEmpty.style.display = "none";
-    }
+    if (els.sharePreviewImage) els.sharePreviewImage.src = encoded;
+    if (els.sharePreviewWrap) els.sharePreviewWrap.style.display = "block";
+    if (els.sharePreviewEmpty) els.sharePreviewEmpty.style.display = "none";
 
     alert("分享圖片已生成，往下可看到預覽圖");
   }
@@ -973,18 +966,14 @@
   function fillLatestDragNumber() {
     const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
     const firstNum = Array.isArray(latest?.numbers) && latest.numbers.length ? latest.numbers[0] : "";
-    if (els.dragQueryNumber) {
-      els.dragQueryNumber.value = firstNum || "";
-    }
+    if (els.dragQueryNumber) els.dragQueryNumber.value = firstNum || "";
   }
 
   function renderDragQueryResultList(rows, maxCount) {
     if (!els.dragQueryResults) return;
 
     if (!rows.length) {
-      els.dragQueryResults.innerHTML = `
-        <div style="font-size:15px;font-weight:700;color:#64748b;">查無符合資料</div>
-      `;
+      els.dragQueryResults.innerHTML = `<div style="font-size:15px;font-weight:700;color:#64748b;">查無符合資料</div>`;
       return;
     }
 
@@ -1073,7 +1062,6 @@
       const predicted = predictNumbers(mode, history);
       const actual = uniqueSorted(actualRow.numbers || []);
       const hitCount = compareHit(predicted, actual);
-
       results.push({ hitCount });
     }
 
@@ -1081,11 +1069,7 @@
     const avgHit = results.reduce((sum, row) => sum + row.hitCount, 0) / total;
     const maxHit = results.length ? Math.max(...results.map((r) => r.hitCount)) : 0;
 
-    return {
-      mode,
-      avgHit,
-      maxHit
-    };
+    return { mode, avgHit, maxHit };
   }
 
   function findBestBacktestMode(rows) {
@@ -1197,7 +1181,6 @@
     const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
 
     let rows = [];
-
     if (Array.isArray(latest?.recent50) && latest.recent50.length) {
       rows = latest.recent50;
     } else if (Array.isArray(latest?.recent5) && latest.recent5.length) {
@@ -1221,13 +1204,11 @@
       .filter(Boolean);
 
     if (normalized.length < 10) {
-      const fallback = sampleHistory(60, latest?.numbers || DEFAULT_LATEST.numbers).map((nums, idx) => ({
+      return sampleHistory(60, latest?.numbers || DEFAULT_LATEST.numbers).map((nums, idx) => ({
         period: `sim_${idx + 1}`,
         date: "",
         numbers: uniqueSorted(nums).slice(0, 5)
       }));
-
-      return fallback;
     }
 
     return normalized;
@@ -1256,11 +1237,7 @@
 
     for (let i = 0; i < rows.length; i++) {
       const actualRow = rows[i];
-
-      const historyRows = sourceRows
-        .slice(i + 1, i + 21)
-        .map((r) => uniqueSorted(r.numbers || []));
-
+      const historyRows = sourceRows.slice(i + 1, i + 21).map((r) => uniqueSorted(r.numbers || []));
       const history =
         historyRows.length >= 5
           ? historyRows
