@@ -1444,7 +1444,7 @@ function bindDialog() {
     const sorted = [...freq.entries()].sort((a, b) => b[1] - a[1]);
 
     const top10 = sorted.slice(0, 10).map(([n, c]) => `${pad2(n)}（${c}次）`).join("\n");
-    alert(`完整分析\n\n最近 ${periods} 期熱門號 Top 10：\n${top10}`);
+    showDialog(`完整分析\n\n最近 ${periods} 期熱門號 Top 10：\n${top10}`, "完整分析");
   }
 
   function showHitTrack() {
