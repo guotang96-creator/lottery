@@ -1544,10 +1544,11 @@ function bindDialog() {
   }
 
   async function init() {
-    try {
-      bindActions();
-      bindNav();
-      loadUserSettings();
+  try {
+    bindActions();
+    bindNav();
+    bindDialog();
+    loadUserSettings();
 
       const latest = await loadLatestFromCandidates();
       renderLatest(latest);
