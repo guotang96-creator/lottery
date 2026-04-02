@@ -347,7 +347,17 @@
       const numbers = toIntArray(
         item.drawNumberSize || item.drawNumbers || item.numbers || item.orderNumbers || item.num || []
       );
-
+  function getSafeDefaultLatest() {
+  return {
+    period: DEFAULT_LATEST.period,
+    date: DEFAULT_LATEST.date,
+    numbers: [...DEFAULT_LATEST.numbers],
+    recent5: Array.isArray(DEFAULT_LATEST.recent5) ? [...DEFAULT_LATEST.recent5] : [],
+    recent50: Array.isArray(DEFAULT_LATEST.recent50) ? [...DEFAULT_LATEST.recent50] : [],
+    updatedAt: DEFAULT_LATEST.updatedAt,
+    source: DEFAULT_LATEST.source
+  };
+}
       if (period && numbers.length >= 5) {
         return {
           period: String(period),
