@@ -632,7 +632,7 @@ function bindDialog() {
     oldFavorites.unshift(newItem);
     writeJSON(STORAGE_KEYS.favorites, oldFavorites.slice(0, 100));
     renderFavoritesList();
-    alert(`已收藏：${balls.join(" ")}`);
+    showDialog(`已收藏：${balls.join(" ")}`, "收藏完成");
   }
 
   async function copyNumbers(numbers) {
@@ -643,7 +643,7 @@ function bindDialog() {
     }
     try {
       await navigator.clipboard.writeText(text);
-      alert(`已複製：${text}`);
+      showDialog(`已複製：${text}`, "複製完成");
     } catch {
       alert(`複製失敗，請手動複製：${text}`);
     }
