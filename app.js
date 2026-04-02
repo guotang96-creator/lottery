@@ -1457,7 +1457,10 @@ function bindDialog() {
       .join("\n");
 
     const stats = calcHitStats(records);
-    alert(`最近命中追蹤\n\n${text}\n\n平均：${stats.avg}\n最高：${stats.max}\n最佳模式：${stats.bestMode}`);
+    showDialog(
+  `最近命中追蹤\n\n${text}\n\n平均：${stats.avg}\n最高：${stats.max}\n最佳模式：${stats.bestMode}`,
+  "命中追蹤"
+);
   }
 
   async function reloadData() {
