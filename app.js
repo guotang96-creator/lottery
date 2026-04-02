@@ -1373,9 +1373,10 @@ function bindDialog() {
     updateDashboard(primary, confidence, mode, history);
     renderPredictResults(allPredictions, mode, confidence);
 
-    alert(
-      `539 預測完成\n\n模式：${modeLabel}\n分析期數：${periods}期\n推薦組數：${recommendCount}組\n\n主推薦：${formatNums(primary)}\n主推薦信心：${confidence}`
-    );
+    showDialog(
+  `539 預測完成\n\n模式：${modeLabel}\n分析期數：${periods}期\n推薦組數：${recommendCount}組\n\n主推薦：${formatNums(primary)}\n主推薦信心：${confidence}`,
+  "預測結果"
+);
   }
 
   async function copyPrediction() {
