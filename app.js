@@ -631,13 +631,23 @@
   }
 
   function renderLatest(latest) {
-    if (!latest) latest = DEFAULT_LATEST;
-    if (els.lastUpdateText) els.lastUpdateText.textContent = latest.updatedAt || "-";
-    if (els.latestPeriod) els.latestPeriod.textContent = latest.period || "-";
-    if (els.latestDate) els.latestDate.textContent = latest.date || "-";
-    if (els.latestDrawNo) els.latestDrawNo.textContent = latest.period || "-";
-    renderBalls(els.latestBalls, latest.numbers || DEFAULT_LATEST.numbers, false);
-  }
+  const safe = latest && typeof latest === "object" ? latest : getSafeDefaultLatest();
+
+  const period = safe.period || DEFAULT_LATEST.period;
+  const date = safe.date || DEFAULT_LATEST.date;
+  const numbers = Array.isArray(safe.numbers) && safe.numbers.length >= 5
+    ? safe.numbers
+    : DEFAULT_LATEST.numbers;
+  const updatedAt = safe.updatedAt || getTaiwanDateTime();
+
+  if (els.lastUpdateText) els.lastUpdateText.textContent = updatedAt;
+  if (els.latestPeriod) els.latestPeriod.textContent = period;
+  if (els.latestDate) els.latestDate.textContent = date;
+  if (els.latestDrawNo) els.latestDrawNo.textContent = period;
+  if (els.dataSourceText) els.dataSourceText.textContent = safe.source || "latest.json";
+
+  renderBalls(els.latestBalls, numbers, false);
+}
 
   function getAnalysisSummary(history) {
     const freq = getFrequency(history);
