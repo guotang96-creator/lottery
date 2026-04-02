@@ -181,6 +181,42 @@
       settings: $("#page-settings")
     }
   };
+  function showDialog(message, title = "系統訊息") {
+  const dialog = document.getElementById("appDialog");
+  const titleEl = document.getElementById("appDialogTitle");
+  const msgEl = document.getElementById("appDialogMessage");
+
+  if (!dialog || !titleEl || !msgEl) {
+    alert(message);
+    return;
+  }
+
+  titleEl.textContent = title;
+  msgEl.textContent = message;
+  dialog.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+}
+
+function closeDialog() {
+  const dialog = document.getElementById("appDialog");
+  if (dialog) dialog.classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+function bindDialog() {
+  const confirmBtn = document.getElementById("appDialogConfirm");
+  const dialog = document.getElementById("appDialog");
+
+  if (confirmBtn) {
+    confirmBtn.addEventListener("click", closeDialog);
+  }
+
+  if (dialog) {
+    dialog.querySelectorAll("[data-dialog-close='1']").forEach((el) => {
+      el.addEventListener("click", closeDialog);
+    });
+  }
+}
 
   function pad2(n) {
     return String(n).padStart(2, "0");
