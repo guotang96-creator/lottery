@@ -1500,7 +1500,7 @@
       `最新日期：${latest.date}\n` +
       `最新號碼：${formatNums(latest.numbers || [])}\n` +
       `最後更新：${latest.updatedAt}\n` +
-      `資料來源：${status.source || "local-cache"}\n` +
+      資料來源：${status.source || "local-cache"}\n` +
       `狀態：${status.ok ? "正常" : "異常"}`,
       "資料狀態"
     );
