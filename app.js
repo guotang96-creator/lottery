@@ -390,10 +390,23 @@
 }
 
   async function fetchJSON(url) {
-    const res = await fetch(`${url}?t=${Date.now()}`, { cache: "no-store" });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
+  const fullUrl = `${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}`;
+
+  const res = await fetch(fullUrl, {
+    method: "GET",
+    cache: "no-store",
+    headers: {
+      "Accept": "application/json"
+    }
+  });
+
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status} @ ${url}`);
   }
+
+  const data = await res.json();
+  return data;
+}
 
   async function loadLatestFromCandidates() {
     for (const url of JSON_CANDIDATES) {
