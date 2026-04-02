@@ -1,12 +1,12 @@
 (() => {
-  const APP_VERSION = "V3.8.2｜今彩539 專用版｜回測修正＋快取更新版";
+  const APP_VERSION = "V3.8.3｜今彩539 專用版｜穩定修復版";
 
   const STORAGE_KEYS = {
-    favorites: "jincai539_favorites_v47",
-    history: "jincai539_predict_history_v47",
-    latest: "jincai539_latest_result_v47",
-    status: "jincai539_data_status_v47",
-    settings: "jincai539_user_settings_v47"
+    favorites: "jincai539_favorites_v48",
+    history: "jincai539_predict_history_v48",
+    latest: "jincai539_latest_result_v48",
+    status: "jincai539_data_status_v48",
+    settings: "jincai539_user_settings_v48"
   };
 
   const JSON_CANDIDATES = [
@@ -75,6 +75,7 @@
   };
 
   const $ = (selector) => document.querySelector(selector);
+  const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 
   const els = {
     lastUpdateText: $("#lastUpdateText"),
@@ -87,7 +88,6 @@
     analysisPeriods: $("#analysisPeriods"),
     recommendCount: $("#recommendCount"),
     predictMode: $("#predictMode"),
-    btnPredict: $("#btnPredict"),
 
     recommendBalls1: $("#recommendBalls1"),
     hotNums: $("#hotNums"),
@@ -171,7 +171,9 @@
     simNetProfit: $("#simNetProfit"),
     simBetAmountText: $("#simBetAmountText"),
 
-    navButtons: document.querySelectorAll(".nav-btn"),
+    navButtons: $$(".nav-btn"),
+    predictButtons: $$("[id='btnPredict']"),
+
     pages: {
       home: $("#page-home"),
       predict: $("#page-predict"),
@@ -181,42 +183,41 @@
       settings: $("#page-settings")
     }
   };
+
   function showDialog(message, title = "系統訊息") {
-  const dialog = document.getElementById("appDialog");
-  const titleEl = document.getElementById("appDialogTitle");
-  const msgEl = document.getElementById("appDialogMessage");
+    const dialog = document.getElementById("appDialog");
+    const titleEl = document.getElementById("appDialogTitle");
+    const msgEl = document.getElementById("appDialogMessage");
 
-  if (!dialog || !titleEl || !msgEl) {
-    alert(message);
-    return;
+    if (!dialog || !titleEl || !msgEl) {
+      window.alert(message);
+      return;
+    }
+
+    titleEl.textContent = title;
+    msgEl.textContent = message;
+    dialog.classList.remove("hidden");
+    document.body.style.overflow = "hidden";
   }
 
-  titleEl.textContent = title;
-  msgEl.textContent = message;
-  dialog.classList.remove("hidden");
-  document.body.style.overflow = "hidden";
-}
-
-function closeDialog() {
-  const dialog = document.getElementById("appDialog");
-  if (dialog) dialog.classList.add("hidden");
-  document.body.style.overflow = "";
-}
-
-function bindDialog() {
-  const confirmBtn = document.getElementById("appDialogConfirm");
-  const dialog = document.getElementById("appDialog");
-
-  if (confirmBtn) {
-    confirmBtn.addEventListener("click", closeDialog);
+  function closeDialog() {
+    const dialog = document.getElementById("appDialog");
+    if (dialog) dialog.classList.add("hidden");
+    document.body.style.overflow = "";
   }
 
-  if (dialog) {
-    dialog.querySelectorAll("[data-dialog-close='1']").forEach((el) => {
-      el.addEventListener("click", closeDialog);
-    });
+  function bindDialog() {
+    const confirmBtn = document.getElementById("appDialogConfirm");
+    const dialog = document.getElementById("appDialog");
+
+    if (confirmBtn) confirmBtn.addEventListener("click", closeDialog);
+
+    if (dialog) {
+      dialog.querySelectorAll("[data-dialog-close='1']").forEach((el) => {
+        el.addEventListener("click", closeDialog);
+      });
+    }
   }
-}
 
   function pad2(n) {
     return String(n).padStart(2, "0");
@@ -250,6 +251,22 @@ function bindDialog() {
     } catch {}
   }
 
+  function normalizeDateText(value) {
+    if (!value) return "";
+    if (typeof value !== "string") value = String(value);
+    return value.replace("T00:00:00", "").replace("T", " ").slice(0, 19);
+  }
+
+  function normalizeDateOnly(value) {
+    const text = normalizeDateText(value);
+    return text ? text.slice(0, 10) : "";
+  }
+
+  function toIntArray(arr) {
+    if (!Array.isArray(arr)) return [];
+    return arr.map((v) => Number(v)).filter((v) => Number.isFinite(v) && v >= 1 && v <= 39);
+  }
+
   function saveUserSettings() {
     const settings = {
       analysisPeriods: els.analysisPeriods?.value || "120",
@@ -265,22 +282,6 @@ function bindDialog() {
     if (els.analysisPeriods && settings.analysisPeriods) els.analysisPeriods.value = settings.analysisPeriods;
     if (els.recommendCount && settings.recommendCount) els.recommendCount.value = settings.recommendCount;
     if (els.predictMode && settings.predictMode) els.predictMode.value = settings.predictMode;
-  }
-
-  function normalizeDateText(value) {
-    if (!value) return "";
-    if (typeof value !== "string") value = String(value);
-    return value.replace("T00:00:00", "").replace("T", " ").slice(0, 19);
-  }
-
-  function normalizeDateOnly(value) {
-    const text = normalizeDateText(value);
-    return text ? text.slice(0, 10) : "";
-  }
-
-  function toIntArray(arr) {
-    if (!Array.isArray(arr)) return [];
-    return arr.map((v) => Number(v)).filter((v) => Number.isFinite(v) && v >= 1 && v <= 39);
   }
 
   function normalizeRecentRows(rows) {
@@ -383,7 +384,7 @@ function bindDialog() {
     const recentReal =
       Array.isArray(latest?.recent50) && latest.recent50.length
         ? latest.recent50.map((item) => uniqueSorted(item.numbers || []))
-        : Array.isArray(latest?.recent5)
+        : Array.isArray(latest?.recent5) && latest.recent5.length
           ? latest.recent5.map((item) => uniqueSorted(item.numbers || []))
           : [];
 
@@ -550,10 +551,10 @@ function bindDialog() {
 
   function renderLatest(latest) {
     if (!latest) latest = DEFAULT_LATEST;
-    if (els.lastUpdateText) els.lastUpdateText.textContent = latest.updatedAt || DEFAULT_LATEST.updatedAt;
-    if (els.latestPeriod) els.latestPeriod.textContent = latest.period || DEFAULT_LATEST.period;
-    if (els.latestDate) els.latestDate.textContent = latest.date || DEFAULT_LATEST.date;
-    if (els.latestDrawNo) els.latestDrawNo.textContent = latest.period || DEFAULT_LATEST.period;
+    if (els.lastUpdateText) els.lastUpdateText.textContent = latest.updatedAt || "-";
+    if (els.latestPeriod) els.latestPeriod.textContent = latest.period || "-";
+    if (els.latestDate) els.latestDate.textContent = latest.date || "-";
+    if (els.latestDrawNo) els.latestDrawNo.textContent = latest.period || "-";
     renderBalls(els.latestBalls, latest.numbers || DEFAULT_LATEST.numbers, false);
   }
 
@@ -618,7 +619,7 @@ function bindDialog() {
   function saveFavoriteNumbers(numbers) {
     const balls = (numbers || []).map(pad2);
     if (!balls.length) {
-      alert("目前沒有可收藏的號碼");
+      showDialog("目前沒有可收藏的號碼", "收藏失敗");
       return;
     }
 
@@ -638,14 +639,14 @@ function bindDialog() {
   async function copyNumbers(numbers) {
     const text = (numbers || []).map(pad2).join(" ");
     if (!text) {
-      alert("目前沒有可複製的號碼");
+      showDialog("目前沒有可複製的號碼", "複製失敗");
       return;
     }
     try {
       await navigator.clipboard.writeText(text);
       showDialog(`已複製：${text}`, "複製完成");
     } catch {
-      alert(`複製失敗，請手動複製：${text}`);
+      showDialog(`複製失敗，請手動複製：${text}`, "複製失敗");
     }
   }
 
@@ -653,7 +654,7 @@ function bindDialog() {
     const oldFavorites = readJSON(STORAGE_KEYS.favorites, []);
     writeJSON(STORAGE_KEYS.favorites, oldFavorites.filter((item) => item.id !== id));
     renderFavoritesList();
-    alert("已刪除這組收藏");
+    showDialog("已刪除這組收藏", "刪除完成");
   }
 
   function getModeMeta(mode) {
@@ -797,7 +798,7 @@ function bindDialog() {
   function generateShareCard() {
     const firstCard = document.querySelector("#predictResultsList .analysis-item");
     if (!firstCard) {
-      alert("目前還沒有可分享的預測結果，請先按「立即預測」");
+      showDialog("目前還沒有可分享的預測結果，請先按「立即預測」", "分享圖片");
       return;
     }
 
@@ -806,7 +807,7 @@ function bindDialog() {
       .filter((v) => Number.isFinite(v));
 
     if (!numbers.length) {
-      alert("找不到推薦號碼");
+      showDialog("找不到推薦號碼", "分享圖片");
       return;
     }
 
@@ -823,7 +824,7 @@ function bindDialog() {
     if (els.sharePreviewWrap) els.sharePreviewWrap.style.display = "block";
     if (els.sharePreviewEmpty) els.sharePreviewEmpty.style.display = "none";
 
-    alert("分享圖片已生成，往下可看到預覽圖");
+    showDialog("分享圖片已生成，往下可看到預覽圖", "分享圖片");
   }
 
   function clearSharePreview() {
@@ -992,7 +993,7 @@ function bindDialog() {
     const rows =
       Array.isArray(latest?.recent50) && latest.recent50.length
         ? latest.recent50
-        : Array.isArray(latest?.recent5)
+        : Array.isArray(latest?.recent5) && latest.recent5.length
           ? latest.recent5
           : [];
 
@@ -1034,13 +1035,13 @@ function bindDialog() {
     const scope = Number(els.dragQueryScope?.value || 50);
 
     if (!Number.isInteger(target) || target < 1 || target > 39) {
-      alert("請輸入 01～39 的號碼");
+      showDialog("請輸入 01～39 的號碼", "拖號查詢");
       return;
     }
 
     const rows = getDragQueryRows(scope);
     if (rows.length < 2) {
-      alert("目前資料不足，無法查詢拖號");
+      showDialog("目前資料不足，無法查詢拖號", "拖號查詢");
       return;
     }
 
@@ -1141,7 +1142,7 @@ function bindDialog() {
   async function copyAllPredictions() {
     const cards = [...document.querySelectorAll("#predictResultsList .analysis-item")];
     if (!cards.length) {
-      alert("目前沒有可複製的預測結果");
+      showDialog("目前沒有可複製的預測結果", "複製全部");
       return;
     }
 
@@ -1155,19 +1156,20 @@ function bindDialog() {
 
     try {
       await navigator.clipboard.writeText(text);
-      alert(`已複製全部推薦：\n\n${text}`);
+      showDialog(`已複製全部推薦：\n\n${text}`, "複製全部");
     } catch {
-      alert(`複製失敗，請手動複製：\n\n${text}`);
+      showDialog(`複製失敗，請手動複製：\n\n${text}`, "複製全部");
     }
   }
 
   function showPredictSummary() {
-    alert(
+    showDialog(
       `預測摘要\n\n` +
       `熱門號：${els.hotNums?.textContent || ""}\n` +
       `冷門號：${els.coldNums?.textContent || ""}\n` +
       `拖號組：${els.dragNums?.textContent || ""}\n` +
-      `尾數強勢：${els.tailNums?.textContent || ""}`
+      `尾數強勢：${els.tailNums?.textContent || ""}`,
+      "預測摘要"
     );
   }
 
@@ -1257,7 +1259,7 @@ function bindDialog() {
 
     const sourceRows = getBacktestSourceRows();
     if (!sourceRows.length) {
-      alert("目前沒有可用資料可回測");
+      showDialog("目前沒有可用資料可回測", "回測結果");
       return;
     }
 
@@ -1265,7 +1267,7 @@ function bindDialog() {
     const rows = sourceRows.slice(0, actualCount);
 
     if (!rows.length) {
-      alert("目前沒有足夠資料可回測");
+      showDialog("目前沒有足夠資料可回測", "回測結果");
       return;
     }
 
@@ -1321,9 +1323,9 @@ function bindDialog() {
     renderProfitSimulation(results, betAmount);
 
     showDialog(
-  `回測完成\n\n模式：${MODE_LABELS[mode] || mode}\n要求期數：${requestedCount}期\n實際回測：${total}期\n平均命中：${avg}顆\n最高命中：${max}顆`,
-  "回測結果"
-);
+      `回測完成\n\n模式：${MODE_LABELS[mode] || mode}\n要求期數：${requestedCount}期\n實際回測：${total}期\n平均命中：${avg}顆\n最高命中：${max}顆`,
+      "回測結果"
+    );
   }
 
   function switchPage(page) {
@@ -1374,31 +1376,9 @@ function bindDialog() {
     renderPredictResults(allPredictions, mode, confidence);
 
     showDialog(
-  `539 預測完成\n\n模式：${modeLabel}\n分析期數：${periods}期\n推薦組數：${recommendCount}組\n\n主推薦：${formatNums(primary)}\n主推薦信心：${confidence}`,
-  "預測結果"
-);
-  }
-
-  async function copyPrediction() {
-    const balls = [...document.querySelectorAll("#recommendBalls1 .ball")]
-      .map((el) => el.textContent?.trim())
-      .filter(Boolean);
-    if (!balls.length) return alert("目前沒有可複製的號碼");
-
-    try {
-      await navigator.clipboard.writeText(balls.join(" "));
-      alert(`已複製：${balls.join(" ")}`);
-    } catch {
-      alert(`複製失敗，請手動複製：${balls.join(" ")}`);
-    }
-  }
-
-  function saveFavorite() {
-    const balls = [...document.querySelectorAll("#recommendBalls1 .ball")]
-      .map((el) => el.textContent?.trim())
-      .filter(Boolean)
-      .map((v) => Number(v));
-    saveFavoriteNumbers(balls);
+      `539 預測完成\n\n模式：${modeLabel}\n分析期數：${periods}期\n推薦組數：${recommendCount}組\n\n主推薦：${formatNums(primary)}\n主推薦信心：${confidence}`,
+      "預測結果"
+    );
   }
 
   function showRecent5() {
@@ -1422,18 +1402,17 @@ function bindDialog() {
       version: APP_VERSION
     });
 
-    alert(
-      showDialog(
-  `資料狀態詳情\n\n` +
-  `版本：${status.version || APP_VERSION}\n` +
-  `最新期數：${latest.period}\n` +
-  `最新日期：${latest.date}\n` +
-  `最新號碼：${formatNums(latest.numbers || [])}\n` +
-  `最後更新：${latest.updatedAt}\n` +
-  `資料來源：${status.source || "local-cache"}\n` +
-  `狀態：${status.ok ? "正常" : "異常"}`,
-  "資料狀態"
-);
+    showDialog(
+      `資料狀態詳情\n\n` +
+      `版本：${status.version || APP_VERSION}\n` +
+      `最新期數：${latest.period}\n` +
+      `最新日期：${latest.date}\n` +
+      `最新號碼：${formatNums(latest.numbers || [])}\n` +
+      `最後更新：${latest.updatedAt}\n` +
+      `資料來源：${status.source || "local-cache"}\n` +
+      `狀態：${status.ok ? "正常" : "異常"}`,
+      "資料狀態"
+    );
   }
 
   function showFullAnalysis() {
@@ -1442,14 +1421,16 @@ function bindDialog() {
     const history = sampleHistory(periods, latest.numbers);
     const freq = getFrequency(history);
     const sorted = [...freq.entries()].sort((a, b) => b[1] - a[1]);
-
     const top10 = sorted.slice(0, 10).map(([n, c]) => `${pad2(n)}（${c}次）`).join("\n");
     showDialog(`完整分析\n\n最近 ${periods} 期熱門號 Top 10：\n${top10}`, "完整分析");
   }
 
   function showHitTrack() {
     const records = readJSON(STORAGE_KEYS.history, []);
-    if (!records.length) return alert("目前還沒有命中追蹤資料");
+    if (!records.length) {
+      showDialog("目前還沒有命中追蹤資料", "命中追蹤");
+      return;
+    }
 
     const recent = records.slice(-5);
     const text = recent
@@ -1458,9 +1439,9 @@ function bindDialog() {
 
     const stats = calcHitStats(records);
     showDialog(
-  `最近命中追蹤\n\n${text}\n\n平均：${stats.avg}\n最高：${stats.max}\n最佳模式：${stats.bestMode}`,
-  "命中追蹤"
-);
+      `最近命中追蹤\n\n${text}\n\n平均：${stats.avg}\n最高：${stats.max}\n最佳模式：${stats.bestMode}`,
+      "命中追蹤"
+    );
   }
 
   async function reloadData() {
@@ -1484,6 +1465,10 @@ function bindDialog() {
     showDialog("資料已重新載入", "資料更新");
   }
 
+  function switchToPredictPage() {
+    switchPage("predict");
+  }
+
   function bindNav() {
     els.navButtons.forEach((btn) => {
       btn.addEventListener("click", () => switchPage(btn.dataset.page));
@@ -1491,9 +1476,24 @@ function bindDialog() {
   }
 
   function bindActions() {
-    if (els.btnPredict) els.btnPredict.addEventListener("click", generatePrediction);
-    if (els.btnCopy) els.btnCopy.addEventListener("click", copyPrediction);
-    if (els.btnSave) els.btnSave.addEventListener("click", saveFavorite);
+    els.predictButtons.forEach((btn) => btn.addEventListener("click", generatePrediction));
+
+    if (els.btnCopy) els.btnCopy.addEventListener("click", async () => {
+      const balls = [...document.querySelectorAll("#recommendBalls1 .ball")]
+        .map((el) => el.textContent?.trim())
+        .filter(Boolean)
+        .map(Number);
+      await copyNumbers(balls);
+    });
+
+    if (els.btnSave) els.btnSave.addEventListener("click", () => {
+      const balls = [...document.querySelectorAll("#recommendBalls1 .ball")]
+        .map((el) => el.textContent?.trim())
+        .filter(Boolean)
+        .map(Number);
+      saveFavoriteNumbers(balls);
+    });
+
     if (els.btnRecent5) els.btnRecent5.addEventListener("click", showRecent5);
     if (els.btnDataStatus) els.btnDataStatus.addEventListener("click", showDataStatus);
     if (els.btnFullAnalysis) els.btnFullAnalysis.addEventListener("click", showFullAnalysis);
@@ -1507,7 +1507,7 @@ function bindDialog() {
 
     if (els.btnRunBacktest) els.btnRunBacktest.addEventListener("click", runBacktest);
 
-    if (els.btnGoPredict) els.btnGoPredict.addEventListener("click", () => switchPage("predict"));
+    if (els.btnGoPredict) els.btnGoPredict.addEventListener("click", switchToPredictPage);
     if (els.btnCopyAllPredict) els.btnCopyAllPredict.addEventListener("click", copyAllPredictions);
     if (els.btnPredictSummary) els.btnPredictSummary.addEventListener("click", showPredictSummary);
     if (els.btnGenerateShareCard) els.btnGenerateShareCard.addEventListener("click", generateShareCard);
@@ -1517,14 +1517,14 @@ function bindDialog() {
       els.btnClearFavorites.addEventListener("click", () => {
         localStorage.removeItem(STORAGE_KEYS.favorites);
         renderFavoritesList();
-        alert("收藏已清除");
+        showDialog("收藏已清除", "系統設定");
       });
     }
 
     if (els.btnClearHistory) {
       els.btnClearHistory.addEventListener("click", () => {
         localStorage.removeItem(STORAGE_KEYS.history);
-        alert("預測記錄已清除");
+        showDialog("預測記錄已清除", "系統設定");
       });
     }
 
@@ -1551,11 +1551,11 @@ function bindDialog() {
   }
 
   async function init() {
-  try {
-    bindActions();
-    bindNav();
-    bindDialog();
-    loadUserSettings();
+    try {
+      bindDialog();
+      bindActions();
+      bindNav();
+      loadUserSettings();
 
       const latest = await loadLatestFromCandidates();
       renderLatest(latest);
@@ -1605,7 +1605,7 @@ function bindDialog() {
       switchPage("home");
     } catch (err) {
       console.error("init error:", err);
-      alert("頁面初始化失敗，請檢查 index.html 或 app.js 是否有漏貼。");
+      showDialog("頁面初始化失敗，請檢查 index.html 或 app.js 是否有漏貼。", "初始化失敗");
     }
   }
 
