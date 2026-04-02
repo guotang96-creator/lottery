@@ -1320,9 +1320,10 @@ function bindDialog() {
     renderBestModeSuggestion(best);
     renderProfitSimulation(results, betAmount);
 
-    alert(
-      `回測完成\n\n模式：${MODE_LABELS[mode] || mode}\n要求期數：${requestedCount}期\n實際回測：${total}期\n平均命中：${avg}顆\n最高命中：${max}顆`
-    );
+    showDialog(
+  `回測完成\n\n模式：${MODE_LABELS[mode] || mode}\n要求期數：${requestedCount}期\n實際回測：${total}期\n平均命中：${avg}顆\n最高命中：${max}顆`,
+  "回測結果"
+);
   }
 
   function switchPage(page) {
