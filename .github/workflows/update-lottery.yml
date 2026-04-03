@@ -1,0 +1,51 @@
+name: Update 539 Latest Data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/30 * * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  update-539:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Create required folders
+        run: |
+          mkdir -p docs
+          mkdir -p .github/workflows
+
+      - name: Run fetch_latest_539.js
+        run: node fetch_latest_539.js
+
+      - name: Show latest.json
+        run: |
+          echo "===== latest.json ====="
+          cat latest.json || true
+          echo "===== docs/latest.json ====="
+          cat docs/latest.json || true
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add latest.json docs/latest.json
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update latest 539 data"
+            git push
+          fi
