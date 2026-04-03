@@ -26,10 +26,17 @@ jobs:
           mkdir -p docs
           mkdir -p .github/workflows
 
+      - name: Show repository files
+        run: |
+          echo "===== repo root ====="
+          ls -la
+          echo "===== workflows ====="
+          ls -la .github/workflows || true
+
       - name: Run fetch_latest_539.js
         run: node fetch_latest_539.js
 
-      - name: Show latest.json
+      - name: Show generated files
         run: |
           echo "===== latest.json ====="
           cat latest.json || true
