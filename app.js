@@ -1,12 +1,12 @@
 (() => {
-  const APP_VERSION = "V3.8.4｜今彩539 專用版｜收藏時間修正版";
+  const APP_VERSION = "V3.8.5｜今彩539 專用版｜latest 載入穩定版";
 
   const STORAGE_KEYS = {
-    favorites: "jincai539_favorites_v49",
-    history: "jincai539_predict_history_v49",
-    latest: "jincai539_latest_result_v49",
-    status: "jincai539_data_status_v49",
-    settings: "jincai539_user_settings_v49"
+    favorites: "jincai539_favorites_v50",
+    history: "jincai539_predict_history_v50",
+    latest: "jincai539_latest_result_v50",
+    status: "jincai539_data_status_v50",
+    settings: "jincai539_user_settings_v50"
   };
 
   const JSON_CANDIDATES = [
@@ -28,7 +28,7 @@
     numbers: [5, 12, 21, 33, 39],
     recent5: [],
     recent50: [],
-    updatedAt: "2026-03-31 20:05",
+    updatedAt: "2026-03-31 20:05:00",
     source: "fallback-local"
   };
 
@@ -81,8 +81,6 @@
     lastUpdateText: $("#lastUpdateText"),
     latestPeriod: $("#latestPeriod"),
     latestDate: $("#latestDate"),
-    historyCount: $("#historyCount"),
-    latestDrawNo: $("#latestDrawNo"),
     latestBalls: $("#latestBalls"),
 
     analysisPeriods: $("#analysisPeriods"),
@@ -100,13 +98,8 @@
     historyDragNums: $("#historyDragNums"),
     historyTailNums: $("#historyTailNums"),
 
-    avgHit: $("#avgHit"),
-    maxHit: $("#maxHit"),
-    bestMode: $("#bestMode"),
-
     btnCopy: $("#btnCopy"),
     btnSave: $("#btnSave"),
-    btnGoPredict: $("#btnGoPredict"),
     btnCopyAllPredict: $("#btnCopyAllPredict"),
     btnPredictSummary: $("#btnPredictSummary"),
 
@@ -172,7 +165,7 @@
     simBetAmountText: $("#simBetAmountText"),
 
     navButtons: $$(".nav-btn"),
-    predictButtons: $$("[id='btnPredict']"),
+    predictButtons: [$("#btnPredictHome"), $("#btnPredictPage")].filter(Boolean),
 
     pages: {
       home: $("#page-home"),
@@ -249,6 +242,18 @@
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch {}
+  }
+
+  function getSafeDefaultLatest() {
+    return {
+      period: DEFAULT_LATEST.period,
+      date: DEFAULT_LATEST.date,
+      numbers: [...DEFAULT_LATEST.numbers],
+      recent5: [],
+      recent50: [],
+      updatedAt: DEFAULT_LATEST.updatedAt,
+      source: DEFAULT_LATEST.source
+    };
   }
 
   function normalizeDateText(value) {
@@ -331,134 +336,126 @@
   }
 
   function normalizeLatestFromAny(raw, sourceUrl = "") {
-  if (!raw || typeof raw !== "object") return null;
+    if (!raw || typeof raw !== "object") return null;
 
-  const candidates = [];
+    const candidates = [];
+    if (raw.content?.daily539) candidates.push(raw.content.daily539);
+    if (raw.daily539) candidates.push(raw.daily539);
+    if (raw.latest) candidates.push(raw.latest);
+    if (raw.period || raw.lotteryDate || raw.drawNumberSize || raw.numbers) candidates.push(raw);
 
-  if (raw.content?.daily539) candidates.push(raw.content.daily539);
-  if (raw.daily539) candidates.push(raw.daily539);
-  if (raw.latest) candidates.push(raw.latest);
-  if (raw.period || raw.lotteryDate || raw.drawNumberSize || raw.numbers) candidates.push(raw);
+    for (const item of candidates) {
+      if (!item || typeof item !== "object") continue;
 
-  for (const item of candidates) {
-    if (!item || typeof item !== "object") continue;
-
-    const period = item.period || item.drawTerm || item.issue || item.term || item.drawNo || "";
-    const date = normalizeDateOnly(
-      item.lotteryDate || item.drawDate || item.dDate || item.date || ""
-    );
-    const numbers = toIntArray(
-      item.drawNumberSize || item.drawNumbers || item.numbers || item.orderNumbers || item.num || []
-    );
-
-    if (period && numbers.length >= 5) {
-      const recent5 = normalizeRecentRows(
-        raw.recent5 ||
-        raw.content?.recent5 ||
-        item.recent5 ||
-        []
+      const period = item.period || item.drawTerm || item.issue || item.term || item.drawNo || "";
+      const date = normalizeDateOnly(item.lotteryDate || item.drawDate || item.dDate || item.date || "");
+      const numbers = toIntArray(
+        item.drawNumberSize || item.drawNumbers || item.numbers || item.orderNumbers || item.num || []
       );
 
-      const recent50 = normalizeRecentRows(
-        raw.recent50 ||
-        raw.content?.recent50 ||
-        item.recent50 ||
-        raw.recent5 ||
-        raw.content?.recent5 ||
-        []
-      );
+      if (period && numbers.length >= 5) {
+        const recent5 = normalizeRecentRows(raw.recent5 || raw.content?.recent5 || item.recent5 || []);
+        const recent50 = normalizeRecentRows(
+          raw.recent50 || raw.content?.recent50 || item.recent50 || raw.recent5 || raw.content?.recent5 || []
+        );
 
-      return {
-        period: String(period),
-        date: date || getSafeDefaultLatest().date,
-        numbers: uniqueSorted(numbers.slice(0, 5)),
-        recent5,
-        recent50,
-        updatedAt: normalizeDateText(
-          raw.updatedAt ||
-          raw.generatedAt ||
-          item.updatedAt ||
-          item.generatedAt ||
-          getTaiwanDateTime()
-        ),
-        source: sourceUrl || "remote-json"
-      };
+        return {
+          period: String(period),
+          date: date || getSafeDefaultLatest().date,
+          numbers: uniqueSorted(numbers.slice(0, 5)),
+          recent5,
+          recent50,
+          updatedAt: normalizeDateText(
+            raw.updatedAt || raw.generatedAt || item.updatedAt || item.generatedAt || getTaiwanDateTime()
+          ),
+          source: sourceUrl || "remote-json"
+        };
+      }
     }
-  }
 
-  return null;
-}
+    return null;
+  }
 
   async function fetchJSON(url) {
-  const fullUrl = `${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}`;
+    const fullUrl = `${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}`;
+    const res = await fetch(fullUrl, {
+      method: "GET",
+      cache: "no-store",
+      headers: { Accept: "application/json" }
+    });
 
-  const res = await fetch(fullUrl, {
-    method: "GET",
-    cache: "no-store",
-    headers: {
-      "Accept": "application/json"
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status} @ ${url}`);
     }
-  });
 
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status} @ ${url}`);
+    return await res.json();
   }
-
-  const data = await res.json();
-  return data;
-}
 
   async function loadLatestFromCandidates() {
-  let lastError = null;
+    let lastError = null;
 
-  for (const url of JSON_CANDIDATES) {
-    try {
-      const raw = await fetchJSON(url);
-      const normalized = normalizeLatestFromAny(raw, url);
+    for (const url of JSON_CANDIDATES) {
+      try {
+        const raw = await fetchJSON(url);
+        const normalized = normalizeLatestFromAny(raw, url);
 
-      if (normalized && normalized.period && normalized.numbers?.length >= 5) {
-        writeJSON(STORAGE_KEYS.latest, normalized);
-        writeJSON(STORAGE_KEYS.status, {
-          ok: true,
-          source: url,
-          version: APP_VERSION,
-          updatedAt: getTaiwanDateTime()
-        });
-        return normalized;
+        if (normalized && normalized.period && normalized.numbers?.length >= 5) {
+          writeJSON(STORAGE_KEYS.latest, normalized);
+          writeJSON(STORAGE_KEYS.status, {
+            ok: true,
+            source: url,
+            version: APP_VERSION,
+            updatedAt: getTaiwanDateTime()
+          });
+          return normalized;
+        }
+      } catch (err) {
+        lastError = err;
+        console.warn("loadLatestFromCandidates failed:", url, err);
       }
-    } catch (err) {
-      lastError = err;
-      console.warn("loadLatestFromCandidates failed:", url, err);
     }
-  }
 
-  const local = readJSON(STORAGE_KEYS.latest, null);
-  const normalizedLocal = normalizeLatestFromAny(local || {}, "local-cache");
+    const local = readJSON(STORAGE_KEYS.latest, null);
+    const normalizedLocal = normalizeLatestFromAny(local || {}, "local-cache");
 
-  if (normalizedLocal && normalizedLocal.period && normalizedLocal.numbers?.length >= 5) {
+    if (normalizedLocal && normalizedLocal.period && normalizedLocal.numbers?.length >= 5) {
+      writeJSON(STORAGE_KEYS.status, {
+        ok: true,
+        source: "local-cache",
+        version: APP_VERSION,
+        updatedAt: getTaiwanDateTime(),
+        fallback: true
+      });
+      return normalizedLocal;
+    }
+
+    const fallback = getSafeDefaultLatest();
+
+    writeJSON(STORAGE_KEYS.latest, fallback);
     writeJSON(STORAGE_KEYS.status, {
-      ok: true,
-      source: "local-cache",
+      ok: false,
+      source: "fallback-default",
       version: APP_VERSION,
       updatedAt: getTaiwanDateTime(),
-      fallback: true
+      error: lastError ? String(lastError.message || lastError) : "unknown"
     });
-    return normalizedLocal;
+
+    return fallback;
   }
 
-  const fallback = getSafeDefaultLatest();
+  function getRecentFiveDraws(latest) {
+    if (Array.isArray(latest?.recent5) && latest.recent5.length) return latest.recent5.slice(0, 5);
 
-  writeJSON(STORAGE_KEYS.latest, fallback);
-  writeJSON(STORAGE_KEYS.status, {
-    ok: false,
-    source: "fallback-default",
-    version: APP_VERSION,
-    updatedAt: getTaiwanDateTime(),
-    error: lastError ? String(lastError.message || lastError) : "unknown"
-  });
-
-  return fallback;
-}
+    const rows = [];
+    if (Array.isArray(latest?.numbers) && latest.numbers.length >= 5) {
+      rows.push({
+        period: latest.period || "",
+        date: latest.date || "",
+        numbers: uniqueSorted(latest.numbers.slice(0, 5))
+      });
+    }
+    return rows;
+  }
 
   function sampleHistory(periods, latestNumbers = null) {
     const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
@@ -478,10 +475,7 @@
       source.push(uniqueSorted(latestNumbers.slice(0, 5)));
     }
 
-    while (source.length < size) {
-      source.push(...MOCK_HISTORY);
-    }
-
+    while (source.length < size) source.push(...MOCK_HISTORY);
     return source.slice(0, size);
   }
 
@@ -631,23 +625,18 @@
   }
 
   function renderLatest(latest) {
-  const safe = latest && typeof latest === "object" ? latest : getSafeDefaultLatest();
+    const safe = latest && typeof latest === "object" ? latest : getSafeDefaultLatest();
+    const period = safe.period || DEFAULT_LATEST.period;
+    const date = safe.date || DEFAULT_LATEST.date;
+    const numbers = Array.isArray(safe.numbers) && safe.numbers.length >= 5 ? safe.numbers : DEFAULT_LATEST.numbers;
+    const updatedAt = safe.updatedAt || getTaiwanDateTime();
 
-  const period = safe.period || DEFAULT_LATEST.period;
-  const date = safe.date || DEFAULT_LATEST.date;
-  const numbers = Array.isArray(safe.numbers) && safe.numbers.length >= 5
-    ? safe.numbers
-    : DEFAULT_LATEST.numbers;
-  const updatedAt = safe.updatedAt || getTaiwanDateTime();
-
-  if (els.lastUpdateText) els.lastUpdateText.textContent = updatedAt;
-  if (els.latestPeriod) els.latestPeriod.textContent = period;
-  if (els.latestDate) els.latestDate.textContent = date;
-  if (els.latestDrawNo) els.latestDrawNo.textContent = period;
-  if (els.dataSourceText) els.dataSourceText.textContent = safe.source || "latest.json";
-
-  renderBalls(els.latestBalls, numbers, false);
-}
+    if (els.lastUpdateText) els.lastUpdateText.textContent = updatedAt;
+    if (els.latestPeriod) els.latestPeriod.textContent = period;
+    if (els.latestDate) els.latestDate.textContent = date;
+    if (els.dataSourceText) els.dataSourceText.textContent = safe.source || "latest.json";
+    renderBalls(els.latestBalls, numbers, false);
+  }
 
   function getAnalysisSummary(history) {
     const freq = getFrequency(history);
@@ -771,13 +760,6 @@
   function updateDashboard(numbers, confidence, mode, history) {
     renderBalls(els.recommendBalls1, numbers, true);
     updateAnalysisViews(history);
-
-    const saved = readJSON(STORAGE_KEYS.history, []);
-    const stats = calcHitStats(saved);
-
-    if (els.avgHit) els.avgHit.textContent = stats.avg;
-    if (els.maxHit) els.maxHit.textContent = stats.max;
-    if (els.bestMode) els.bestMode.textContent = stats.bestMode || MODE_LABELS[mode] || "均衡型";
 
     const metaBox = document.querySelector(".recommend-meta");
     const meta = getModeMeta(mode);
@@ -1017,10 +999,7 @@
 
   function renderTailChart(history) {
     if (!els.tailChartList) return;
-    const tails = getTailGroups(history).map(([tail, count]) => ({
-      label: `${tail}尾`,
-      value: count
-    }));
+    const tails = getTailGroups(history).map(([tail, count]) => ({ label: `${tail}尾`, value: count }));
     const maxValue = tails.length ? tails[0].value : 1;
     renderBarList(els.tailChartList, tails, maxValue);
   }
@@ -1030,7 +1009,6 @@
 
     let odd = 0;
     let even = 0;
-
     history.forEach((draw) => {
       draw.forEach((num) => {
         if (num % 2 === 0) even += 1;
@@ -1053,11 +1031,10 @@
 
     let small = 0;
     let big = 0;
-
     history.forEach((draw) => {
       draw.forEach((num) => {
         if (num >= 1 && num <= 19) small += 1;
-        else if (num >= 20 && num <= 39) big += 1;
+        else big += 1;
       });
     });
 
@@ -1173,8 +1150,7 @@
     const maxCount = top5.length ? top5[0].count : 1;
 
     if (els.dragQuerySummary) {
-      els.dragQuerySummary.textContent =
-        `${pad2(target)} 在最近 ${scope} 期可分析區間中出現 ${triggerCount} 次；下期常見拖號如下`;
+      els.dragQuerySummary.textContent = `${pad2(target)} 在最近 ${scope} 期可分析區間中出現 ${triggerCount} 次；下期常見拖號如下`;
     }
 
     renderDragQueryResultList(top5, maxCount);
@@ -1196,7 +1172,6 @@
     const total = results.length || 1;
     const avgHit = results.reduce((sum, row) => sum + row.hitCount, 0) / total;
     const maxHit = results.length ? Math.max(...results.map((r) => r.hitCount)) : 0;
-
     return { mode, avgHit, maxHit };
   }
 
@@ -1310,18 +1285,12 @@
     const latest = readJSON(STORAGE_KEYS.latest, DEFAULT_LATEST);
 
     let rows = [];
-    if (Array.isArray(latest?.recent50) && latest.recent50.length) {
-      rows = latest.recent50;
-    } else if (Array.isArray(latest?.recent5) && latest.recent5.length) {
-      rows = latest.recent5;
-    }
+    if (Array.isArray(latest?.recent50) && latest.recent50.length) rows = latest.recent50;
+    else if (Array.isArray(latest?.recent5) && latest.recent5.length) rows = latest.recent5;
 
     const normalized = (rows || [])
       .map((item, idx) => {
-        const numbers = uniqueSorted(
-          toIntArray(item?.numbers || item?.drawNumberSize || item?.drawNumbers || [])
-        ).slice(0, 5);
-
+        const numbers = uniqueSorted(toIntArray(item?.numbers || item?.drawNumberSize || item?.drawNumbers || [])).slice(0, 5);
         if (numbers.length < 5) return null;
 
         return {
@@ -1367,11 +1336,7 @@
     for (let i = 0; i < rows.length; i++) {
       const actualRow = rows[i];
       const historyRows = sourceRows.slice(i + 1, i + 21).map((r) => uniqueSorted(r.numbers || []));
-      const history =
-        historyRows.length >= 5
-          ? historyRows
-          : MOCK_HISTORY.slice(0, 20).map((r) => uniqueSorted(r));
-
+      const history = historyRows.length >= 5 ? historyRows : MOCK_HISTORY.slice(0, 20).map((r) => uniqueSorted(r));
       const predicted = predictNumbers(mode, history);
       const actual = uniqueSorted(actualRow.numbers || []);
       const hitCount = compareHit(predicted, actual);
@@ -1448,7 +1413,6 @@
 
     const primary = allPredictions[0];
     const confidence = estimateConfidence(primary, history, mode);
-    const hitCount = compareHit(primary, latest.numbers || DEFAULT_LATEST.numbers);
 
     savePredictRecord({
       createdAt: getTaiwanDateTime(),
@@ -1458,11 +1422,10 @@
       recommendCount,
       numbers: primary,
       confidence,
-      hitCount
+      hitCount: compareHit(primary, latest.numbers || DEFAULT_LATEST.numbers)
     });
 
-    if (els.historyCount) els.historyCount.textContent = `最近 ${periods} 期`;
-
+    updateAnalysisViews(history);
     updateDashboard(primary, confidence, mode, history);
     renderPredictResults(allPredictions, mode, confidence);
 
@@ -1500,7 +1463,7 @@
       `最新日期：${latest.date}\n` +
       `最新號碼：${formatNums(latest.numbers || [])}\n` +
       `最後更新：${latest.updatedAt}\n` +
-      資料來源：${status.source || "local-cache"}\n` +
+      `資料來源：${status.source || "local-cache"}\n` +
       `狀態：${status.ok ? "正常" : "異常"}`,
       "資料狀態"
     );
@@ -1528,41 +1491,33 @@
       .map((r, idx) => `${idx + 1}. ${r.modeLabel}｜${formatNums(r.numbers || [])}｜命中 ${r.hitCount || 0} 顆`)
       .join("\n");
 
-    const stats = calcHitStats(records);
-    showDialog(
-      `最近命中追蹤\n\n${text}\n\n平均：${stats.avg}\n最高：${stats.max}\n最佳模式：${stats.bestMode}`,
-      "命中追蹤"
-    );
+    showDialog(`最近命中追蹤\n\n${text}`, "命中追蹤");
   }
 
   async function reloadData() {
-  try {
-    const latest = await loadLatestFromCandidates();
+    try {
+      const latest = await loadLatestFromCandidates();
 
-    renderLatest(latest);
-    renderRecent5List();
-    renderFavoritesList();
-    renderVisualAnalysis();
-    fillLatestDragNumber();
+      renderLatest(latest);
+      renderRecent5List();
+      renderFavoritesList();
+      renderVisualAnalysis();
+      fillLatestDragNumber();
 
-    const periods = Number(els.analysisPeriods?.value || 120);
-    const currentMode = els.predictMode?.value || "balanced";
-    const history = sampleHistory(periods, latest.numbers);
-    const primary = predictNumbers(currentMode, history);
-    const confidence = estimateConfidence(primary, history, currentMode);
+      const periods = Number(els.analysisPeriods?.value || 120);
+      const currentMode = els.predictMode?.value || "balanced";
+      const history = sampleHistory(periods, latest.numbers);
+      const primary = predictNumbers(currentMode, history);
+      const confidence = estimateConfidence(primary, history, currentMode);
 
-    updateDashboard(primary, confidence, currentMode, history);
-    renderPredictResults([primary], currentMode, confidence);
+      updateDashboard(primary, confidence, currentMode, history);
+      renderPredictResults([primary], currentMode, confidence);
 
-    showDialog("latest.json 已重新載入", "資料更新");
-  } catch (err) {
-    console.error("reloadData error:", err);
-    showDialog("資料重新載入失敗，已保留目前畫面資料", "資料更新");
-  }
-}
-
-  function switchToPredictPage() {
-    switchPage("predict");
+      showDialog("latest.json 已重新載入", "資料更新");
+    } catch (err) {
+      console.error("reloadData error:", err);
+      showDialog("資料重新載入失敗，已保留目前畫面資料", "資料更新");
+    }
   }
 
   function bindNav() {
@@ -1607,7 +1562,6 @@
 
     if (els.btnRunBacktest) els.btnRunBacktest.addEventListener("click", runBacktest);
 
-    if (els.btnGoPredict) els.btnGoPredict.addEventListener("click", switchToPredictPage);
     if (els.btnCopyAllPredict) els.btnCopyAllPredict.addEventListener("click", copyAllPredictions);
     if (els.btnPredictSummary) els.btnPredictSummary.addEventListener("click", showPredictSummary);
     if (els.btnGenerateShareCard) els.btnGenerateShareCard.addEventListener("click", generateShareCard);
@@ -1658,23 +1612,23 @@
       loadUserSettings();
 
       const latest = await loadLatestFromCandidates();
-renderLatest(latest);
-renderRecent5List();
-renderFavoritesList();
-renderVisualAnalysis();
-fillLatestDragNumber();
+      renderLatest(latest);
+      renderRecent5List();
+      renderFavoritesList();
+      renderVisualAnalysis();
+      fillLatestDragNumber();
 
-const periods = Number(els.analysisPeriods?.value || 120);
-const currentMode = els.predictMode?.value || "balanced";
-const history = sampleHistory(periods, latest.numbers);
-const primary = predictNumbers(currentMode, history);
-const confidence = estimateConfidence(primary, history, currentMode);
+      const periods = Number(els.analysisPeriods?.value || 120);
+      const currentMode = els.predictMode?.value || "balanced";
+      const history = sampleHistory(periods, latest.numbers);
+      const primary = predictNumbers(currentMode, history);
+      const confidence = estimateConfidence(primary, history, currentMode);
 
-updateDashboard(primary, confidence, currentMode, history);
-renderPredictResults([primary], currentMode, confidence);
+      updateAnalysisViews(history);
+      updateDashboard(primary, confidence, currentMode, history);
+      renderPredictResults([primary], currentMode, confidence);
 
       if (els.appVersionText) els.appVersionText.textContent = APP_VERSION;
-      if (els.dataSourceText) els.dataSourceText.textContent = latest.source || "latest.json";
       if (els.currentModeText) els.currentModeText.textContent = MODE_LABELS[currentMode] || "均衡型";
 
       if (els.backtestModeText) els.backtestModeText.textContent = "均衡型";
