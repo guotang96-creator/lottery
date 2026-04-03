@@ -2,10 +2,10 @@ const CACHE_NAME = "lottery-cache-v55";
 
 const ASSETS = [
   "./",
-  "./index.html?v=54",
-  "./style.css?v=54",
-  "./app.js?v=54",
-  "./manifest.json?v=54",
+  "./index.html?v=55",
+  "./style.css?v=55",
+  "./app.js?v=55",
+  "./manifest.json?v=55",
   "./latest.json",
   "./favicon.png",
   "./icon-192.png",
@@ -14,7 +14,6 @@ const ASSETS = [
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
-
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(ASSETS))
@@ -30,9 +29,7 @@ self.addEventListener("activate", (event) => {
       .then((keys) =>
         Promise.all(
           keys.map((key) => {
-            if (key !== CACHE_NAME) {
-              return caches.delete(key);
-            }
+            if (key !== CACHE_NAME) return caches.delete(key);
             return Promise.resolve();
           })
         )
@@ -43,15 +40,11 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const request = event.request;
-
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
-
-  // 只處理同網域資源
   if (url.origin !== location.origin) return;
 
-  // JSON 走網路優先，避免資料卡住
   if (
     url.pathname.endsWith("/latest.json") ||
     url.pathname.endsWith("latest.json") ||
@@ -69,7 +62,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 其他靜態檔走快取優先
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;
@@ -80,7 +72,7 @@ self.addEventListener("fetch", (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(request, cloned));
           return response;
         })
-        .catch(() => caches.match("./index.html?v=54"));
+        .catch(() => caches.match("./index.html?v=55"));
     })
   );
 });
