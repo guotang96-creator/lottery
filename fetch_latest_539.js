@@ -1,13 +1,12 @@
 const fs = require("fs");
 const path = require("path");
 
-const OUTPUT_CANDIDATES = [
-  path.join(process.cwd(), "latest.json"),
-  path.join(process.cwd(), "docs", "latest.json")
-];
+const ROOT = process.cwd();
 
-const API_URL =
-  "https://api.taiwanlottery.com/TLCAPIWeB/Lottery/Daily539Result?period&month=2026-01&endMonth=2026-12&pageNum=1&pageSize=200";
+const OUTPUT_CANDIDATES = [
+  path.join(ROOT, "latest.json"),
+  path.join(ROOT, "docs", "latest.json")
+];
 
 function ensureDir(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
@@ -51,7 +50,9 @@ function normalizeRow(item) {
   const period = item?.period ? String(item.period) : "";
   const date = normalizeDateOnly(item?.lotteryDate || item?.drawDate || item?.date || "");
   const numbers = Array.isArray(item?.drawNumberSize)
-    ? item.drawNumberSize.map(Number).filter((n) => Number.isFinite(n) && n >= 1 && n <= 39)
+    ? item.drawNumberSize
+        .map(Number)
+        .filter((n) => Number.isFinite(n) && n >= 1 && n <= 39)
     : [];
 
   if (!period || numbers.length < 5) return null;
@@ -83,9 +84,16 @@ function sortRowsDesc(rows) {
 }
 
 async function main() {
-  console.log("🚀 開始抓取今彩539官方資料...");
+  const now = new Date();
+  const year = now.getFullYear();
 
-  const raw = await fetchJson(API_URL);
+  const apiUrl =
+    `https://api.taiwanlottery.com/TLCAPIWeB/Lottery/Daily539Result?period&month=${year}-01&endMonth=${year}-12&pageNum=1&pageSize=200`;
+
+  console.log("🚀 開始抓取今彩539官方資料...");
+  console.log(`📡 API: ${apiUrl}`);
+
+  const raw = await fetchJson(apiUrl);
 
   if (raw?.rtCode !== 0) {
     throw new Error(`官方 API rtCode 異常: ${raw?.rtCode}`);
