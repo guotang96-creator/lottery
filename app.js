@@ -1,4 +1,4 @@
-const APP_VERSION = "AI Compact Final 3";
+const APP_VERSION = "AI Compact Final 4";
 const AI_API_BASE = "https://lottery-ai-api.vercel.app";
 
 const JSON_CANDIDATES = [
@@ -102,9 +102,7 @@ function renderAiBalls(numbers) {
   if (!Array.isArray(numbers) || !numbers.length) {
     return `<span class="ai-empty">無資料</span>`;
   }
-  return numbers
-    .map((num) => `<span class="ai-ball">${pad2(num)}</span>`)
-    .join("");
+  return numbers.map((num) => `<span class="ai-ball">${pad2(num)}</span>`).join("");
 }
 
 function normalizeLatest539(json) {
@@ -263,14 +261,8 @@ function extractHistory539(json, latest) {
     }))
     .filter((row) => row.numbers.length >= 5);
 
-  if (mapped.length) {
-    return mapped;
-  }
-
-  if (latest) {
-    return [latest];
-  }
-
+  if (mapped.length) return mapped;
+  if (latest) return [latest];
   return [];
 }
 
@@ -328,6 +320,18 @@ function uniqSorted(arr) {
   return [...new Set(arr)].sort((a, b) => a - b);
 }
 
+function uniqKeepOrder(arr) {
+  const seen = new Set();
+  const out = [];
+  for (const n of arr) {
+    if (!seen.has(n)) {
+      seen.add(n);
+      out.push(n);
+    }
+  }
+  return out;
+}
+
 function pickTopFromMap(map, limit, reverse = true) {
   return [...map.entries()]
     .sort((a, b) => reverse ? b[1] - a[1] || a[0] - b[0] : a[1] - b[1] || a[0] - b[0])
@@ -349,6 +353,12 @@ function tailBalancePick(source, limit = 5) {
   }
 
   return result;
+}
+
+function isBadSimpleSequence(nums) {
+  if (!Array.isArray(nums) || nums.length !== 5) return false;
+  const joined = nums.join(",");
+  return joined === "1,2,3,4,5" || joined === "2,3,4,5,6";
 }
 
 function predictNumbers(mode, history) {
@@ -381,9 +391,15 @@ function predictNumbers(mode, history) {
       ]).slice(0, 5);
       break;
 
-    case "tail":
-      picked = tailBalancePick(uniqSorted([...hot, ...missingTop]), 5);
+    case "tail": {
+      const rankedPool = uniqKeepOrder([
+        ...hot,
+        ...missingTop,
+        ...cold
+      ]);
+      picked = tailBalancePick(rankedPool, 5);
       break;
+    }
 
     case "balanced":
     default:
@@ -399,7 +415,17 @@ function predictNumbers(mode, history) {
       break;
   }
 
-  return picked.filter((n) => n >= 1 && n <= 39).slice(0, 5);
+  picked = picked.filter((n) => n >= 1 && n <= 39).slice(0, 5);
+
+  if (isBadSimpleSequence(picked)) {
+    picked = uniqSorted([
+      ...hot.slice(0, 3),
+      ...missingTop.slice(0, 2),
+      ...cold.slice(0, 2)
+    ]).slice(0, 5);
+  }
+
+  return picked;
 }
 
 function estimateConfidence(primary, history, mode) {
@@ -502,7 +528,7 @@ function buildAiPromptFallback(payload) {
 
   const currentIsFakeSimple =
     Array.isArray(state.currentPrediction) &&
-    state.currentPrediction.join(",") === "1,2,3,4,5";
+    isBadSimpleSequence(state.currentPrediction);
 
   const primary =
     state.currentPrediction?.length >= 5 && !currentIsFakeSimple
