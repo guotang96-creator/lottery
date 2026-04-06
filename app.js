@@ -1,4 +1,4 @@
-const APP_VERSION = "AI Compact Final 4";
+const APP_VERSION = "AI Compact Final Stable";
 const AI_API_BASE = "https://lottery-ai-api.vercel.app";
 
 const JSON_CANDIDATES = [
@@ -85,8 +85,8 @@ function setAiHtml(html, className = "") {
   els.aiResult.innerHTML = html;
 }
 
-function renderBall(value, extraClass = "range-1") {
-  return `<span class="ball ${extraClass}">${pad2(value)}</span>`;
+function renderBall(value) {
+  return `<span class="ball">${pad2(value)}</span>`;
 }
 
 function renderBalls(values, target) {
@@ -130,19 +130,12 @@ function normalizeLatest539(json) {
       item.drawNumbers ||
       item.num ||
       []
-    )
-      .map(Number)
-      .filter(Number.isFinite);
+    ).map(Number).filter(Number.isFinite);
 
     if (numbers.length >= 5) {
       return {
         period: item.period || item.issue || item.drawTerm || "--",
-        lotteryDate:
-          item.lotteryDate ||
-          item.drawDate ||
-          item.dDate ||
-          item.date ||
-          "",
+        lotteryDate: item.lotteryDate || item.drawDate || item.dDate || item.date || "",
         numbers: numbers.slice(0, 5)
       };
     }
@@ -168,48 +161,16 @@ function normalizeLatest539(json) {
           row.drawNumbers ||
           row.num ||
           []
-        )
-          .map(Number)
-          .filter(Number.isFinite);
+        ).map(Number).filter(Number.isFinite);
 
         if (numbers.length >= 5) {
           return {
             period: row.period || row.issue || row.drawTerm || "--",
-            lotteryDate:
-              row.lotteryDate ||
-              row.drawDate ||
-              row.dDate ||
-              row.date ||
-              "",
+            lotteryDate: row.lotteryDate || row.drawDate || row.dDate || row.date || "",
             numbers: numbers.slice(0, 5)
           };
         }
       }
-    }
-  }
-
-  if (content?.daily539?.lotteryData) {
-    const row = content.daily539.lotteryData;
-    const numbers = (
-      row.numbers ||
-      row.drawNumberSize ||
-      row.drawNumbers ||
-      []
-    )
-      .map(Number)
-      .filter(Number.isFinite);
-
-    if (numbers.length >= 5) {
-      return {
-        period: row.period || row.issue || row.drawTerm || "--",
-        lotteryDate:
-          row.lotteryDate ||
-          row.drawDate ||
-          row.dDate ||
-          row.date ||
-          "",
-        numbers: numbers.slice(0, 5)
-      };
     }
   }
 
@@ -242,22 +203,14 @@ function extractHistory539(json, latest) {
   const mapped = rows
     .map((row) => ({
       period: row.period || row.issue || row.drawTerm || "",
-      lotteryDate:
-        row.lotteryDate ||
-        row.drawDate ||
-        row.dDate ||
-        row.date ||
-        "",
+      lotteryDate: row.lotteryDate || row.drawDate || row.dDate || row.date || "",
       numbers: (
         row.numbers ||
         row.drawNumberSize ||
         row.drawNumbers ||
         row.num ||
         []
-      )
-        .map(Number)
-        .filter(Number.isFinite)
-        .slice(0, 5)
+      ).map(Number).filter(Number.isFinite).slice(0, 5)
     }))
     .filter((row) => row.numbers.length >= 5);
 
@@ -320,18 +273,6 @@ function uniqSorted(arr) {
   return [...new Set(arr)].sort((a, b) => a - b);
 }
 
-function uniqKeepOrder(arr) {
-  const seen = new Set();
-  const out = [];
-  for (const n of arr) {
-    if (!seen.has(n)) {
-      seen.add(n);
-      out.push(n);
-    }
-  }
-  return out;
-}
-
 function pickTopFromMap(map, limit, reverse = true) {
   return [...map.entries()]
     .sort((a, b) => reverse ? b[1] - a[1] || a[0] - b[0] : a[1] - b[1] || a[0] - b[0])
@@ -339,41 +280,17 @@ function pickTopFromMap(map, limit, reverse = true) {
     .map(([num]) => num);
 }
 
-function tailBalancePick(source, limit = 5) {
-  const usedTails = new Set();
-  const result = [];
-
-  for (const n of source) {
-    const tail = n % 10;
-    if (!usedTails.has(tail)) {
-      usedTails.add(tail);
-      result.push(n);
-    }
-    if (result.length >= limit) break;
-  }
-
-  return result;
-}
-
-function isBadSimpleSequence(nums) {
-  if (!Array.isArray(nums) || nums.length !== 5) return false;
-  const joined = nums.join(",");
-  return joined === "1,2,3,4,5" || joined === "2,3,4,5,6";
-}
-
 function predictNumbers(mode, history) {
-  if (!history.length) {
-    return [];
-  }
+  if (!history.length) return [];
 
   const freq = countFrequency(history);
   const miss = getMissingCounts(history);
 
-  const hot = pickTopFromMap(freq, 15, true);
-  const cold = pickTopFromMap(freq, 15, false);
+  const hot = pickTopFromMap(freq, 12, true);
+  const cold = pickTopFromMap(freq, 12, false);
   const missingTop = [...miss.entries()]
     .sort((a, b) => b[1] - a[1] || a[0] - b[0])
-    .slice(0, 15)
+    .slice(0, 12)
     .map(([num]) => num);
 
   let picked = [];
@@ -391,15 +308,13 @@ function predictNumbers(mode, history) {
       ]).slice(0, 5);
       break;
 
-    case "tail": {
-      const rankedPool = uniqKeepOrder([
-        ...hot,
-        ...missingTop,
-        ...cold
-      ]);
-      picked = tailBalancePick(rankedPool, 5);
+    case "tail":
+      picked = uniqSorted([
+        ...hot.slice(0, 3),
+        ...missingTop.slice(0, 2),
+        ...cold.slice(0, 2)
+      ]).slice(0, 5);
       break;
-    }
 
     case "balanced":
     default:
@@ -408,24 +323,10 @@ function predictNumbers(mode, history) {
         ...missingTop.slice(0, 2),
         ...cold.slice(0, 2)
       ]).slice(0, 5);
-
-      if (picked.length < 5) {
-        picked = uniqSorted([...picked, ...hot, ...missingTop, ...cold]).slice(0, 5);
-      }
       break;
   }
 
-  picked = picked.filter((n) => n >= 1 && n <= 39).slice(0, 5);
-
-  if (isBadSimpleSequence(picked)) {
-    picked = uniqSorted([
-      ...hot.slice(0, 3),
-      ...missingTop.slice(0, 2),
-      ...cold.slice(0, 2)
-    ]).slice(0, 5);
-  }
-
-  return picked;
+  return picked.filter((n) => n >= 1 && n <= 39).slice(0, 5);
 }
 
 function estimateConfidence(primary, history, mode) {
@@ -454,23 +355,20 @@ function getHotColdTexts(history) {
   return { hot, cold };
 }
 
-function updateDashboard(primary, confidence, mode, history) {
+function updateDashboard(primary, confidence, history) {
   const { hot, cold } = getHotColdTexts(history);
 
   els.primaryNumbersText.textContent =
     primary.length ? primary.map(pad2).join("、") : "資料不足";
-
   els.confidenceText.textContent =
     primary.length ? `${confidence} 分` : "--";
-
   els.hotNumbersText.textContent = hot;
   els.coldNumbersText.textContent = cold;
 
   if (primary.length) {
     renderBalls(primary, els.predictResultsList);
   } else {
-    els.predictResultsList.innerHTML =
-      `<div class="empty-text">資料不足，暫不產生推薦號碼</div>`;
+    els.predictResultsList.innerHTML = `<div class="empty-text">資料不足，暫不產生推薦號碼</div>`;
   }
 
   state.currentPrediction = primary;
@@ -488,31 +386,15 @@ function getLatest539Payload() {
     };
   }
 
-  const latestIssueText =
-    document.body.innerText.match(/最新期數[:：]\s*([0-9]+)/)?.[1] || "";
-  const latestDateText =
-    document.body.innerText.match(/開獎日期[:：]\s*([0-9\-]+)/)?.[1] || "";
-
-  const numberMatches = Array.from(document.querySelectorAll(".ball"))
-    .map((el) => Number(el.textContent.trim()))
-    .filter(Number.isFinite)
-    .slice(0, 5);
-
   return {
     game: "daily539",
     mode: els.predictMode?.value || "balanced",
     latestDraw: {
-      period: latestIssueText,
-      lotteryDate: latestDateText,
-      numbers: numberMatches
+      period: "",
+      lotteryDate: "",
+      numbers: []
     },
-    history: [
-      {
-        period: latestIssueText,
-        lotteryDate: latestDateText,
-        numbers: numberMatches
-      }
-    ]
+    history: []
   };
 }
 
@@ -526,12 +408,8 @@ function buildAiPromptFallback(payload) {
     .sort((a, b) => b[1] - a[1] || a[0] - b[0])
     .map(([n]) => n);
 
-  const currentIsFakeSimple =
-    Array.isArray(state.currentPrediction) &&
-    isBadSimpleSequence(state.currentPrediction);
-
   const primary =
-    state.currentPrediction?.length >= 5 && !currentIsFakeSimple
+    Array.isArray(state.currentPrediction) && state.currentPrediction.length >= 5
       ? state.currentPrediction.slice(0, 5)
       : hot.slice(0, 5);
 
@@ -586,12 +464,9 @@ function renderAiResult(result, modelName) {
       <div class="ai-reason-list">
         ${
           reasoning.length
-            ? reasoning
-                .map(
-                  (item, index) =>
-                    `<div class="ai-reason-item">${index + 1}. ${escapeHtml(item)}</div>`
-                )
-                .join("")
+            ? reasoning.map((item, index) =>
+                `<div class="ai-reason-item">${index + 1}. ${escapeHtml(item)}</div>`
+              ).join("")
             : `<div class="ai-empty">無資料</div>`
         }
       </div>
@@ -633,7 +508,7 @@ async function callAiApi(provider) {
         data?.error ||
         data?.message ||
         rawText ||
-        `API 錯誤（${res.status}）`;
+        `API 錯誤（${res.status})`;
 
       setAiResult(`${provider.toUpperCase()} 分析失敗：${msg}`, "error");
       return;
@@ -673,10 +548,6 @@ async function loadLatestFromCandidates() {
   state.latest539 = latest539;
   state.history539 = extractHistory539(json, latest539);
 
-  window.latestData = latest539;
-  window.latestJson = json;
-  window.appLatestData = latest539;
-
   return latest539;
 }
 
@@ -687,7 +558,7 @@ function runQuickAnalysis() {
   const primary = predictNumbers(currentMode, history);
   const confidence = estimateConfidence(primary, history, currentMode);
 
-  updateDashboard(primary, confidence, currentMode, history);
+  updateDashboard(primary, confidence, history);
 }
 
 async function refreshAll() {

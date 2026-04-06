@@ -2,17 +2,11 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-  />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>今彩539 AI 預測系統</title>
   <meta name="theme-color" content="#0f2f70" />
-  <meta
-    name="description"
-    content="今彩539 AI 預測系統｜最新開獎、快速分析、AI 雙模型分析"
-  />
-  <link rel="stylesheet" href="style.css?v=final-ai-compact-1" />
+  <meta name="description" content="今彩539 AI 預測系統｜最新開獎、快速分析、AI 雙模型分析" />
+  <link rel="stylesheet" href="style.css?v=final-v1" />
 </head>
 <body>
   <div class="app-shell">
@@ -27,14 +21,13 @@
             <span>・</span>
             <span>Vercel AI API</span>
           </div>
-          <div class="hero-update" id="heroUpdateText">
-            載入最新資料中...
-          </div>
+          <div class="hero-update" id="heroUpdateText">載入最新資料中...</div>
         </div>
       </section>
 
       <section class="card">
         <div class="section-title">最新開獎</div>
+
         <div class="info-grid">
           <div>最新期數：<span id="latestIssue">--</span></div>
           <div>開獎日期：<span id="latestDate">--</span></div>
@@ -49,8 +42,8 @@
         </div>
 
         <div class="action-row">
-          <button class="primary-btn" id="btnRefresh">重新載入資料</button>
-          <button class="secondary-btn" id="btnQuickPick">立即預測</button>
+          <button class="primary-btn" id="btnRefresh" type="button">重新載入資料</button>
+          <button class="secondary-btn" id="btnQuickPick" type="button">立即預測</button>
         </div>
       </section>
 
@@ -77,14 +70,17 @@
             <span class="label">主推薦號碼</span>
             <strong id="primaryNumbersText">--</strong>
           </div>
+
           <div class="analysis-item">
             <span class="label">信心分數</span>
             <strong id="confidenceText">--</strong>
           </div>
+
           <div class="analysis-item">
             <span class="label">熱號觀察</span>
             <strong id="hotNumbersText">--</strong>
           </div>
+
           <div class="analysis-item">
             <span class="label">冷號觀察</span>
             <strong id="coldNumbersText">--</strong>
@@ -115,6 +111,6 @@
     </main>
   </div>
 
-  <script src="app.js?v=final-ai-compact-1"></script>
+  <script src="app.js?v=final-v1"></script>
 </body>
 </html>

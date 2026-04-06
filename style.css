@@ -2,17 +2,12 @@
   --bg1:#06142d;
   --bg2:#0a1f4b;
   --card:#f3f6fb;
-  --card-dark:rgba(10,20,45,.72);
   --text:#0f172a;
   --muted:#64748b;
   --primary:#1d4ed8;
-  --primary2:#38bdf8;
   --white:#ffffff;
   --line:#dbe5f0;
   --shadow:0 18px 40px rgba(2,6,23,.18);
-  --radius-xl:30px;
-  --radius-lg:22px;
-  --radius-md:16px;
 }
 
 *{
@@ -30,8 +25,7 @@ html,body{
     "PingFang TC",
     "Microsoft JhengHei",
     sans-serif;
-  background:
-    radial-gradient(circle at top, #0f2f70 0%, #081a3e 35%, #06142d 100%);
+  background:radial-gradient(circle at top, #0f2f70 0%, #081a3e 35%, #06142d 100%);
   color:var(--text);
 }
 
@@ -180,37 +174,18 @@ img{
 }
 
 .ball{
-  width:50px;
-  height:50px;
+  width:40px;
+  height:40px;
   border-radius:999px;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:18px;
+  font-size:16px;
   font-weight:900;
   color:#fff;
-  box-shadow:0 10px 20px rgba(15,23,42,.14);
+  box-shadow:0 8px 18px rgba(15,23,42,.14);
   border:2px solid rgba(255,255,255,.45);
-}
-
-.ball.active{
-  transform:translateY(-1px);
-}
-
-.ball.range-1{
   background:linear-gradient(135deg,#2563eb,#60a5fa);
-}
-
-.ball.range-2{
-  background:linear-gradient(135deg,#0f766e,#2dd4bf);
-}
-
-.ball.range-3{
-  background:linear-gradient(135deg,#7c3aed,#a78bfa);
-}
-
-.ball.range-4{
-  background:linear-gradient(135deg,#ea580c,#fb923c);
 }
 
 .recommend-meta{
@@ -307,7 +282,6 @@ img{
   padding:10px 0 0;
 }
 
-/* AI Panel */
 .ai-panel{
   width:min(92%, 900px);
   margin:24px auto 120px;
@@ -415,15 +389,15 @@ img{
 }
 
 .ai-ball{
-  min-width:34px;
-  height:34px;
-  padding:0 8px;
+  min-width:30px;
+  height:30px;
+  padding:0 7px;
   border-radius:999px;
   display:inline-flex;
   align-items:center;
   justify-content:center;
   font-weight:800;
-  font-size:14px;
+  font-size:13px;
   line-height:1;
   color:#fff;
   background:linear-gradient(135deg, #2563eb, #60a5fa);
@@ -444,13 +418,13 @@ img{
 .ai-result-meta .chip{
   display:inline-flex;
   align-items:center;
-  min-height:24px;
-  padding:4px 8px;
+  min-height:22px;
+  padding:4px 7px;
   border-radius:999px;
   background:#eaf2ff;
   color:#1e3a8a;
   border:1px solid #dbeafe;
-  font-size:12px;
+  font-size:11px;
   font-weight:800;
   line-height:1;
 }
@@ -458,31 +432,31 @@ img{
 .ai-reason-list{
   display:flex;
   flex-direction:column;
-  gap:5px;
+  gap:4px;
   margin:0;
   padding:0;
 }
 
 .ai-reason-item{
   margin:0;
-  padding:7px 8px;
-  border-radius:10px;
+  padding:6px 7px;
+  border-radius:9px;
   background:#f8fbff;
   border:1px solid #e2e8f0;
-  font-size:13px;
-  line-height:1.45;
+  font-size:12px;
+  line-height:1.4;
   color:#1e293b;
   word-break:break-word;
 }
 
 .ai-empty{
   margin:0;
-  padding:7px 8px;
-  border-radius:10px;
+  padding:6px 7px;
+  border-radius:9px;
   background:#f8fafc;
   border:1px dashed #cbd5e1;
   color:#94a3b8;
-  font-size:13px;
+  font-size:12px;
   line-height:1.4;
 }
 
@@ -520,12 +494,6 @@ img{
 
   .secondary-btn{
     flex:1 1 calc(50% - 6px);
-  }
-
-  .ball{
-    width:46px;
-    height:46px;
-    font-size:17px;
   }
 
   .section-title{
@@ -566,116 +534,5 @@ img{
     padding:10px;
     border-radius:14px;
     gap:7px;
-  }
-
-  .ai-result-title{
-    font-size:16px;
-    margin-bottom:3px;
-  }
-
-  .ai-result-block{
-    padding:7px 8px;
-    border-radius:10px;
-    gap:5px;
-  }
-
-  .ai-result-label{
-    font-size:11px;
-  }
-
-  .ai-ball-row{
-    gap:5px;
-  }
-
-  .ai-ball{
-    min-width:30px;
-    height:30px;
-    padding:0 7px;
-    font-size:13px;
-  }
-
-  .ai-result-meta{
-    gap:5px;
-  }
-
-  .ai-result-meta span,
-  .ai-result-meta .chip{
-    min-height:22px;
-    padding:4px 7px;
-    font-size:11px;
-  }
-
-  .ai-reason-list{
-    gap:4px;
-  }
-
-  .ai-reason-item{
-    padding:6px 7px;
-    border-radius:9px;
-    font-size:12px;
-    line-height:1.4;
-  }
-
-  .ai-empty{
-    padding:6px 7px;
-    border-radius:9px;
-    font-size:12px;
-  }
-}
-
-@media (max-width:420px){
-  .hero-info h1{
-    font-size:18px;
-  }
-
-  .hero-subline,
-  .hero-update{
-    font-size:14px;
-  }
-
-  .form-control{
-    height:54px;
-    font-size:17px;
-  }
-
-  .primary-btn,
-  .secondary-btn{
-    font-size:17px;
-  }
-
-  .ai-panel-inner{
-    padding:14px 12px;
-  }
-
-  .ai-panel h2{
-    font-size:18px;
-  }
-
-  .ai-actions button{
-    width:100%;
-  }
-
-  .ai-result{
-    padding:9px;
-  }
-
-  .ai-result-title{
-    font-size:15px;
-  }
-
-  .ai-ball{
-    min-width:28px;
-    height:28px;
-    font-size:12px;
-  }
-
-  .ai-result-meta span,
-  .ai-result-meta .chip{
-    font-size:10px;
-  }
-
-  .ai-reason-item,
-  .ai-empty{
-    font-size:11px;
   }
 }
