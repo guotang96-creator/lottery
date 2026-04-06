@@ -112,34 +112,108 @@ function normalizeLatest539(json) {
   if (!json || typeof json !== "object") return null;
 
   const content = json.content || json;
-  const daily539 =
-    content.daily539 ||
-    content.latest539 ||
-    content.daily539Latest ||
-    json.daily539 ||
-    null;
 
-  if (daily539 && Array.isArray(daily539.numbers)) {
-    return {
-      period: daily539.period || daily539.issue || "--",
-      lotteryDate:
-        daily539.lotteryDate ||
-        daily539.drawDate ||
-        daily539.date ||
-        "",
-      numbers: daily539.numbers.map(Number).filter(Number.isFinite)
-    };
+  const candidates = [
+    content.daily539,
+    content.latest539,
+    content.daily539Latest,
+    content.daily539Result,
+    content.jincai539,
+    json.daily539,
+    json.latest539,
+    json.daily539Latest,
+    json.daily539Result,
+    json.jincai539
+  ].filter(Boolean);
+
+  for (const item of candidates) {
+    const numbers = (
+      item.numbers ||
+      item.drawNumberSize ||
+      item.drawNumbers ||
+      item.num ||
+      []
+    )
+      .map(Number)
+      .filter(Number.isFinite);
+
+    if (numbers.length >= 5) {
+      return {
+        period: item.period || item.issue || item.drawTerm || "--",
+        lotteryDate:
+          item.lotteryDate ||
+          item.drawDate ||
+          item.dDate ||
+          item.date ||
+          "",
+        numbers: numbers.slice(0, 5)
+      };
+    }
   }
 
-  if (Array.isArray(content.daily539Res) && content.daily539Res.length) {
-    const row = content.daily539Res[0];
-    return {
-      period: row.period || row.issue || "--",
-      lotteryDate: row.lotteryDate || row.drawDate || "",
-      numbers: (row.drawNumberSize || row.numbers || [])
-        .map(Number)
-        .filter(Number.isFinite)
-    };
+  const listCandidates = [
+    content.daily539Res,
+    content.daily539Result,
+    content.results,
+    content.list,
+    json.daily539Res,
+    json.daily539Result,
+    json.results,
+    json.list
+  ];
+
+  for (const list of listCandidates) {
+    if (Array.isArray(list) && list.length) {
+      for (const row of list) {
+        const numbers = (
+          row.numbers ||
+          row.drawNumberSize ||
+          row.drawNumbers ||
+          row.num ||
+          []
+        )
+          .map(Number)
+          .filter(Number.isFinite);
+
+        if (numbers.length >= 5) {
+          return {
+            period: row.period || row.issue || row.drawTerm || "--",
+            lotteryDate:
+              row.lotteryDate ||
+              row.drawDate ||
+              row.dDate ||
+              row.date ||
+              "",
+            numbers: numbers.slice(0, 5)
+          };
+        }
+      }
+    }
+  }
+
+  if (content?.daily539?.lotteryData) {
+    const row = content.daily539.lotteryData;
+    const numbers = (
+      row.numbers ||
+      row.drawNumberSize ||
+      row.drawNumbers ||
+      []
+    )
+      .map(Number)
+      .filter(Number.isFinite);
+
+    if (numbers.length >= 5) {
+      return {
+        period: row.period || row.issue || row.drawTerm || "--",
+        lotteryDate:
+          row.lotteryDate ||
+          row.drawDate ||
+          row.dDate ||
+          row.date ||
+          "",
+        numbers: numbers.slice(0, 5)
+      };
+    }
   }
 
   return null;
