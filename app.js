@@ -1,5 +1,5 @@
 const APP_VERSION = "AI Compact Final 1";
-const AI_API_BASE = "https://lottery-ai-api.vercel.app";
+const AI_API_BASE = "https://guotang96-creator.github.io/lottery/";
 
 const JSON_CANDIDATES = [
   "./latest.json",
