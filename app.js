@@ -575,8 +575,9 @@ async function loadLatestFromCandidates() {
 
   const latest539 = normalizeLatest539(json);
   if (!latest539) {
-    throw new Error("latest.json 內沒有 daily539 可用資料");
-  }
+  console.error("latest.json raw =", json);
+  throw new Error("latest.json 內沒有 daily539 可用資料");
+}
 
   state.latest539 = latest539;
   state.history539 = extractHistory539(json, latest539);
