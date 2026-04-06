@@ -584,3 +584,131 @@ img{
   border-color: #fecaca;
   background: #fef2f2;
 }
+.ai-panel {
+  width: min(92%, 900px);
+  margin: 24px auto 120px;
+}
+
+.ai-panel-inner {
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+.ai-panel h2 {
+  margin: 0 0 8px;
+  font-size: 24px;
+  color: #0f172a;
+}
+
+.ai-panel-desc {
+  margin: 0 0 16px;
+  color: #475569;
+  font-size: 14px;
+}
+
+.ai-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.ai-actions button {
+  border: none;
+  border-radius: 14px;
+  padding: 12px 18px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  background: linear-gradient(135deg, #2563eb, #60a5fa);
+  color: #fff;
+}
+
+.ai-actions button:last-child {
+  background: linear-gradient(135deg, #7c3aed, #a78bfa);
+}
+
+.ai-result {
+  min-height: 120px;
+  background: #f8fafc;
+  border: 1px solid #dbeafe;
+  border-radius: 16px;
+  padding: 16px;
+  color: #0f172a;
+  white-space: pre-wrap;
+  line-height: 1.7;
+}
+
+.ai-result.loading {
+  color: #475569;
+}
+
+.ai-result.error {
+  color: #b91c1c;
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.ai-result-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 16px;
+}
+
+.ai-result-block {
+  margin-bottom: 16px;
+}
+
+.ai-result-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 10px;
+}
+
+.ai-ball-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ai-ball {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 16px;
+  color: #fff;
+  background: linear-gradient(135deg, #2563eb, #60a5fa);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
+}
+
+.ai-result-meta {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 16px;
+}
+
+.ai-reason-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ai-reason-item {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #1e293b;
+}
+
+.ai-empty {
+  color: #94a3b8;
+  font-size: 14px;
+}
