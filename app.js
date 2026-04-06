@@ -1,5 +1,5 @@
-const APP_VERSION = "AI Compact Final 1";
-const AI_API_BASE = "https://guotang96-creator.github.io/lottery/";
+const APP_VERSION = "AI Compact Final 2";
+const AI_API_BASE = "https://lottery-ai-api.vercel.app";
 
 const JSON_CANDIDATES = [
   "./latest.json",
@@ -102,7 +102,6 @@ function renderAiBalls(numbers) {
   if (!Array.isArray(numbers) || !numbers.length) {
     return `<span class="ai-empty">無資料</span>`;
   }
-
   return numbers
     .map((num) => `<span class="ai-ball">${pad2(num)}</span>`)
     .join("");
@@ -223,32 +222,49 @@ function extractHistory539(json, latest) {
   const content = json?.content || json || {};
   const rows = [];
 
-  if (Array.isArray(content.daily539History)) {
-    rows.push(...content.daily539History);
-  }
+  const sources = [
+    content.daily539History,
+    content.daily539Res,
+    content.daily539Result,
+    content.results,
+    content.list,
+    content.history,
+    json.daily539History,
+    json.daily539Res,
+    json.daily539Result,
+    json.results,
+    json.list,
+    json.history
+  ];
 
-  if (Array.isArray(content.daily539Res)) {
-    rows.push(...content.daily539Res);
-  }
-
-  if (Array.isArray(content.history)) {
-    rows.push(...content.history);
+  for (const source of sources) {
+    if (Array.isArray(source)) rows.push(...source);
   }
 
   const mapped = rows
     .map((row) => ({
-      period: row.period || row.issue || "",
-      lotteryDate: row.lotteryDate || row.drawDate || row.date || "",
-      numbers: (row.numbers || row.drawNumberSize || [])
+      period: row.period || row.issue || row.drawTerm || "",
+      lotteryDate:
+        row.lotteryDate ||
+        row.drawDate ||
+        row.dDate ||
+        row.date ||
+        "",
+      numbers: (
+        row.numbers ||
+        row.drawNumberSize ||
+        row.drawNumbers ||
+        row.num ||
+        []
+      )
         .map(Number)
         .filter(Number.isFinite)
+        .slice(0, 5)
     }))
     .filter((row) => row.numbers.length >= 5);
 
   if (mapped.length) return mapped;
-
   if (latest) return [latest];
-
   return [];
 }
 
@@ -520,7 +536,10 @@ async function callAiApi(provider) {
     const payload = getLatest539Payload();
     payload.recommended = state.currentPrediction || [];
 
-    const res = await fetch(`${AI_API_BASE}/api/${provider}`, {
+    const apiPath =
+      provider === "gemini" ? "gemini-predict" : "openai-predict";
+
+    const res = await fetch(`${AI_API_BASE}/api/${apiPath}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -575,9 +594,9 @@ async function loadLatestFromCandidates() {
 
   const latest539 = normalizeLatest539(json);
   if (!latest539) {
-  console.error("latest.json raw =", json);
-  throw new Error("latest.json 內沒有 daily539 可用資料");
-}
+    console.error("latest.json raw =", json);
+    throw new Error("latest.json 內沒有 daily539 可用資料");
+  }
 
   state.latest539 = latest539;
   state.history539 = extractHistory539(json, latest539);
