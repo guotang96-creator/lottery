@@ -1690,10 +1690,10 @@ function getLatest539Payload() {
     document.body.innerText.match(/開獎日期[:：]\s*([0-9\-]+)/)?.[1] || "";
 
   const numberMatches = [...document.querySelectorAll("*")]
-    .map(el => el.textContent.trim())
-    .filter(text => /^\d{2}$/.test(text))
+    .map((el) => el.textContent.trim())
+    .filter((text) => /^\d{2}$/.test(text))
     .slice(0, 5)
-    .map(v => Number(v));
+    .map((v) => Number(v));
 
   return {
     game: "daily539",
@@ -1711,6 +1711,26 @@ function getLatest539Payload() {
       }
     ]
   };
+}
+
+function renderAiBalls(numbers) {
+  if (!Array.isArray(numbers) || !numbers.length) {
+    return `<span class="ai-empty">無資料</span>`;
+  }
+
+  return numbers
+    .map((num) => {
+      const n = String(num).padStart(2, "0");
+      return `<span class="ai-ball">${n}</span>`;
+    })
+    .join("");
+}
+
+function setAiHtml(html, className = "") {
+  const box = document.getElementById("ai-result");
+  if (!box) return;
+  box.className = `ai-result ${className}`.trim();
+  box.innerHTML = html;
 }
 
 async function callAiApi(provider) {
@@ -1739,33 +1759,37 @@ async function callAiApi(provider) {
     }
 
     const result = data.result || {};
-    const nums = Array.isArray(result.recommended_numbers)
-      ? result.recommended_numbers.join("、")
-      : "無資料";
-
-    const backup = Array.isArray(result.backup_numbers)
-      ? result.backup_numbers.join("、")
-      : "無資料";
-
-    const reasons = Array.isArray(result.reasoning)
-      ? result.reasoning.map((item, index) => `${index + 1}. ${item}`).join("\n")
-      : "無";
-
     const confidence =
       result.confidence !== undefined && result.confidence !== null
         ? result.confidence
         : "-";
 
-    setAiResult(
-`${provider === "gemini" ? "Gemini" : "ChatGPT"} 分析完成
+    setAiHtml(`
+      <div class="ai-result-title">${provider === "gemini" ? "Gemini" : "ChatGPT"} 分析完成</div>
 
-推薦號碼：${nums}
-備選號碼：${backup}
-信心分數：${confidence}
+      <div class="ai-result-block">
+        <div class="ai-result-label">推薦號碼</div>
+        <div class="ai-ball-row">${renderAiBalls(result.recommended_numbers || [])}</div>
+      </div>
 
-分析理由：
-${reasons}`
-    );
+      <div class="ai-result-block">
+        <div class="ai-result-label">備選號碼</div>
+        <div class="ai-ball-row">${renderAiBalls(result.backup_numbers || [])}</div>
+      </div>
+
+      <div class="ai-result-meta">信心分數：${confidence}</div>
+
+      <div class="ai-result-block">
+        <div class="ai-result-label">分析理由</div>
+        <div class="ai-reason-list">${
+          Array.isArray(result.reasoning) && result.reasoning.length
+            ? result.reasoning
+                .map((item, index) => `<div class="ai-reason-item">${index + 1}. ${item}</div>`)
+                .join("")
+            : `<div class="ai-reason-item">無</div>`
+        }</div>
+      </div>
+    `);
   } catch (error) {
     setAiResult(`分析失敗：${error.message}`, "error");
   }
@@ -1780,3 +1804,65 @@ document.addEventListener("DOMContentLoaded", () => {
     callAiApi("gemini");
   });
 });
+}
+
+function getLatest539Payload() {
+  const latest = window.latestData || window.latestJson || window.appLatestData || null;
+
+  if (latest) {
+    return {
+      game: "daily539",
+      mode: "balanced",
+      latestDraw: latest,
+      history: [latest]
+    };
+  }
+
+  const latestIssueText =
+    document.body.innerText.match(/最新期數[:：]\s*([0-9]+)/)?.[1] || "";
+  const latestDateText =
+    document.body.innerText.match(/開獎日期[:：]\s*([0-9\-]+)/)?.[1] || "";
+
+  const numberMatches = [...document.querySelectorAll("*")]
+    .map(el => el.textContent.trim())
+    .filter(text => /^\d{2}$/.test(text))
+    .slice(0, 5)
+    .map(v => Number(v));
+
+  return {
+    game: "daily539",
+    mode: "balanced",
+    latestDraw: {
+      period: latestIssueText,
+      lotteryDate: latestDateText,
+      numbers: numberMatches
+    },
+    history: [
+      {
+        period: latestIssueText,
+        lotteryDate: latestDateText,
+        numbers: numberMatches
+      }
+    ]
+  };
+}
+
+function renderAiBalls(numbers) {
+  if (!Array.isArray(numbers) || !numbers.length) {
+    return `<span class="ai-empty">無資料</span>`;
+  }
+
+  return numbers
+    .map((num) => {
+      const n = String(num).padStart(2, "0");
+      return `<span class="ai-ball">${n}</span>`;
+    })
+    .join("");
+}
+
+function setAiHtml(html, className = "") {
+  const box = document.getElementById("ai-result");
+  if (!box) return;
+  box.className = `ai-result ${className}`.trim();
+  box.innerHTML = html;
+}
