@@ -1,10 +1,11 @@
 {
   "name": "今彩539 AI 預測系統",
-  "short_name": "539預測",
-  "start_url": "./index.html",
+  "short_name": "539 AI",
+  "start_url": "./",
   "display": "standalone",
-  "background_color": "#0b1220",
-  "theme_color": "#0f172a",
+  "background_color": "#0b1f5c",
+  "theme_color": "#0b1f5c",
+  "description": "今彩539 AI 預測系統",
   "icons": [
     {
       "src": "icon-192.png",
@@ -17,3 +18,4 @@
       "type": "image/png"
     }
   ]
+}
