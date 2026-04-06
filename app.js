@@ -1,4 +1,4 @@
-const APP_VERSION = "AI Compact Final 2";
+const APP_VERSION = "AI Compact Final 3";
 const AI_API_BASE = "https://lottery-ai-api.vercel.app";
 
 const JSON_CANDIDATES = [
@@ -263,8 +263,14 @@ function extractHistory539(json, latest) {
     }))
     .filter((row) => row.numbers.length >= 5);
 
-  if (mapped.length) return mapped;
-  if (latest) return [latest];
+  if (mapped.length) {
+    return mapped;
+  }
+
+  if (latest) {
+    return [latest];
+  }
+
   return [];
 }
 
@@ -346,6 +352,10 @@ function tailBalancePick(source, limit = 5) {
 }
 
 function predictNumbers(mode, history) {
+  if (!history.length) {
+    return [];
+  }
+
   const freq = countFrequency(history);
   const miss = getMissingCounts(history);
 
@@ -362,16 +372,23 @@ function predictNumbers(mode, history) {
     case "hot":
       picked = hot.slice(0, 5);
       break;
+
     case "cold":
-      picked = uniqSorted([...cold.slice(0, 3), ...missingTop.slice(0, 4)]).slice(0, 5);
+      picked = uniqSorted([
+        ...cold.slice(0, 2),
+        ...missingTop.slice(0, 3),
+        ...hot.slice(0, 2)
+      ]).slice(0, 5);
       break;
+
     case "tail":
       picked = tailBalancePick(uniqSorted([...hot, ...missingTop]), 5);
       break;
+
     case "balanced":
     default:
       picked = uniqSorted([
-        ...hot.slice(0, 2),
+        ...hot.slice(0, 3),
         ...missingTop.slice(0, 2),
         ...cold.slice(0, 2)
       ]).slice(0, 5);
@@ -382,7 +399,7 @@ function predictNumbers(mode, history) {
       break;
   }
 
-  return uniqSorted(picked).slice(0, 5);
+  return picked.filter((n) => n >= 1 && n <= 39).slice(0, 5);
 }
 
 function estimateConfidence(primary, history, mode) {
@@ -401,6 +418,10 @@ function estimateConfidence(primary, history, mode) {
 }
 
 function getHotColdTexts(history) {
+  if (!history.length) {
+    return { hot: "--", cold: "--" };
+  }
+
   const freq = countFrequency(history);
   const hot = pickTopFromMap(freq, 5, true).map(pad2).join("、") || "--";
   const cold = pickTopFromMap(freq, 5, false).map(pad2).join("、") || "--";
@@ -410,12 +431,22 @@ function getHotColdTexts(history) {
 function updateDashboard(primary, confidence, mode, history) {
   const { hot, cold } = getHotColdTexts(history);
 
-  els.primaryNumbersText.textContent = primary.map(pad2).join("、") || "--";
-  els.confidenceText.textContent = `${confidence} 分`;
+  els.primaryNumbersText.textContent =
+    primary.length ? primary.map(pad2).join("、") : "資料不足";
+
+  els.confidenceText.textContent =
+    primary.length ? `${confidence} 分` : "--";
+
   els.hotNumbersText.textContent = hot;
   els.coldNumbersText.textContent = cold;
 
-  renderBalls(primary, els.predictResultsList);
+  if (primary.length) {
+    renderBalls(primary, els.predictResultsList);
+  } else {
+    els.predictResultsList.innerHTML =
+      `<div class="empty-text">資料不足，暫不產生推薦號碼</div>`;
+  }
+
   state.currentPrediction = primary;
 }
 
@@ -463,15 +494,30 @@ function buildAiPromptFallback(payload) {
   const latest = payload.latestDraw || {};
   const history = payload.history || [];
   const hotCold = getHotColdTexts(history);
-  const primary = state.currentPrediction || [];
+
+  const freq = countFrequency(history);
+  const hot = [...freq.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+    .map(([n]) => n);
+
+  const currentIsFakeSimple =
+    Array.isArray(state.currentPrediction) &&
+    state.currentPrediction.join(",") === "1,2,3,4,5";
+
+  const primary =
+    state.currentPrediction?.length >= 5 && !currentIsFakeSimple
+      ? state.currentPrediction.slice(0, 5)
+      : hot.slice(0, 5);
+
+  const backupBase = uniqSorted([
+    ...pickTopFromMap(countFrequency(history), 5, true),
+    ...pickTopFromMap(getMissingCounts(history), 5, true)
+  ]).filter((n) => !primary.includes(n));
 
   return {
     title: "AI 分析結果",
     recommended_numbers: primary,
-    backup_numbers: uniqSorted([
-      ...pickTopFromMap(countFrequency(history), 4, true),
-      ...pickTopFromMap(getMissingCounts(history), 4, true)
-    ]).slice(0, 5),
+    backup_numbers: backupBase.slice(0, 5),
     confidence: estimateConfidence(primary, history, payload.mode || "balanced"),
     reasoning: [
       `最新期數 ${latest.period || "--"}，最新開獎為 ${(latest.numbers || []).map(pad2).join("、") || "無資料"}`,
