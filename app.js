@@ -1663,3 +1663,120 @@
 
   document.addEventListener("DOMContentLoaded", init);
 })();
+const AI_API_BASE = "https://lottery-ai-api.vercel.app";
+
+function setAiResult(message, className = "") {
+  const box = document.getElementById("ai-result");
+  if (!box) return;
+  box.className = `ai-result ${className}`.trim();
+  box.textContent = message;
+}
+
+function getLatest539Payload() {
+  const latest = window.latestData || window.latestJson || window.appLatestData || null;
+
+  if (latest) {
+    return {
+      game: "daily539",
+      mode: "balanced",
+      latestDraw: latest,
+      history: [latest]
+    };
+  }
+
+  const latestIssueText =
+    document.body.innerText.match(/最新期數[:：]\s*([0-9]+)/)?.[1] || "";
+  const latestDateText =
+    document.body.innerText.match(/開獎日期[:：]\s*([0-9\-]+)/)?.[1] || "";
+
+  const numberMatches = [...document.querySelectorAll("*")]
+    .map(el => el.textContent.trim())
+    .filter(text => /^\d{2}$/.test(text))
+    .slice(0, 5)
+    .map(v => Number(v));
+
+  return {
+    game: "daily539",
+    mode: "balanced",
+    latestDraw: {
+      period: latestIssueText,
+      lotteryDate: latestDateText,
+      numbers: numberMatches
+    },
+    history: [
+      {
+        period: latestIssueText,
+        lotteryDate: latestDateText,
+        numbers: numberMatches
+      }
+    ]
+  };
+}
+
+async function callAiApi(provider) {
+  const endpoint =
+    provider === "gemini"
+      ? `${AI_API_BASE}/api/gemini-predict`
+      : `${AI_API_BASE}/api/openai-predict`;
+
+  const payload = getLatest539Payload();
+
+  setAiResult("AI 分析中，請稍候...", "loading");
+
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || `HTTP ${response.status}`);
+    }
+
+    const result = data.result || {};
+    const nums = Array.isArray(result.recommended_numbers)
+      ? result.recommended_numbers.join("、")
+      : "無資料";
+
+    const backup = Array.isArray(result.backup_numbers)
+      ? result.backup_numbers.join("、")
+      : "無資料";
+
+    const reasons = Array.isArray(result.reasoning)
+      ? result.reasoning.map((item, index) => `${index + 1}. ${item}`).join("\n")
+      : "無";
+
+    const confidence =
+      result.confidence !== undefined && result.confidence !== null
+        ? result.confidence
+        : "-";
+
+    setAiResult(
+`${provider === "gemini" ? "Gemini" : "ChatGPT"} 分析完成
+
+推薦號碼：${nums}
+備選號碼：${backup}
+信心分數：${confidence}
+
+分析理由：
+${reasons}`
+    );
+  } catch (error) {
+    setAiResult(`分析失敗：${error.message}`, "error");
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("btn-openai")?.addEventListener("click", () => {
+    callAiApi("openai");
+  });
+
+  document.getElementById("btn-gemini")?.addEventListener("click", () => {
+    callAiApi("gemini");
+  });
+});
