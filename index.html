@@ -6,7 +6,7 @@
   <title>今彩539 AI 預測系統</title>
   <meta name="theme-color" content="#0f2f70" />
   <meta name="description" content="今彩539 AI 預測系統｜最新開獎、快速分析、AI 雙模型分析" />
-  <link rel="stylesheet" href="style.css?v=final-v1" />
+  <link rel="stylesheet" href="style.css?v=final-v2" />
 </head>
 <body>
   <div class="app-shell">
@@ -19,28 +19,24 @@
             <span class="status-dot"></span>
             <span>GitHub Pages 前端</span>
             <span>・</span>
-            <span>Vercel AI API</span>
+            <span>Render AI API</span> 
           </div>
-          <div class="hero-update" id="heroUpdateText">載入最新資料中...</div>
+          <div class="hero-update" id="heroUpdateText">正在同步雲端資料...</div>
         </div>
       </section>
 
       <section class="card">
         <div class="section-title">最新開獎</div>
-
         <div class="info-grid">
           <div>最新期數：<span id="latestIssue">--</span></div>
           <div>開獎日期：<span id="latestDate">--</span></div>
         </div>
-
         <div class="field-label">最新號碼</div>
         <div class="balls-row" id="latestBalls"></div>
-
         <div class="recommend-meta">
           <span id="dataSourceText">資料來源：載入中</span>
           <span id="dataUpdatedText">更新時間：--</span>
         </div>
-
         <div class="action-row">
           <button class="primary-btn" id="btnRefresh" type="button">重新載入資料</button>
           <button class="secondary-btn" id="btnQuickPick" type="button">立即預測</button>
@@ -49,68 +45,37 @@
 
       <section class="card">
         <div class="section-title">快速分析</div>
-
         <label class="field-label" for="analysisPeriods">分析期數</label>
         <select class="form-control" id="analysisPeriods">
-          <option value="30">最近 30 期</option>
-          <option value="60">最近 60 期</option>
           <option value="120" selected>最近 120 期</option>
         </select>
-
-        <label class="field-label" for="predictMode">預測模式</label>
-        <select class="form-control" id="predictMode">
-          <option value="balanced" selected>均衡型</option>
-          <option value="hot">熱號型</option>
-          <option value="cold">冷號型</option>
-          <option value="tail">尾數型</option>
-        </select>
-
         <div class="analysis-grid" style="margin-top:16px;">
-          <div class="analysis-item">
-            <span class="label">主推薦號碼</span>
-            <strong id="primaryNumbersText">--</strong>
-          </div>
-
-          <div class="analysis-item">
-            <span class="label">信心分數</span>
-            <strong id="confidenceText">--</strong>
-          </div>
-
           <div class="analysis-item">
             <span class="label">熱號觀察</span>
             <strong id="hotNumbersText">--</strong>
           </div>
-
           <div class="analysis-item">
             <span class="label">冷號觀察</span>
             <strong id="coldNumbersText">--</strong>
           </div>
         </div>
-
-        <div class="field-label">推薦彩球</div>
-        <div class="balls-row" id="predictResultsList"></div>
       </section>
 
       <section class="ai-panel">
         <div class="ai-panel-inner">
           <h2>AI 雙模型分析</h2>
-          <p class="ai-panel-desc">
-            可切換 Gemini / ChatGPT API 分析目前 539 最新資料與推薦號碼。
-          </p>
-
+          <p class="ai-panel-desc">使用隨機森林演算法分析最新數據並產出推薦球號。</p>
           <div class="ai-actions">
             <button id="btn-gemini" type="button">Gemini 分析</button>
             <button id="btn-openai" type="button">ChatGPT 分析</button>
           </div>
-
-          <div id="ai-result" class="ai-result loading">
-            請選擇要使用的 AI 模型進行分析。
+          <div id="ai-result" class="ai-result">
+            請點擊上方按鈕開始 AI 預測分析。
           </div>
         </div>
       </section>
     </main>
   </div>
-
-  <script src="app.js?v=final-v1"></script>
+  <script src="app.js?v=final-v2"></script>
 </body>
 </html>
