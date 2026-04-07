@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>今彩539 AI 預測系統</title>
   <meta name="theme-color" content="#0f172a" />
-  <meta name="description" content="今彩539 AI 預測系統｜預測、分析、拖號、回測、收藏" />
   <link rel="stylesheet" href="style.css?v=55-stable" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </head>
@@ -19,7 +18,7 @@
           <div class="hero-subline">
             <span id="appVersionText">V3.8.5</span>
             <span>｜</span>
-            <span>系統正常</span>
+            <span>資料正常</span>
             <span class="status-dot"></span>
           </div>
           <div class="hero-update">最後更新：<span id="lastUpdateText">-</span></div>
@@ -37,6 +36,14 @@
         <div class="balls-row" id="latestBalls"></div>
       </section>
 
+      <section class="card" style="background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #3b82f6;">
+        <div class="section-title" style="color: #60a5fa;"><i class="fas fa-brain"></i> Gemini 強力深度分析</div>
+        <div class="action-row">
+          <button id="btn-gemini" class="primary-btn" style="width:100%; background: linear-gradient(135deg, #2563eb, #1e40af);">執行 Gemini 分析</button>
+        </div>
+        <div id="ai-result-box" style="margin-top: 15px; display: none; color: white;"></div>
+      </section>
+
       <section class="card">
         <div class="section-title">主推薦號碼</div>
         <div class="balls-row" id="recommendBalls1"></div>
@@ -46,14 +53,6 @@
           <button id="btnCopy" class="secondary-btn">複製號碼</button>
           <button id="btnSave" class="secondary-btn">收藏號碼</button>
         </div>
-      </section>
-
-      <section class="card ai-panel-card" style="background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #3b82f6;">
-        <div class="section-title" style="color: #60a5fa;"><i class="fas fa-brain"></i> Gemini 強力深度分析</div>
-        <div class="action-row">
-          <button id="btn-gemini" class="primary-btn" style="width:100%; background: linear-gradient(135deg, #2563eb, #1e40af);">執行 Gemini AI 分析</button>
-        </div>
-        <div id="ai-result-box" style="margin-top: 15px; display: none;"></div>
       </section>
 
       <section class="card">
@@ -67,59 +66,11 @@
       </section>
     </section>
 
-    <section id="page-predict" class="page hidden">
-      <section class="card">
-        <div class="section-title">預測設定</div>
-        <label class="field-label" for="analysisPeriods">分析期數</label>
-        <select id="analysisPeriods" class="form-control">
-          <option value="120" selected>120期</option>
-          <option value="240">240期</option>
-        </select>
-        <label class="field-label" for="predictMode">預測模式</label>
-        <select id="predictMode" class="form-control">
-          <option value="balanced" selected>均衡型</option>
-          <option value="hot">熱號型</option>
-        </select>
-        <div class="action-row">
-          <button id="btnPredictPage" class="primary-btn" style="width:100%;">立即預測</button>
-        </div>
-      </section>
-      <section class="card">
-        <div class="section-title">推薦結果</div>
-        <div id="predictResultsList"></div>
-      </section>
-    </section>
-
-    <section id="page-history" class="page hidden">
-      <section class="card">
-        <div class="section-title">最近 5 期</div>
-        <div id="recent5List"></div>
-      </section>
-    </section>
-
-    <section id="page-favorites" class="page hidden">
-      <section class="card">
-        <div class="section-title">收藏清單</div>
-        <div id="favoritesList"></div>
-      </section>
-    </section>
-
-    <section id="page-backtest" class="page hidden">
-      <section class="card">
-        <div class="section-title">回測命中率</div>
-        <button id="btnRunBacktest" class="primary-btn" style="width:100%;">開始回測</button>
-        <div id="backtestResultsList" style="margin-top:15px;"></div>
-      </section>
-    </section>
-
-    <section id="page-settings" class="page hidden">
-      <section class="card">
-        <div class="section-title">拖號查詢</div>
-        <input id="dragQueryNumber" class="form-control" type="number" placeholder="輸入號碼 01-39" />
-        <button id="btnRunDragQuery" class="primary-btn" style="width:100%; margin-top:10px;">查詢拖號</button>
-        <div id="dragQueryResults" style="margin-top:15px;"></div>
-      </section>
-    </section>
+    <section id="page-predict" class="page hidden">...</section>
+    <section id="page-history" class="page hidden">...</section>
+    <section id="page-favorites" class="page hidden">...</section>
+    <section id="page-backtest" class="page hidden">...</section>
+    <section id="page-settings" class="page hidden">...</section>
   </div>
 
   <nav class="bottom-nav">
