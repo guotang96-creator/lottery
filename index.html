@@ -5,11 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>今彩539 AI 預測系統</title>
   <meta name="theme-color" content="#0f172a" />
-  <link rel="stylesheet" href="style.css?v=final-stable" />
+  <meta name="description" content="今彩539 AI 預測系統｜Gemini 強力深度分析與機器學習預測" />
+  <link rel="stylesheet" href="style.css?v=stable-v2" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </head>
 <body>
   <div class="app-shell">
+    
     <section id="page-home" class="page">
       <div class="hero-card">
         <div class="hero-icon">539</div>
@@ -18,19 +20,19 @@
           <div class="hero-subline">
             <span id="appVersionText">V3.8.5</span>
             <span>｜</span>
-            <span>系統正常</span>
+            <span id="systemStatusText">系統正常</span>
             <span class="status-dot"></span>
           </div>
-          <div class="hero-update">最後更新：<span id="lastUpdateText">-</span></div>
+          <div class="hero-update">最後更新：<span id="lastUpdateText">載入中</span></div>
         </div>
       </div>
 
       <section class="card">
         <div class="section-title">最新開獎</div>
         <div class="info-grid">
-          <div>最新期數：<strong id="latestPeriod">-</strong></div>
-          <div>開獎日期：<strong id="latestDate">-</strong></div>
-          <div>資料來源：<strong id="dataSourceText">-</strong></div>
+          <div>最新期數：<strong id="latestPeriod">--</strong></div>
+          <div>開獎日期：<strong id="latestDate">--</strong></div>
+          <div>資料來源：<strong id="dataSourceText">載入中</strong></div>
           <div>目前模式：<strong id="currentModeText">均衡型</strong></div>
         </div>
         <div class="balls-row" id="latestBalls"></div>
@@ -42,19 +44,18 @@
         <div class="recommend-meta"></div>
         <div class="action-row">
           <button id="btnPredictHome" class="primary-btn">立即預測</button>
-          <button id="btnCopy" class="secondary-btn">複製號碼</button>
-          <button id="btnSave" class="secondary-btn">收藏號碼</button>
+          <button id="btnCopy" class="secondary-btn">複製</button>
+          <button id="btnSave" class="secondary-btn">收藏</button>
         </div>
       </section>
 
-      <section class="card ai-panel-card" style="background: linear-gradient(180deg, #0f172a, #1e293b); color: white;">
-        <div class="section-title" style="color: #60a5fa;">AI 雙模型分析 (Render)</div>
-        <p style="font-size: 14px; color: #cbd5e1; margin-bottom: 15px;">串連雲端 Python 隨機森林模型，執行深度大數據預測。</p>
+      <section class="card ai-panel-card" style="background: linear-gradient(135deg, #1e293b, #0f172a);">
+        <div class="section-title" style="color: #60a5fa;"><i class="fas fa-brain"></i> Gemini 強力深度分析</div>
+        <p style="font-size: 13px; color: #94a3b8; margin-bottom: 12px; line-height: 1.5;">呼叫 Render 雲端 Python 隨機森林模型，執行深度大數據預測。</p>
         <div class="action-row">
-          <button id="btn-gemini" class="primary-btn" style="flex:1; background: #2563eb;">Gemini 分析</button>
-          <button id="btn-openai" class="primary-btn" style="flex:1; background: #7c3aed;">ChatGPT 分析</button>
+          <button id="btn-gemini" class="primary-btn" style="flex:1; background: linear-gradient(135deg, #2563eb, #1e40af);">執行 Gemini 分析</button>
         </div>
-        <div id="ai-result-box" style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 18px; display: none;">
+        <div id="ai-result-box" style="margin-top: 15px; display: none;">
             </div>
       </section>
 
@@ -69,15 +70,112 @@
       </section>
     </section>
 
-    </div>
+    <section id="page-predict" class="page hidden">
+      <section class="card">
+        <div class="section-title">自訂預測</div>
+        <label class="field-label">分析期數</label>
+        <select class="form-control" id="predictPeriodCount">
+          <option value="30">最近 30 期</option>
+          <option value="60">最近 60 期</option>
+          <option value="120" selected>最近 120 期</option>
+          <option value="250">最近 250 期</option>
+        </select>
+        <label class="field-label">預測模式</label>
+        <select class="form-control" id="predictModeSelect">
+          <option value="balanced" selected>均衡型</option>
+          <option value="hot">熱號型</option>
+          <option value="cold">冷號型</option>
+          <option value="tail">尾數型</option>
+        </select>
+        <div class="action-row">
+          <button id="btnPredictCalc" class="primary-btn" style="width:100%">產生預測</button>
+        </div>
+      </section>
+      <section class="card">
+        <div class="section-title">預測結果</div>
+        <div class="info-grid">
+          <div>分析期數：<strong id="predResultPeriods">-</strong></div>
+          <div>預測模式：<strong id="predResultMode">-</strong></div>
+          <div>主推薦彩球</div>
+        </div>
+        <div class="balls-row" id="recommendBalls2"></div>
+      </section>
+    </section>
+
+    <section id="page-history" class="page hidden">
+      <section class="card">
+        <div class="section-title">歷史開獎紀錄</div>
+        <label class="field-label">顯示期數</label>
+        <select class="form-control" id="historyPeriodCount">
+          <option value="10">最近 10 期</option>
+          <option value="30">最近 30 期</option>
+          <option value="50" selected>最近 50 期</option>
+          <option value="100">最近 100 期</option>
+        </select>
+        <div class="action-row">
+          <button id="btnRefreshHistory" class="primary-btn">重新載入</button>
+        </div>
+        <div id="historyTableArea" style="margin-top:15px; font-size:14px; overflow-x:auto;">
+          (載入中...)
+        </div>
+      </section>
+    </section>
+
+    <section id="page-favorites" class="page hidden">
+      <section class="card">
+        <div class="section-title">我的收藏號碼</div>
+        <div id="favListArea" class="fav-list-area">
+          (載入中...)
+        </div>
+        <div class="action-row">
+          <button id="btnClearFav" class="secondary-btn">清空所有收藏</button>
+        </div>
+      </section>
+    </section>
+
+    <section id="page-backtest" class="page hidden">
+      <section class="card">
+        <div class="section-title">策略回測</div>
+        <label class="field-label">回測模式</label>
+        <select class="form-control" id="btMode">
+          <option value="balanced" selected>均衡型</option>
+          <option value="hot">熱號型</option>
+          <option value="cold">冷號型</option>
+          <option value="tail">尾數型</option>
+        </select>
+        <div class="action-row">
+          <button id="btnRunBT" class="primary-btn">開始回測 (最近 50 期)</button>
+        </div>
+        <div id="btResultArea" style="margin-top:15px; font-size:14px; color:#cbd5e1; line-height:1.6; display:none;">
+          (回測中...)
+        </div>
+      </section>
+    </section>
+
+    <section id="page-settings" class="page hidden">
+      <section class="card">
+        <div class="section-title">系統設定與關於</div>
+        <div class="info-grid">
+          <div>系統名稱：<strong style="color:white;">539 AI 預測系統</strong></div>
+          <div>核心版本：<strong id="settingVersionText">-</strong></div>
+          <div>後端連線：<strong style="color: #10b981;">Render 穩定版</strong></div>
+        </div>
+        <div class="action-row">
+          <button id="btnManualUpdate" class="primary-btn">手動檢查更新 (GitHub)</button>
+          <button id="btnShareApp" class="secondary-btn">分享系統</button>
+        </div>
+      </section>
+    </section>
+
+  </div>
 
   <nav class="bottom-nav">
-    <button class="nav-btn active" data-page="home">首頁</button>
-    <button class="nav-btn" data-page="predict">預測</button>
-    <button class="nav-btn" data-page="history">歷史</button>
-    <button class="nav-btn" data-page="favorites">收藏</button>
-    <button class="nav-btn" data-page="backtest">回測</button>
-    <button class="nav-btn" data-page="settings">設定</button>
+    <button class="nav-btn active" data-page="home"><i class="fas fa-home"></i><br>首頁</button>
+    <button class="nav-btn" data-page="predict"><i class="fas fa-search-dollar"></i><br>預測</button>
+    <button class="nav-btn" data-page="history"><i class="fas fa-history"></i><br>歷史</button>
+    <button class="nav-btn" data-page="favorites"><i class="fas fa-bookmark"></i><br>收藏</button>
+    <button class="nav-btn" data-page="backtest"><i class="fas fa-chart-line"></i><br>回測</button>
+    <button class="nav-btn" data-page="settings"><i class="fas fa-cog"></i><br>設定</button>
   </nav>
 
   <div id="appDialog" class="app-dialog hidden">
@@ -91,6 +189,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=final-stable"></script>
+  <script src="app.js?v=stable-v2"></script>
 </body>
 </html>
