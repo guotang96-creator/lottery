@@ -1,60 +1,88 @@
-const AI_API_BASE = "https://lottery-k099.onrender.com";
+(() => {
+  // [1] 配置區
+  const APP_VERSION = "V3.8.5｜AI 雲端穩定版";
+  const AI_API_BASE = "https://lottery-k099.onrender.com";
 
-document.addEventListener('DOMContentLoaded', async () => {
-    // 啟動時先載入所有資料
-    await initDashboard();
+  // ... (保留您原本的 STORAGE_KEYS, JSON_CANDIDATES, DEFAULT_LATEST, MOCK_HISTORY 等定義) ...
 
-    // 綁定按鈕
-    document.getElementById('btn-gemini').onclick = () => callAiApi('Gemini');
-    document.getElementById('btn-openai').onclick = () => callAiApi('ChatGPT');
-    document.getElementById('btnRefresh').onclick = () => initDashboard();
-});
+  const els = {
+    // ... (保留您原本 els 的所有選擇器) ...
+    // 新增 AI 選擇器
+    btnGemini: document.getElementById('btn-gemini'),
+    btnOpenAI: document.getElementById('btn-openai'),
+    aiResultBox: document.getElementById('ai-result-box')
+  };
 
-// [初始化] 讓所有卡片顯示數字
-async function initDashboard() {
-    try {
-        const res = await fetch('./latest.json');
-        let data = await res.json();
-        if (Array.isArray(data)) data = data[0]; // 防止格式錯誤
+  // ... (保留您原本的工具函式：showDialog, pad2, normalizeDateOnly, readJSON, writeJSON 等) ...
 
-        // 1. 最新開獎
-        document.getElementById('latestIssue').innerText = data.latest_draw || '--';
-        document.getElementById('latestDate').innerText = data.date || '--';
-        document.getElementById('latestBalls').innerHTML = (data.numbers || []).map(n => `<span class="ball">${n}</span>`).join('');
-
-        // 2. 主推薦 (顯示在最顯眼的地方)
-        document.getElementById('mainRecommendBalls').innerHTML = (data.numbers || []).map(n => `<span class="ball" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">${n}</span>`).join('');
-
-        // 3. 快速分析資料
-        document.getElementById('hotNumbersText').innerText = (data.hot_numbers || []).join(' ');
-        document.getElementById('coldNumbersText').innerText = (data.cold_numbers || []).join(' ');
-        document.getElementById('trailingText').innerText = data.trailing || '暫無資料';
-        document.getElementById('strongTailText').innerText = data.strong_tail || '1尾、9尾';
-
-        document.getElementById('heroStatusText').innerText = "系統運作正常 (Render 已連動)";
-    } catch (e) {
-        document.getElementById('heroStatusText').innerText = "本地資料讀取失敗";
-    }
-}
-
-// [AI 功能] 呼叫 Render 並顯示美美的結果
-async function callAiApi(modelName) {
-    const resultArea = document.getElementById('ai-result');
-    resultArea.innerHTML = `<div class="loading">🧠 ${modelName} 正在運算中...<br>(Render 喚醒需時 40 秒)</div>`;
+  /**
+   * AI 核心功能：呼叫 Render 伺服器
+   */
+  async function callAiApi(modelName) {
+    if (!els.aiResultBox) return;
+    
+    els.aiResultBox.style.display = "block";
+    els.aiResultBox.innerHTML = `
+      <div style="text-align:center; color:#60a5fa; padding:10px;">
+        <i class="fas fa-spinner fa-spin"></i> ${modelName} 正在運算中...<br>
+        <small style="color:#94a3b8;">(首次連線需 40 秒喚醒伺服器)</small>
+      </div>
+    `;
 
     try {
-        const response = await fetch(`${AI_API_BASE}/api/predict`);
-        const data = await response.json();
-        
-        if (data.status === 'success') {
-            let html = `<h3 style="color:#4facfe; margin-bottom:15px;">✨ AI 預測完成</h3>`;
-            html += `<div class="balls-row">` + data.predicted_numbers.map(n => `<span class="ball ai-ball">${n}</span>`).join('') + `</div>`;
-            html += `<div style="margin-top:15px; border-top:1px solid #333; pt:10px; font-size:13px;">`;
-            html += data.details.map((d, i) => `<div style="margin-bottom:4px;">${i+1}. 號碼 ${d.num} 權重: ${d.score.toFixed(2)}</div>`).join('');
-            html += `</div>`;
-            resultArea.innerHTML = html;
-        }
-    } catch (e) {
-        resultArea.innerHTML = `<div style="color:#ff6b6b;">AI 連線超時，請再按一次喚醒伺服器。</div>`;
+      const response = await fetch(`${AI_API_BASE}/api/predict`);
+      const data = await response.json();
+      
+      if (data.status === 'success') {
+        renderAiResult(data, modelName);
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (err) {
+      els.aiResultBox.innerHTML = `<div style="color:#f87171;">連線失敗：伺服器正在起床中，請 30 秒後再試。</div>`;
     }
-}
+  }
+
+  function renderAiResult(data, modelName) {
+    let html = `
+      <h3 style="color:#60a5fa; margin-bottom:10px; font-size:18px;">✨ ${modelName} AI 預測結果</h3>
+      <div class="balls-row">
+        ${data.predicted_numbers.map(n => `<span class="ball active range-1">${n}</span>`).join('')}
+      </div>
+      <div style="margin-top:15px; font-size:13px; color:#94a3b8; border-top:1px solid rgba(255,255,255,0.1); pt:10px;">
+        <p>演算法權重明細：</p>
+        ${data.details.map((d, i) => `<div>${i+1}. 號碼 ${d.num} 權重指數: ${d.score.toFixed(2)}</div>`).join('')}
+      </div>
+    `;
+    els.aiResultBox.innerHTML = html;
+  }
+
+  // ... (保留您原本的 renderLatest, initDashboard, generatePrediction 等函式) ...
+
+  function bindActions() {
+    // 這裡保留您原本所有的 els.predictButtons.forEach 等等...
+    
+    // 加上 AI 按鈕點擊
+    if (els.btnGemini) els.btnGemini.addEventListener('click', () => callAiApi('Gemini'));
+    if (els.btnOpenAI) els.btnOpenAI.addEventListener('click', () => callAiApi('ChatGPT'));
+
+    // ... (其餘 bindActions 內容不變) ...
+  }
+
+  async function init() {
+    try {
+      // 保留您原本 init 的所有流程
+      // ... (包括 bindDialog, bindActions, bindNav, loadLatestFromCandidates 等) ...
+      
+      // 確保初始化時 AI 預覽是收起來的
+      if (els.aiResultBox) els.aiResultBox.style.display = "none";
+      
+      switchPage("home");
+      console.log(APP_VERSION + " 啟動成功");
+    } catch (err) {
+      console.error("init error:", err);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
+})();
