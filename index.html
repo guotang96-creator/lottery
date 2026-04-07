@@ -5,19 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>今彩539 AI 預測系統</title>
   <meta name="theme-color" content="#0f172a" />
-  <link rel="stylesheet" href="style.css?v=final-stable" />
+  <meta name="description" content="今彩539 AI 預測系統｜預測、分析、拖號、回測、收藏" />
+  <link rel="manifest" href="manifest.json?v=55" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="icon" href="favicon.png" />
+  <link rel="stylesheet" href="style.css?v=55" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </head>
 <body>
   <div class="app-shell">
-    
     <section id="page-home" class="page">
       <div class="hero-card">
         <div class="hero-icon">539</div>
         <div class="hero-info">
           <h1>今彩539 AI 預測系統</h1>
           <div class="hero-subline">
-            <span id="appVersionText">V3.8.5</span>｜<span>資料正常</span><span class="status-dot"></span>
+            <span id="appVersionText">V3.8.5</span>
+            <span>｜</span>
+            <span>資料正常</span>
+            <span class="status-dot"></span>
           </div>
           <div class="hero-update">最後更新：<span id="lastUpdateText">-</span></div>
         </div>
@@ -45,9 +51,12 @@
         </div>
       </section>
 
-      <section class="card" style="background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #3b82f6;">
+      <section class="card ai-card" style="background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #3b82f6;">
         <div class="section-title" style="color: #60a5fa;"><i class="fas fa-brain"></i> Gemini 強力深度分析</div>
-        <button id="btn-gemini" class="primary-btn" style="width: 100%; background: linear-gradient(135deg, #2563eb, #1e40af);">執行 Gemini 分析</button>
+        <p style="font-size: 13px; color: #94a3b8; margin-bottom: 15px;">同步 Render 雲端隨機森林模型，執行大數據權重預測。</p>
+        <div class="action-row">
+          <button id="btn-gemini" class="primary-btn" style="width: 100%; background: linear-gradient(135deg, #2563eb, #1e40af);">執行 Gemini 分析</button>
+        </div>
         <div id="ai-result-box" style="margin-top: 15px; display: none;"></div>
       </section>
 
@@ -66,35 +75,67 @@
       <section class="card">
         <div class="section-title">預測設定</div>
         <label class="field-label" for="analysisPeriods">分析期數</label>
-        <select id="analysisPeriods" class="form-control"><option value="120" selected>120期</option></select>
+        <select id="analysisPeriods" class="form-control">
+          <option value="30">30期</option><option value="60">60期</option><option value="120" selected>120期</option><option value="240">240期</option><option value="500">500期</option>
+        </select>
+        <label class="field-label" for="recommendCount">推薦組數</label>
+        <select id="recommendCount" class="form-control"><option value="1">1組</option><option value="3" selected>3組</option><option value="5">5組</option></select>
         <label class="field-label" for="predictMode">預測模式</label>
-        <select id="predictMode" class="form-control"><option value="balanced">均衡型</option></select>
-        <button id="btnPredictPage" class="primary-btn" style="width:100%; margin-top:15px;">立即預測</button>
+        <select id="predictMode" class="form-control">
+          <option value="balanced" selected>均衡型</option><option value="hot">熱號型</option><option value="cold">冷號型</option><option value="tail">尾數型</option><option value="drag">拖號型</option>
+        </select>
+        <div class="action-row">
+          <button id="btnPredictPage" class="primary-btn">立即預測</button>
+          <button id="btnCopyAllPredict" class="secondary-btn">複製全部</button>
+          <button id="btnPredictSummary" class="secondary-btn">預測摘要</button>
+        </div>
       </section>
-      <section class="card"><div id="predictResultsList"></div></section>
+      <section class="card"><div class="section-title">推薦結果</div><div id="predictResultsList"></div></section>
+      <section class="card">
+        <div class="section-title">分享圖片</div>
+        <div class="action-row"><button id="btnGenerateShareCard" class="primary-btn">產生分享圖</button><button id="btnCloseSharePreview" class="secondary-btn">清除預覽</button></div>
+        <div id="sharePreviewEmpty" class="empty-text">尚未生成分享圖</div>
+        <div id="sharePreviewWrap" style="display:none;"><img id="sharePreviewImage" alt="share preview" style="width:100%;border-radius:18px;" /></div>
+      </section>
     </section>
 
     <section id="page-history" class="page hidden">
-      <section class="card"><div class="section-title">最近 5 期</div><div id="recent5List"></div></section>
+      <section class="card"><div class="section-title">最近 5 期</div><div class="action-row"><button id="btnRecent5" class="secondary-btn">查看最近5期</button><button id="btnHistoryRefresh" class="secondary-btn">重新整理</button></div><div id="recent5List"></div></section>
+      <section class="card"><div class="section-title">分析摘要</div>
+        <div class="analysis-grid"><div class="analysis-item"><span class="label">熱門號</span><strong id="historyHotNums">-</strong></div><div class="analysis-item"><span class="label">冷門號</span><strong id="historyColdNums">-</strong></div><div class="analysis-item"><span class="label">拖號組</span><strong id="historyDragNums">-</strong></div><div class="analysis-item"><span class="label">尾數強勢</span><strong id="historyTailNums">-</strong></div></div>
+        <div class="action-row"><button id="btnDataStatus" class="secondary-btn">資料狀態</button><button id="btnFullAnalysis" class="secondary-btn">完整分析</button><button id="btnHitTrack" class="secondary-btn">命中追蹤</button></div>
+      </section>
     </section>
 
     <section id="page-favorites" class="page hidden">
-      <section class="card"><div class="section-title">收藏清單</div><div id="favoritesList"></div></section>
+      <section class="card"><div class="section-title">收藏清單</div><div class="action-row"><button id="btnRefreshFavorites" class="secondary-btn">重新整理</button><button id="btnClearFavorites" class="secondary-btn">清空收藏</button></div><div id="favoritesList"></div></section>
+      <section class="card"><div class="section-title">視覺分析</div><div class="action-row"><button id="btnRefreshVisual" class="secondary-btn">刷新圖表</button></div><div id="heatmapList"></div><div id="tailChartList"></div><div id="oddEvenChart"></div><div id="bigSmallChart"></div></section>
     </section>
 
     <section id="page-backtest" class="page hidden">
       <section class="card">
         <div class="section-title">回測命中率</div>
-        <button id="btnRunBacktest" class="primary-btn" style="width:100%;">開始回測</button>
-        <div id="backtestResultsList" style="margin-top:15px;"></div>
+        <label class="field-label" for="backtestCount">回測期數</label><select id="backtestCount" class="form-control"><option value="10">10期</option><option value="20" selected>20期</option><option value="30">30期</option><option value="50">50期</option></select>
+        <label class="field-label" for="backtestMode">回測模式</label><select id="backtestMode" class="form-control"><option value="balanced" selected>均衡型</option><option value="hot">熱號型</option><option value="cold">冷號型</option><option value="tail">尾數型</option><option value="drag">拖號型</option></select>
+        <label class="field-label" for="betAmount">每期投注金額</label><select id="betAmount" class="form-control"><option value="50" selected>50元</option><option value="100">100元</option><option value="200">200元</option></select>
+        <div class="action-row"><button id="btnRunBacktest" class="primary-btn">開始回測</button></div>
       </section>
+      <section class="card"><div class="section-title">回測統計</div><div class="analysis-grid"><div class="analysis-item"><span class="label">平均命中</span><strong id="backtestAvgHit">0顆</strong></div><div class="analysis-item"><span class="label">最高命中</span><strong id="backtestMaxHit">0顆</strong></div><div class="analysis-item"><span class="label">總回測期數</span><strong id="backtestTotal">0期</strong></div><div class="analysis-item"><span class="label">模式</span><strong id="backtestModeText">均衡型</strong></div></div></section>
+      <section class="card"><div class="section-title">命中分佈</div><div class="analysis-grid"><div class="analysis-item"><span class="label">0顆</span><strong id="hitCount0">0次</strong></div><div class="analysis-item"><span class="label">1顆</span><strong id="hitCount1">0次</strong></div><div class="analysis-item"><span class="label">2顆</span><strong id="hitCount2">0次</strong></div><div class="analysis-item"><span class="label">3顆</span><strong id="hitCount3">0次</strong></div><div class="analysis-item"><span class="label">4顆</span><strong id="hitCount4">0次</strong></div><div class="analysis-item"><span class="label">5顆</span><strong id="hitCount5">0次</strong></div></div></section>
+      <section class="card"><div class="section-title">最佳模式推薦</div><div class="analysis-item"><span class="label">最佳模式</span><strong id="bestBacktestMode">尚未分析</strong></div><div class="analysis-item"><span class="label">建議</span><strong id="bestBacktestSuggestion">請先執行回測</strong></div></section>
+      <section class="card"><div class="section-title">模擬損益</div><div class="analysis-grid"><div class="analysis-item"><span class="label">總投注</span><strong id="simTotalBet">0元</strong></div><div class="analysis-item"><span class="label">總回收</span><strong id="simTotalReturn">0元</strong></div><div class="analysis-item"><span class="label">淨損益</span><strong id="simNetProfit">0元</strong></div><div class="analysis-item"><span class="label">每期投注</span><strong id="simBetAmountText">50元</strong></div></div></section>
+      <section class="card"><div class="section-title">回測明細</div><div id="backtestResultsList"></div></section>
     </section>
 
     <section id="page-settings" class="page hidden">
       <section class="card">
-        <div class="section-title">系統設定</div>
-        <button id="btnReloadData" class="secondary-btn" style="width:100%;">重新載入資料</button>
+        <div class="section-title">拖號查詢</div>
+        <label class="field-label" for="dragQueryNumber">查詢號碼</label><input id="dragQueryNumber" class="form-control" type="number" min="1" max="39" placeholder="輸入 01～39" />
+        <label class="field-label" for="dragQueryScope">查詢範圍</label><select id="dragQueryScope" class="form-control"><option value="10">最近10期</option><option value="20">最近20期</option><option value="30">最近30期</option><option value="50" selected>最近50期</option></select>
+        <div class="action-row"><button id="btnUseLatestDrag" class="secondary-btn">帶入最新號碼</button><button id="btnRunDragQuery" class="primary-btn">查詢拖號</button></div>
+        <div class="analysis-item"><span class="label">查詢摘要</span><strong id="dragQuerySummary">尚未查詢</strong></div><div id="dragQueryResults"></div>
       </section>
+      <section class="card"><div class="section-title">系統設定</div><div class="action-row"><button id="btnReloadData" class="secondary-btn">重新載入資料</button><button id="btnClearHistory" class="secondary-btn">清空預測記錄</button></div></section>
     </section>
   </div>
 
@@ -115,6 +156,7 @@
       <div class="app-dialog-actions"><button id="appDialogConfirm" class="primary-btn">確定</button></div>
     </div>
   </div>
-  <script src="app.js?v=final-stable"></script>
+
+  <script src="app.js?v=55"></script>
 </body>
 </html>
