@@ -1,8 +1,3 @@
-import os
-
-# 自動安裝必要的套件（手機操作最方便）
-os.system('pip install flask flask-cors requests beautifulsoup4 pandas numpy scikit-learn')
-
 from flask import Flask, jsonify
 from flask_cors import CORS
 import requests
@@ -13,7 +8,7 @@ from sklearn.ensemble import RandomForestClassifier
 import re
 
 app = Flask(__name__)
-CORS(app) # 允許 GitHub 連線
+CORS(app) # 允許您的網頁跨網域連線
 
 @app.route('/')
 def home():
@@ -22,7 +17,7 @@ def home():
 @app.route('/api/predict')
 def predict():
     try:
-        # 1. 爬蟲抓取資料
+        # 1. 爬取最新開獎資料
         url = "https://www.lotto-8.com/listlto539.asp"
         res = requests.get(url, timeout=10)
         res.encoding = 'utf-8'
@@ -34,7 +29,7 @@ def predict():
         data_list = [[m[0]] + [int(n) for n in m[1:6]] for m in matches]
         df = pd.DataFrame(data_list, columns=['Date', 'B1', 'B2', 'B3', 'B4', 'B5']).iloc[::-1]
 
-        # 2. 機器學習訓練
+        # 2. 隨機森林模型訓練
         def to_matrix(row):
             m = np.zeros(39)
             for i in range(1, 6): m[int(row[f'B{i}']) - 1] = 1
@@ -44,7 +39,7 @@ def predict():
         model = RandomForestClassifier(n_estimators=100, random_state=42)
         model.fit(all_draws[:-1], all_draws[1:])
 
-        # 3. 產出預測
+        # 3. 產出預測結果
         probs = model.predict_proba(all_draws[-1].reshape(1, -1))
         scores = sorted([(i+1, probs[i][0][1]) for i in range(39)], key=lambda x: x[1], reverse=True)
         
