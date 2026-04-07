@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>今彩539 AI 預測系統</title>
   <meta name="theme-color" content="#0f172a" />
-  <link rel="stylesheet" href="style.css?v=stable-final" />
+  <meta name="description" content="今彩539 AI 預測系統｜預測、分析、拖號、回測、收藏" />
+  <link rel="stylesheet" href="style.css?v=stable-v5" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </head>
 <body>
@@ -16,7 +17,10 @@
         <div class="hero-info">
           <h1>今彩539 AI 預測系統</h1>
           <div class="hero-subline">
-            <span id="appVersionText">V3.8.5</span>｜<span>資料正常</span><span class="status-dot"></span>
+            <span id="appVersionText">V3.8.5</span>
+            <span>｜</span>
+            <span>系統運作中</span>
+            <span class="status-dot"></span>
           </div>
           <div class="hero-update">最後更新：<span id="lastUpdateText">-</span></div>
         </div>
@@ -44,9 +48,9 @@
         </div>
       </section>
 
-      <section class="card" style="background: linear-gradient(135deg, #0f172a, #1e293b); border: 1px solid #3b82f6;">
+      <section class="card ai-card" style="background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #3b82f6;">
         <div class="section-title" style="color: #60a5fa;"><i class="fas fa-brain"></i> Gemini 強力深度分析</div>
-        <p style="font-size: 13px; color: #94a3b8; margin-bottom: 15px;">同步雲端隨機森林模型，執行深度數據權重預測。</p>
+        <p style="font-size: 13px; color: #94a3b8; margin-bottom: 15px;">串連雲端 Python 隨機森林模型，執行深度數據權重預測。</p>
         <button id="btn-gemini" class="primary-btn" style="width: 100%; background: linear-gradient(135deg, #2563eb, #1e40af);">執行 Gemini 分析</button>
         <div id="ai-result-box" style="margin-top: 15px; display: none; color: white;"></div>
       </section>
@@ -62,34 +66,15 @@
       </section>
     </section>
 
-    <section id="page-predict" class="page hidden">
-      <section class="card">
-        <div class="section-title">預測設定</div>
-        <label class="field-label">分析期數</label>
-        <select id="analysisPeriods" class="form-control"><option value="120" selected>120期</option></select>
-        <label class="field-label">預測模式</label>
-        <select id="predictMode" class="form-control"><option value="balanced" selected>均衡型</option></select>
-        <button id="btnPredictPage" class="primary-btn" style="width:100%; margin-top:15px;">立即預測</button>
-      </section>
-      <section class="card">
-        <div class="section-title">推薦結果</div>
-        <div id="predictResultsList"></div>
-      </section>
-    </section>
-
-    <section id="page-history" class="page hidden"><div class="card"><div class="section-title">最近 5 期</div><div id="recent5List"></div></div></section>
-    <section id="page-favorites" class="page hidden"><div class="card"><div class="section-title">收藏清單</div><div id="favoritesList"></div></div></section>
-    <section id="page-backtest" class="page hidden"><div class="card"><div class="section-title">回測</div><button id="btnRunBacktest" class="primary-btn" style="width:100%;">開始回測</button><div id="backtestResultsList" style="margin-top:15px;"></div></div></section>
-    <section id="page-settings" class="page hidden"><div class="card"><div class="section-title">設定</div><button id="btnReloadData" class="secondary-btn">重新載入資料</button></div></section>
-  </div>
+    </div>
 
   <nav class="bottom-nav">
-    <button class="nav-btn active" data-page="home"><i class="fas fa-home"></i><br>首頁</button>
-    <button class="nav-btn" data-page="predict"><i class="fas fa-magic"></i><br>預測</button>
-    <button class="nav-btn" data-page="history"><i class="fas fa-history"></i><br>歷史</button>
-    <button class="nav-btn" data-page="favorites"><i class="fas fa-star"></i><br>收藏</button>
-    <button class="nav-btn" data-page="backtest"><i class="fas fa-chart-line"></i><br>回測</button>
-    <button class="nav-btn" data-page="settings"><i class="fas fa-cog"></i><br>設定</button>
+    <button class="nav-btn active" data-page="home">首頁</button>
+    <button class="nav-btn" data-page="predict">預測</button>
+    <button class="nav-btn" data-page="history">歷史</button>
+    <button class="nav-btn" data-page="favorites">收藏</button>
+    <button class="nav-btn" data-page="backtest">回測</button>
+    <button class="nav-btn" data-page="settings">設定</button>
   </nav>
 
   <div id="appDialog" class="app-dialog hidden">
@@ -97,9 +82,11 @@
     <div class="app-dialog-box">
       <div id="appDialogTitle" class="app-dialog-title">系統訊息</div>
       <div id="appDialogMessage" class="app-dialog-message">-</div>
-      <div class="app-dialog-actions"><button id="appDialogConfirm" class="primary-btn">確定</button></div>
+      <div class="app-dialog-actions">
+        <button id="appDialogConfirm" class="primary-btn">確定</button>
+      </div>
     </div>
   </div>
-  <script src="app.js?v=stable-final"></script>
+  <script src="app.js?v=stable-v5"></script>
 </body>
 </html>
