@@ -1,21 +1,19 @@
-:root { --bg1: #06142d; --bg2: #0a1f4b; --card: #f3f6fb; --text: #0f172a; --primary: #1d4ed8; --primary2: #38bdf8; }
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-body { margin: 0; padding: 20px 12px 110px; background: radial-gradient(circle at top, #0f2f70 0%, #081a3e 35%, #06142d 100%); color: #fff; font-family: sans-serif; }
-.app-shell { width: 100%; max-width: 500px; margin: 0 auto; }
-.hidden { display: none !important; }
-.card { background: rgba(255, 255, 255, 0.95); border-radius: 24px; padding: 20px; margin-bottom: 15px; color: var(--text); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-.section-title { font-size: 19px; font-weight: 800; color: var(--bg1); margin-bottom: 12px; }
-.hero-card { display: flex; align-items: center; gap: 15px; background: rgba(8, 20, 47, 0.85); padding: 18px; border-radius: 26px; border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 18px; }
-.hero-icon { width: 56px; height: 56px; background: linear-gradient(135deg, #1d4ed8, #38bdf8); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; }
-.balls-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-.ball { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; color: #fff; background: #475569; border: 2px solid rgba(255, 255, 255, 0.2); }
-.ball.range-1 { background: linear-gradient(135deg, #2563eb, #60a5fa); }
-.primary-btn { width: 100%; height: 50px; border-radius: 16px; border: none; background: linear-gradient(135deg, #1d4ed8, #2d8df0); color: #fff; font-weight: 800; font-size: 16px; cursor: pointer; }
-.secondary-btn { flex: 1; height: 44px; border-radius: 12px; border: 1px solid #dbe5f0; background: #f8fbff; color: var(--text); font-weight: 700; cursor: pointer; }
-.bottom-nav { position: fixed; left: 8px; right: 8px; bottom: 8px; display: grid; grid-template-columns: repeat(6, 1fr); background: rgba(6, 20, 45, 0.96); backdrop-filter: blur(12px); padding: 10px; border-radius: 22px; border: 1px solid rgba(255, 255, 255, 0.1); z-index: 2000; }
-.nav-btn { background: none; border: none; color: #94a3b8; font-size: 11px; text-align: center; cursor: pointer; }
-.nav-btn i { font-size: 19px; margin-bottom: 4px; }
-.nav-btn.active { color: #60a5fa; font-weight: 800; }
-.app-dialog { position: fixed; inset: 0; z-index: 3000; display: flex; align-items: center; justify-content: center; }
-.app-dialog-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.7); }
-.app-dialog-box { position: relative; width: 88%; max-width: 340px; background: #1e293b; padding: 24px; border-radius: 26px; border: 1px solid #3b82f6; text-align: center; }
+/* 確保導覽列在手機上不會跑位 */
+.bottom-nav {
+  position: fixed; left: 8px; right: 8px; bottom: 8px;
+  display: grid; grid-template-columns: repeat(6, 1fr);
+  background: rgba(6, 20, 45, 0.96); backdrop-filter: blur(12px);
+  padding: 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
+  z-index: 2000;
+}
+
+/* AI 面板美化 */
+.ai-card {
+  position: relative; overflow: hidden;
+}
+.ai-card::after {
+  content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+  background: linear-gradient(90deg, transparent, #60a5fa, transparent);
+  animation: scan 2s linear infinite;
+}
+@keyframes scan { 0% { left: -100%; } 100% { left: 100%; } }
