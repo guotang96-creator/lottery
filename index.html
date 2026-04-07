@@ -1,65 +1,90 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>今彩539 AI 預測系統</title>
-  <link rel="stylesheet" href="style.css?v=final-v3" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>今彩539 AI 預測系統</title>
+    <link rel="stylesheet" href="style.css?v=final-stable">
 </head>
 <body>
-  <div class="app-shell">
-    <main class="page">
-      <section class="hero-card">
-        <div class="hero-icon">539</div>
-        <div class="hero-info">
-          <h1>今彩539 AI 預測系統</h1>
-          <div class="hero-subline">
-            <span class="status-dot"></span>
-            <span>GitHub Pages 前端</span>・<span>Render AI API</span> 
-          </div>
-          <div class="hero-update" id="heroUpdateText">載入中...</div>
-        </div>
-      </section>
+    <div class="app-shell">
+        <main class="page">
+            <section class="hero-card">
+                <div class="hero-icon">539</div>
+                <div class="hero-info">
+                    <h1>今彩539 AI 預測系統</h1>
+                    <div class="hero-subline">
+                        <span class="status-dot"></span>
+                        <span id="heroStatusText">系統連線正常</span>
+                    </div>
+                </div>
+            </section>
 
-      <section class="card">
-        <div class="section-title">最新開獎</div>
-        <div class="info-grid">
-          <div>最新期數：<span id="latestIssue">--</span></div>
-          <div>開獎日期：<span id="latestDate">--</span></div>
-        </div>
-        <div class="field-label">最新號碼</div>
-        <div class="balls-row" id="latestBalls"></div>
-        <div class="recommend-meta">
-          <span id="dataSourceText">資料來源：載入中</span>
-          <span id="dataUpdatedText">更新時間：--</span>
-        </div>
-        <div class="action-row">
-          <button class="primary-btn" id="btnRefresh">重新載入</button>
-          <button class="secondary-btn">立即預測</button>
-        </div>
-      </section>
+            <section class="card">
+                <div class="section-title">最新開獎</div>
+                <div class="info-grid">
+                    <div>最新期數：<span id="latestIssue">--</span></div>
+                    <div>開獎日期：<span id="latestDate">--</span></div>
+                </div>
+                <div class="balls-row" id="latestBalls"></div>
+            </section>
 
-      <section class="ai-panel">
-        <div class="ai-panel-inner">
-          <h2>AI 雙模型分析</h2>
-          <div class="ai-actions">
-            <button id="btn-gemini">Gemini 分析</button>
-            <button id="btn-openai">ChatGPT 分析</button>
-          </div>
-          <div id="ai-result" class="ai-result">請點擊上方按鈕開始 AI 預測分析。</div>
-        </div>
-      </section>
-    </main>
+            <section class="card">
+                <div class="section-title">主推薦號碼</div>
+                <div class="balls-row" id="mainRecommendBalls">
+                    <span class="ball">--</span><span class="ball">--</span><span class="ball">--</span><span class="ball">--</span><span class="ball">--</span>
+                </div>
+                <div class="action-row" style="margin-top: 15px;">
+                    <button class="primary-btn" id="btnRefresh">重新載入資料</button>
+                    <button class="secondary-btn" id="btnQuickPick">立即預測</button>
+                </div>
+            </section>
 
-    <nav class="tab-bar">
-      <div class="tab-item active">首頁</div>
-      <div class="tab-item">預測</div>
-      <div class="tab-item">歷史</div>
-      <div class="tab-item">收藏</div>
-      <div class="tab-item">回測</div>
-      <div class="tab-item">設定</div>
-    </nav>
-  </div>
-  <script src="app.js?v=final-v3"></script>
+            <section class="card">
+                <div class="section-title">快速分析</div>
+                <div class="analysis-grid">
+                    <div class="analysis-item">
+                        <span class="label">熱門號</span>
+                        <strong id="hotNumbersText">--</strong>
+                    </div>
+                    <div class="analysis-item">
+                        <span class="label">冷門號</span>
+                        <strong id="coldNumbersText">--</strong>
+                    </div>
+                    <div class="analysis-item">
+                        <span class="label">拖號組</span>
+                        <strong id="trailingText">--</strong>
+                    </div>
+                    <div class="analysis-item">
+                        <span class="label">強勢尾數</span>
+                        <strong id="strongTailText">--</strong>
+                    </div>
+                </div>
+            </section>
+
+            <section class="ai-panel">
+                <div class="ai-panel-inner">
+                    <h2>AI 雙模型分析</h2>
+                    <div class="ai-actions">
+                        <button id="btn-gemini">Gemini 分析</button>
+                        <button id="btn-openai">ChatGPT 分析</button>
+                    </div>
+                    <div id="ai-result" class="ai-result">
+                        請選擇 AI 模型進行深度分析...
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <nav class="tab-bar">
+            <div class="tab-item active">首頁</div>
+            <div class="tab-item">預測</div>
+            <div class="tab-item">歷史</div>
+            <div class="tab-item">收藏</div>
+            <div class="tab-item">回測</div>
+            <div class="tab-item">設定</div>
+        </nav>
+    </div>
+    <script src="app.js?v=final-stable"></script>
 </body>
 </html>
