@@ -1,5 +1,6 @@
-const APP_VERSION = "AI Compact Final Stable";
-const AI_API_BASE = "https://lottery-ai-api.vercel.app";
+const APP_VERSION = "AI Compact Final Stable (Replit Edition)";
+// ★ 替換為您的 Replit API 網址 (移除結尾的 /api/predict，只留基底網址)
+const AI_API_BASE = "https://1b1cece6-4b6a-a051-e14620f36e9a-00-rnx49gixdz62.janeway.replit.dev";
 
 const JSON_CANDIDATES = [
   "./latest.json",
@@ -374,62 +375,53 @@ function updateDashboard(primary, confidence, history) {
   state.currentPrediction = primary;
 }
 
-function getLatest539Payload() {
-  const latest = state.latest539 || null;
+// ★ 調整 AI 呼叫邏輯：連線到 Replit 的預測 API
+async function callAiApi(provider) {
+  try {
+    const modelName = provider === "gemini" ? "Gemini" : "機器學習 (Replit API)";
+    setAiResult(`正在啟動 ${modelName} 模型並訓練中，請稍候...`, "loading");
 
-  if (latest) {
-    return {
-      game: "daily539",
-      mode: els.predictMode?.value || "balanced",
-      latestDraw: latest,
-      history: sampleHistory(Number(els.analysisPeriods?.value || 120))
+    // 不論按哪個按鈕，我們現在統一呼叫您打造的 Replit 機器學習 API
+    const res = await fetch(`${AI_API_BASE}/api/predict`, {
+      method: "GET" // 我們的 Replit API 使用 GET 方法
+    });
+
+    if (!res.ok) {
+      throw new Error(`API 伺服器狀態異常 (${res.status})，請確認 Replit 是否處於喚醒狀態。`);
+    }
+
+    const data = await res.json();
+
+    if (data.status !== "success") {
+       throw new Error(data.error || "無法取得預測資料");
+    }
+
+    // 將 Replit API 回傳的資料結構，轉換成您的網頁可以顯示的格式
+    const predicted_numbers = data.predicted_numbers.map(Number);
+    // 將信心指數轉換為 0~100 的分數形式 (例如 0.34 變 34 分)
+    const confidenceScore = data.details && data.details.length > 0 
+        ? Math.round(data.details[0].score * 100) 
+        : "--";
+        
+    const reasoningList = data.details 
+        ? data.details.map((item, idx) => `號碼 ${item.number} 的演算法權重指數為 ${item.score}`)
+        : ["使用隨機森林演算法，根據歷史開獎數據動態訓練預測。"];
+
+    const result = {
+      recommended_numbers: predicted_numbers,
+      backup_numbers: [], // 我們的 API 目前只回傳最推薦的五顆，不提供備選
+      confidence: confidenceScore,
+      reasoning: reasoningList
     };
+
+    renderAiResult(result, "專屬機器學習 (Random Forest)");
+    
+    // 同步更新上方的主推薦號碼區塊
+    updateDashboard(predicted_numbers, confidenceScore, sampleHistory(Number(els.analysisPeriods?.value || 120)));
+
+  } catch (error) {
+    setAiResult(`分析失敗：${error.message}`, "error");
   }
-
-  return {
-    game: "daily539",
-    mode: els.predictMode?.value || "balanced",
-    latestDraw: {
-      period: "",
-      lotteryDate: "",
-      numbers: []
-    },
-    history: []
-  };
-}
-
-function buildAiPromptFallback(payload) {
-  const latest = payload.latestDraw || {};
-  const history = payload.history || [];
-  const hotCold = getHotColdTexts(history);
-
-  const freq = countFrequency(history);
-  const hot = [...freq.entries()]
-    .sort((a, b) => b[1] - a[1] || a[0] - b[0])
-    .map(([n]) => n);
-
-  const primary =
-    Array.isArray(state.currentPrediction) && state.currentPrediction.length >= 5
-      ? state.currentPrediction.slice(0, 5)
-      : hot.slice(0, 5);
-
-  const backupBase = uniqSorted([
-    ...pickTopFromMap(countFrequency(history), 5, true),
-    ...pickTopFromMap(getMissingCounts(history), 5, true)
-  ]).filter((n) => !primary.includes(n));
-
-  return {
-    title: "AI 分析結果",
-    recommended_numbers: primary,
-    backup_numbers: backupBase.slice(0, 5),
-    confidence: estimateConfidence(primary, history, payload.mode || "balanced"),
-    reasoning: [
-      `最新期數 ${latest.period || "--"}，最新開獎為 ${(latest.numbers || []).map(pad2).join("、") || "無資料"}`,
-      `近期熱號偏向 ${hotCold.hot}`,
-      `近期冷號偏向 ${hotCold.cold}`,
-      `目前模式為 ${payload.mode || "balanced"}，以均衡搭配近期頻率與遺漏值挑選`
-    ]
-  };
 }
 
 function renderAiResult(result, modelName) {
@@ -442,25 +434,20 @@ function renderAiResult(result, modelName) {
     <div class="ai-result-title">${escapeHtml(modelName)} 分析結果</div>
 
     <div class="ai-result-block">
-      <div class="ai-result-label">推薦號碼</div>
+      <div class="ai-result-label">AI 推薦號碼</div>
       <div class="ai-ball-row">${renderAiBalls(recommended)}</div>
-    </div>
-
-    <div class="ai-result-block">
-      <div class="ai-result-label">備選號碼</div>
-      <div class="ai-ball-row">${renderAiBalls(backup)}</div>
     </div>
 
     <div class="ai-result-block">
       <div class="ai-result-label">分析資訊</div>
       <div class="ai-result-meta">
-        <span>信心分數：${escapeHtml(String(confidence))}</span>
+        <span>最高模型信心指數：${escapeHtml(String(confidence))} / 100</span>
         <span>版本：${escapeHtml(APP_VERSION)}</span>
       </div>
     </div>
 
     <div class="ai-result-block">
-      <div class="ai-result-label">分析理由</div>
+      <div class="ai-result-label">演算法細節</div>
       <div class="ai-reason-list">
         ${
           reasoning.length
@@ -474,51 +461,6 @@ function renderAiResult(result, modelName) {
   `;
 
   setAiHtml(html);
-}
-
-async function callAiApi(provider) {
-  try {
-    setAiResult("AI 分析中...", "loading");
-
-    const payload = getLatest539Payload();
-    payload.recommended = state.currentPrediction || [];
-
-    const apiPath =
-      provider === "gemini" ? "gemini-predict" : "openai-predict";
-
-    const res = await fetch(`${AI_API_BASE}/api/${apiPath}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const rawText = await res.text();
-    let data = null;
-
-    try {
-      data = JSON.parse(rawText);
-    } catch {
-      data = null;
-    }
-
-    if (!res.ok) {
-      const msg =
-        data?.error ||
-        data?.message ||
-        rawText ||
-        `API 錯誤（${res.status})`;
-
-      setAiResult(`${provider.toUpperCase()} 分析失敗：${msg}`, "error");
-      return;
-    }
-
-    const result = data?.result || data?.data || data || buildAiPromptFallback(payload);
-    renderAiResult(result, provider === "gemini" ? "Gemini" : "ChatGPT");
-  } catch (error) {
-    setAiResult(`分析失敗：${error.message}`, "error");
-  }
 }
 
 function renderLatest(latest) {
@@ -600,7 +542,7 @@ function bindActions() {
 async function init() {
   bindActions();
   await refreshAll();
-  setAiResult("請選擇要使用的 AI 模型進行分析。", "loading");
+  setAiResult("請選擇下方 AI 模型啟動深度學習分析。", "loading");
 }
 
 document.addEventListener("DOMContentLoaded", init);
