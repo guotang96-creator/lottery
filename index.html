@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>今彩539 AI 預測系統</title>
   <meta name="theme-color" content="#0f172a" />
-  <link rel="stylesheet" href="style.css?v=55-stable" />
+  <link rel="stylesheet" href="style.css?v=stable-final" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </head>
 <body>
@@ -16,10 +16,7 @@
         <div class="hero-info">
           <h1>今彩539 AI 預測系統</h1>
           <div class="hero-subline">
-            <span id="appVersionText">V3.8.5</span>
-            <span>｜</span>
-            <span>資料正常</span>
-            <span class="status-dot"></span>
+            <span id="appVersionText">V3.8.5</span>｜<span>資料正常</span><span class="status-dot"></span>
           </div>
           <div class="hero-update">最後更新：<span id="lastUpdateText">-</span></div>
         </div>
@@ -36,14 +33,6 @@
         <div class="balls-row" id="latestBalls"></div>
       </section>
 
-      <section class="card" style="background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #3b82f6;">
-        <div class="section-title" style="color: #60a5fa;"><i class="fas fa-brain"></i> Gemini 強力深度分析</div>
-        <div class="action-row">
-          <button id="btn-gemini" class="primary-btn" style="width:100%; background: linear-gradient(135deg, #2563eb, #1e40af);">執行 Gemini 分析</button>
-        </div>
-        <div id="ai-result-box" style="margin-top: 15px; display: none; color: white;"></div>
-      </section>
-
       <section class="card">
         <div class="section-title">主推薦號碼</div>
         <div class="balls-row" id="recommendBalls1"></div>
@@ -53,6 +42,13 @@
           <button id="btnCopy" class="secondary-btn">複製號碼</button>
           <button id="btnSave" class="secondary-btn">收藏號碼</button>
         </div>
+      </section>
+
+      <section class="card" style="background: linear-gradient(135deg, #0f172a, #1e293b); border: 1px solid #3b82f6;">
+        <div class="section-title" style="color: #60a5fa;"><i class="fas fa-brain"></i> Gemini 強力深度分析</div>
+        <p style="font-size: 13px; color: #94a3b8; margin-bottom: 15px;">同步雲端隨機森林模型，執行深度數據權重預測。</p>
+        <button id="btn-gemini" class="primary-btn" style="width: 100%; background: linear-gradient(135deg, #2563eb, #1e40af);">執行 Gemini 分析</button>
+        <div id="ai-result-box" style="margin-top: 15px; display: none; color: white;"></div>
       </section>
 
       <section class="card">
@@ -66,11 +62,25 @@
       </section>
     </section>
 
-    <section id="page-predict" class="page hidden">...</section>
-    <section id="page-history" class="page hidden">...</section>
-    <section id="page-favorites" class="page hidden">...</section>
-    <section id="page-backtest" class="page hidden">...</section>
-    <section id="page-settings" class="page hidden">...</section>
+    <section id="page-predict" class="page hidden">
+      <section class="card">
+        <div class="section-title">預測設定</div>
+        <label class="field-label">分析期數</label>
+        <select id="analysisPeriods" class="form-control"><option value="120" selected>120期</option></select>
+        <label class="field-label">預測模式</label>
+        <select id="predictMode" class="form-control"><option value="balanced" selected>均衡型</option></select>
+        <button id="btnPredictPage" class="primary-btn" style="width:100%; margin-top:15px;">立即預測</button>
+      </section>
+      <section class="card">
+        <div class="section-title">推薦結果</div>
+        <div id="predictResultsList"></div>
+      </section>
+    </section>
+
+    <section id="page-history" class="page hidden"><div class="card"><div class="section-title">最近 5 期</div><div id="recent5List"></div></div></section>
+    <section id="page-favorites" class="page hidden"><div class="card"><div class="section-title">收藏清單</div><div id="favoritesList"></div></div></section>
+    <section id="page-backtest" class="page hidden"><div class="card"><div class="section-title">回測</div><button id="btnRunBacktest" class="primary-btn" style="width:100%;">開始回測</button><div id="backtestResultsList" style="margin-top:15px;"></div></div></section>
+    <section id="page-settings" class="page hidden"><div class="card"><div class="section-title">設定</div><button id="btnReloadData" class="secondary-btn">重新載入資料</button></div></section>
   </div>
 
   <nav class="bottom-nav">
@@ -87,12 +97,9 @@
     <div class="app-dialog-box">
       <div id="appDialogTitle" class="app-dialog-title">系統訊息</div>
       <div id="appDialogMessage" class="app-dialog-message">-</div>
-      <div class="app-dialog-actions">
-        <button id="appDialogConfirm" class="primary-btn">確定</button>
-      </div>
+      <div class="app-dialog-actions"><button id="appDialogConfirm" class="primary-btn">確定</button></div>
     </div>
   </div>
-
-  <script src="app.js?v=55-stable"></script>
+  <script src="app.js?v=stable-final"></script>
 </body>
 </html>
