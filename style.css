@@ -1,42 +1,44 @@
-/* 保留您的根變數 */
-:root{
-  --bg1:#06142d; --bg2:#0a1f4b; --card:#f3f6fb; --text:#0f172a;
-  --primary:#1d4ed8; --primary2:#38bdf8; --white:#ffffff;
+/* 恢復您的原有根變數 */
+:root {
+  --bg1: #06142d; --bg2: #0a1f4b; --card: #f3f6fb; --text: #0f172a;
+  --primary: #1d4ed8; --primary2: #38bdf8;
 }
 
-/* 基礎設定 */
-*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-body{ margin:0; padding:20px 14px 110px; background: radial-gradient(circle at top, #0f2f70 0%, #081a3e 35%, #06142d 100%); color:#fff; font-family: sans-serif; }
-.app-shell{ width:100%; max-width:500px; margin:0 auto; }
-.hidden{ display:none !important; }
+/* 確保背景與卡片恢復豪華感 */
+body {
+  background: radial-gradient(circle at top, #0f2f70 0%, #081a3e 35%, #06142d 100%);
+  padding-bottom: 120px; /* 為導覽列留出空間 */
+}
 
-/* 您的豪華卡片樣式 */
-.card { background:rgba(255,255,255,0.95); border-radius:24px; padding:20px; margin-bottom:15px; color:var(--text); box-shadow:0 10px 30px rgba(0,0,0,0.3); }
-.section-title { font-size:20px; font-weight:800; color:var(--bg1); margin-bottom:15px; }
-.hero-card { display:flex; align-items:center; gap:15px; background:rgba(8,20,47,0.8); padding:20px; border-radius:28px; border:1px solid rgba(255,255,255,0.1); margin-bottom:20px; }
-.hero-icon { width:60px; height:60px; background:linear-gradient(135deg, #1d4ed8, #38bdf8); border-radius:18px; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; }
+.card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
 
-/* 球號 RWD 設定 (手機不會跑位) */
-.balls-row { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
-.ball { width:45px; height:45px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:18px; color:#fff; background:#475569; border:2px solid rgba(255,255,255,0.2); }
-.ball.active { transform: scale(1.05); box-shadow:0 4px 10px rgba(0,0,0,0.3); }
-.ball.range-1 { background:linear-gradient(135deg,#2563eb,#60a5fa); }
-.ball.range-2 { background:linear-gradient(135deg,#0f766e,#2dd4bf); }
-.ball.range-3 { background:linear-gradient(135deg,#7c3aed,#a78bfa); }
-.ball.range-4 { background:linear-gradient(135deg,#ea580c,#fb923c); }
+/* 底部導覽列手機配適修正 */
+.bottom-nav {
+  position: fixed; left: 10px; right: 10px; bottom: 10px;
+  display: grid; grid-template-columns: repeat(6, 1fr);
+  background: rgba(6, 20, 45, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 10px; border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 999;
+}
 
-/* 按鈕與選單 */
-.primary-btn { width:100%; height:50px; border-radius:15px; border:none; background:linear-gradient(135deg,#1d4ed8,#2d8df0); color:#fff; font-weight:800; font-size:16px; cursor:pointer; }
-.secondary-btn { flex:1; height:44px; border-radius:12px; border:1px solid #dbe5f0; background:#f8fbff; color:var(--text); font-weight:700; cursor:pointer; }
-.form-control { width:100%; height:45px; border-radius:10px; border:1px solid #d6e0eb; padding:0 15px; font-size:16px; }
+.nav-btn {
+  background: none; border: none;
+  color: #94a3b8; font-size: 11px;
+  text-align: center; cursor: pointer;
+}
 
-/* 底部導覽列 */
-.bottom-nav { position:fixed; left:10px; right:10px; bottom:10px; display:grid; grid-template-columns:repeat(6,1fr); gap:5px; background:rgba(6,20,45,0.95); backdrop-filter:blur(10px); padding:10px; border-radius:20px; border:1px solid rgba(255,255,255,0.1); }
-.nav-btn { background:none; border:none; color:#94a3b8; font-size:11px; text-align:center; cursor:pointer; }
-.nav-btn i { font-size:18px; margin-bottom:4px; }
-.nav-btn.active { color:#60a5fa; font-weight:800; }
+.nav-btn i { font-size: 20px; margin-bottom: 5px; }
+.nav-btn.active { color: #60a5fa; font-weight: 800; }
 
-/* 彈窗樣式 */
-.app-dialog { position:fixed; inset:0; z-index:3000; display:flex; align-items:center; justify-content:center; }
-.app-dialog-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.7); }
-.app-dialog-box { position:relative; width:85%; max-width:350px; background:#1e293b; padding:25px; border-radius:24px; border:1px solid #3b82f6; text-align:center; }
+/* AI 預測球樣式 */
+.ball.ai-ball {
+  background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+  border: 2px solid #fff;
+  box-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+}
