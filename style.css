@@ -1,151 +1,42 @@
-/* ========================================================
-   [V3.8.5 原有樣式恢復區] 保持您的五星級介面
-   ======================================================== */
-:root {
-  --color-bg-app: #0f172a;
-  --color-bg-shell: #0f172a;
-  --color-bg-page: #0f172a;
-  --color-bg-card: #1e293b;
-  --color-bg-panel: #1e293b;
-  --color-text-p: #cbd5e1;
-  --color-text-title: #ffffff;
-  --color-text-sub: #94a3b8;
-  --color-ball: #ffffff;
-  --color-ball-bg: #475569;
-  --color-nav-bg: #1e293b;
-  --color-nav-text: #94a3b8;
-  --color-primary: #2563eb;
-  --color-primary-end: #1d4ed8;
-  --color-secondary: #475569;
-  --color-secondary-end: #334155;
-  --color-tab-active: #ffffff;
-  --color-border: rgba(255, 255, 255, 0.05);
-  --color-success: #10b981;
-  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+/* 保留您的根變數 */
+:root{
+  --bg1:#06142d; --bg2:#0a1f4b; --card:#f3f6fb; --text:#0f172a;
+  --primary:#1d4ed8; --primary2:#38bdf8; --white:#ffffff;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
-html { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans TC", sans-serif; height: 100%; overscroll-behavior: none; font-size: 16px; }
-body { height: 100%; background-color: var(--color-bg-app); color: var(--color-text-p); -webkit-font-smoothing: antialiased; display: flex; justify-content: center; }
+/* 基礎設定 */
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body{ margin:0; padding:20px 14px 110px; background: radial-gradient(circle at top, #0f2f70 0%, #081a3e 35%, #06142d 100%); color:#fff; font-family: sans-serif; }
+.app-shell{ width:100%; max-width:500px; margin:0 auto; }
+.hidden{ display:none !important; }
 
-.app-shell {
-  display: flex; flex-direction: column; width: 100%; max-width: 500px; height: 100%; background-color: var(--color-bg-shell); box-shadow: 0 0 30px rgba(0,0,0,0.5); position: relative;
-}
+/* 您的豪華卡片樣式 */
+.card { background:rgba(255,255,255,0.95); border-radius:24px; padding:20px; margin-bottom:15px; color:var(--text); box-shadow:0 10px 30px rgba(0,0,0,0.3); }
+.section-title { font-size:20px; font-weight:800; color:var(--bg1); margin-bottom:15px; }
+.hero-card { display:flex; align-items:center; gap:15px; background:rgba(8,20,47,0.8); padding:20px; border-radius:28px; border:1px solid rgba(255,255,255,0.1); margin-bottom:20px; }
+.hero-icon { width:60px; height:60px; background:linear-gradient(135deg, #1d4ed8, #38bdf8); border-radius:18px; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:800; }
 
-.page { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: calc(85px + var(--safe-area-bottom)); position: relative; overscroll-behavior: contain; }
-.hidden { display: none !important; }
+/* 球號 RWD 設定 (手機不會跑位) */
+.balls-row { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+.ball { width:45px; height:45px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:18px; color:#fff; background:#475569; border:2px solid rgba(255,255,255,0.2); }
+.ball.active { transform: scale(1.05); box-shadow:0 4px 10px rgba(0,0,0,0.3); }
+.ball.range-1 { background:linear-gradient(135deg,#2563eb,#60a5fa); }
+.ball.range-2 { background:linear-gradient(135deg,#0f766e,#2dd4bf); }
+.ball.range-3 { background:linear-gradient(135deg,#7c3aed,#a78bfa); }
+.ball.range-4 { background:linear-gradient(135deg,#ea580c,#fb923c); }
 
-/* 您的精美卡片 & Hero 樣式 (完全恢復) */
-.hero-card {
-  display: flex; align-items: center; padding: 20px; border-radius: 20px; background: linear-gradient(135deg, var(--color-bg-card), #0f172a); border: 1px solid var(--color-border); margin-bottom: 15px; position: sticky; top: 0; z-index: 10; backdrop-filter: blur(5px);
-}
-.hero-icon { width: 55px; height: 55px; border-radius: 18px; background: linear-gradient(135deg, var(--color-primary), var(--color-primary-end)); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.3rem; margin-right: 15px; text-shadow: 0 2px 3px rgba(0,0,0,0.2); }
-.hero-info { flex: 1; }
-.hero-info h1 { font-size: 1.25rem; font-weight: 700; color: var(--color-text-title); margin-bottom: 4px; }
-.hero-subline { font-size: 0.85rem; color: var(--color-text-sub); display: flex; align-items: center; font-weight: 500; }
-.hero-update { font-size: 0.8rem; color: #64748b; margin-top: 5px; font-weight: 400; }
-.status-dot { width: 8px; height: 8px; border-radius: 50%; background-color: var(--color-success); display: inline-block; margin-left: 6px; box-shadow: 0 0 8px var(--color-success); }
+/* 按鈕與選單 */
+.primary-btn { width:100%; height:50px; border-radius:15px; border:none; background:linear-gradient(135deg,#1d4ed8,#2d8df0); color:#fff; font-weight:800; font-size:16px; cursor:pointer; }
+.secondary-btn { flex:1; height:44px; border-radius:12px; border:1px solid #dbe5f0; background:#f8fbff; color:var(--text); font-weight:700; cursor:pointer; }
+.form-control { width:100%; height:45px; border-radius:10px; border:1px solid #d6e0eb; padding:0 15px; font-size:16px; }
 
-.card {
-  background-color: var(--color-bg-card); border-radius: 20px; padding: 18px; margin-bottom: 15px; border: 1px solid var(--color-border); box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-}
-.section-title { font-size: 1.05rem; font-weight: 700; color: #60a5fa; margin-bottom: 15px; display: flex; align-items: center; border-bottom: 1px solid var(--color-border); padding-bottom: 8px; }
+/* 底部導覽列 */
+.bottom-nav { position:fixed; left:10px; right:10px; bottom:10px; display:grid; grid-template-columns:repeat(6,1fr); gap:5px; background:rgba(6,20,45,0.95); backdrop-filter:blur(10px); padding:10px; border-radius:20px; border:1px solid rgba(255,255,255,0.1); }
+.nav-btn { background:none; border:none; color:#94a3b8; font-size:11px; text-align:center; cursor:pointer; }
+.nav-btn i { font-size:18px; margin-bottom:4px; }
+.nav-btn.active { color:#60a5fa; font-weight:800; }
 
-/* 期數顯示與格線樣式 (恢復正常) */
-.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 15px; font-size: 0.9rem; color: var(--color-text-p); margin-bottom: 15px; line-height: 1.5; }
-.info-grid strong { color: #f8fafc; font-weight: 600; }
-
-.field-label { font-size: 0.8rem; color: var(--color-text-sub); margin-bottom: 6px; display: block; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
-
-/* 您的彩色球號樣式 (完全恢復) */
-.balls-row { display: flex; gap: 8px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap; }
-.ball {
-  width: 44px; height: 44px; border-radius: 50%; background-color: var(--color-ball-bg); color: var(--color-ball); font-weight: 700; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s; border: 2px solid transparent; text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-}
-.ball.active { background-image: linear-gradient(135deg, #475569, #334155); }
-.ball.range-1 { background-image: linear-gradient(135deg, #4facfe, #00f2fe); }
-.ball.range-2 { background-image: linear-gradient(135deg, #10b981, #059669); }
-.ball.range-3 { background-image: linear-gradient(135deg, #f97316, #ea580c); }
-.ball.range-4 { background-image: linear-gradient(135deg, #ef4444, #dc2626); }
-.ball.range-5 { background-image: linear-gradient(135deg, #8b5cf6, #7c3aed); }
-
-/* 下拉選單 & 按鈕 (恢復豪華感) */
-.form-control { width: 100%; height: 44px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); background-color: rgba(0,0,0,0.15); color: #f1f5f9; padding: 0 15px; font-size: 0.95rem; margin-bottom: 15px; transition: all 0.2s; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2394a3b8'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd' /%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 18px; }
-.form-control:focus { border-color: #60a5fa; box-shadow: 0 0 0 2px rgba(96,165,250,0.2); }
-
-.action-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
-.primary-btn, .secondary-btn {
-  flex: 1; height: 44px; border: none; border-radius: 14px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; text-transform: uppercase; letter-spacing: 0.5px; 
-}
-.primary-btn { background: linear-gradient(135deg, var(--color-primary), var(--color-primary-end)); color: white; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2); }
-.primary-btn:active { transform: translateY(1px); }
-.secondary-btn { background: linear-gradient(135deg, var(--color-secondary), var(--color-secondary-end)); color: white; border: 1px solid var(--color-border); }
-
-/* 底部分頁導覽 (完全恢復五星級配適) */
-.bottom-nav {
-  height: calc(65px + var(--safe-area-bottom)); background-color: var(--color-nav-bg); border-top: 1px solid var(--color-border); display: flex; width: 100%; max-width: 500px; position: fixed; bottom: 0; padding-bottom: var(--safe-area-bottom); z-index: 99; box-shadow: 0 -5px 20px rgba(0,0,0,0.2); backdrop-filter: blur(10px);
-}
-.nav-btn {
-  flex: 1; border: none; background: none; color: var(--color-nav-text); font-size: 0.75rem; font-weight: 500; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.2s; 
-}
-.nav-btn i { font-size: 1.4rem; margin-bottom: 3px; }
-.nav-btn.active { color: #60a5fa; font-weight: 600; }
-
-/* 彈窗樣式 (恢復正常) */
-.app-dialog { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; display: flex; align-items: center; justify-content: center; }
-.app-dialog-backdrop { position: absolute; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); }
-.app-dialog-box { background-color: var(--color-bg-panel); border-radius: 24px; padding: 25px; width: 85%; max-width: 320px; position: relative; border: 1px solid var(--color-border); box-shadow: 0 10px 40px rgba(0,0,0,0.5); text-align: center; }
-.app-dialog-title { color: #f8fafc; font-size: 1.15rem; font-weight: 700; margin-bottom: 12px; }
-.app-dialog-message { color: var(--color-text-p); font-size: 0.9rem; line-height: 1.6; margin-bottom: 22px; }
-
-/* ========================================================
-   [💡 RWD 強化 & 手機配適配區] 保證介面不變形
-   ======================================================== */
-/* 手機版窄球 (防止號碼塞不下) */
-@media screen and (max-width: 375px) {
-  html { font-size: 14px; }
-  .ball { width: 38px; height: 38px; font-size: 1.2rem; }
-  .card { padding: 15px; }
-  .bottom-nav { height: calc(60px + var(--safe-area-bottom)); }
-  .nav-btn i { font-size: 1.2rem; }
-}
-
-/* RWD格線配適配 */
-@media screen and (min-width: 376px) and (max-width: 500px) {
-  .info-grid { grid-template-columns: 1fr 1.2fr; gap: 10px; }
-}
-
-/* 歷史表格優化 (防止手機壞掉) */
-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
-th, td { text-align: center; padding: 8px 5px; border-bottom: 1px solid #334155; }
-th { color: #94a3b8; font-weight: 500; }
-td { color: #f1f5f9; }
-
-/* ========================================================
-   [💡 AI 深度分析專用樣式] 展示 AI 的強大與專業
-   ======================================================== */
-.ai-panel-card {
-  position: relative; overflow: hidden; border: 1px solid rgba(96, 165, 250, 0.2) !important; box-shadow: 0 5px 20px rgba(96, 165, 250, 0.1);
-}
-.ai-panel-card::before {
-  content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg, #2563eb, #8b5cf6, #2563eb); background-size: 200% 100%; animation: gradient-move 3s linear infinite;
-}
-@keyframes gradient-move { 0% { background-position: 100% 0%; } 100% { background-position: -100% 0%; } }
-
-/* 專業載入動畫 */
-.loading-spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(96, 165, 250, 0.1); border-top-color: #60a5fa; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 8px; }
-@keyframes spin { 100% { transform: rotate(360deg); } }
-
-/* AI 預測球樣式 (專業且顯眼) */
-.ball.ai-ball {
-  background: linear-gradient(135deg, #1e3a8a, #312e81); border: 2px solid #60a5fa; box-shadow: 0 0 10px rgba(96, 165, 250, 0.3); color: white;
-}
-.ball.ai-ball.active { transform: scale(1.05); }
-
-/* RWD AI 詳細權重列表優化 */
-.ai-details-list { text-align: left; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; margin-top: 15px; }
-.ai-detail-item { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace; font-size: 0.8rem; line-height: 1.8; color: #cbd5e1; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 3px 0; }
-.ai-detail-item:last-child { border-bottom: none; }
-.ai-detail-item span b { color: #fff; font-size: 1rem; }
-.ai-detail-item .highlight { color: #f8fafc; font-weight: 600; font-size: 1.1em; background: rgba(255,255,255,0.05); padding: 1px 4px; border-radius: 4px; }
-.ai-detail-item .score-badge { color: #60a5fa; background: rgba(96, 165, 250, 0.15); padding: 2px 7px; border-radius: 6px; font-weight: 600; }
+/* 彈窗樣式 */
+.app-dialog { position:fixed; inset:0; z-index:3000; display:flex; align-items:center; justify-content:center; }
+.app-dialog-backdrop { position:absolute; inset:0; background:rgba(0,0,0,0.7); }
+.app-dialog-box { position:relative; width:85%; max-width:350px; background:#1e293b; padding:25px; border-radius:24px; border:1px solid #3b82f6; text-align:center; }
