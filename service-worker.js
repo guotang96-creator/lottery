@@ -1,11 +1,11 @@
-const CACHE_NAME = "lottery-cache-v55";
+const CACHE_NAME = "lottery-cache-v56";
 
 const ASSETS = [
   "./",
-  "./index.html?v=55",
-  "./style.css?v=55",
-  "./app.js?v=55",
-  "./manifest.json?v=55",
+  "./index.html?v=56",
+  "./style.css?v=56",
+  "./app.js?v=56",
+  "./manifest.json?v=56",
   "./latest.json",
   "./favicon.png",
   "./icon-192.png",
@@ -72,7 +72,7 @@ self.addEventListener("fetch", (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(request, cloned));
           return response;
         })
-        .catch(() => caches.match("./index.html?v=55"));
+        .catch(() => caches.match("./index.html?v=56"));
     })
   );
 });
