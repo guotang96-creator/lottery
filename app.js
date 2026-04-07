@@ -1,6 +1,6 @@
 const APP_VERSION = "AI Compact Final Stable (Replit Edition)";
 // ★ 替換為您的 Replit API 網址 (移除結尾的 /api/predict，只留基底網址)
-const AI_API_BASE = "https://1b1cece6-4b6a-a051-e14620f36e9a-00-rnx49gixdz62.janeway.replit.dev";
+const AI_API_BASE = "https://1b1cece6-466c-4b6a-a051-e14620f36e9a-00-rnx49gixdz62.janeway.replit.dev/";
 
 const JSON_CANDIDATES = [
   "./latest.json",
