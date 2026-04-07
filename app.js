@@ -1,97 +1,80 @@
 (() => {
-  const APP_VERSION = "V3.8.5｜Gemini 雲端強力運算版";
+  const APP_VERSION = "V3.8.5｜Gemini AI 穩定版";
   const AI_API_BASE = "https://lottery-k099.onrender.com";
 
-  // ... (保留您原本的 STORAGE_KEYS, JSON_CANDIDATES, DEFAULT_LATEST, MOCK_HISTORY 等定義) ...
-
-  const $ = (selector) => document.querySelector(selector);
-  const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+  // 選取器對齊
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => Array.from(document.querySelectorAll(s));
 
   const els = {
-    // ... (保留您原本 els 的所有選擇器，如 lastUpdateText, latestPeriod 等) ...
-    btnGemini: $("#btn-gemini"),
-    aiResultBox: $("#ai-result-box"),
-    // 確保這裡包含您原本所有的選擇器...
-    pages: {
-      home: $("#page-home"), predict: $("#page-predict"), history: $("#page-history"),
-      favorites: $("#page-favorites"), backtest: $("#page-backtest"), settings: $("#page-settings")
-    },
-    navButtons: $$(".nav-btn"),
+    lastUpdateText: $("#lastUpdateText"), latestPeriod: $("#latestPeriod"), latestDate: $("#latestDate"),
+    latestBalls: $("#latestBalls"), recBallsHome: $("#recommendBalls1"), hotNums: $("#hotNums"),
+    coldNums: $("#coldNums"), dragNums: $("#dragNums"), tailNums: $("#tailNums"),
+    appVersionText: $("#appVersionText"), dataSourceText: $("#dataSourceText"),
+    btnGemini: $("#btn-gemini"), aiResultBox: $("#ai-result-box"),
+    navButtons: $$(".nav-btn"), pages: $$(".page"),
     appDialog: $("#appDialog"), appDialogTitle: $("#appDialogTitle"),
     appDialogMessage: $("#appDialogMessage"), appDialogConfirm: $("#appDialogConfirm")
   };
 
-  // ... (保留您原本的工具函式：showDialog, pad2, readJSON, writeJSON 等) ...
+  function showDialog(msg, title = "系統訊息") {
+    if (!els.appDialog) return;
+    els.appDialogTitle.textContent = title; els.appDialogMessage.textContent = msg;
+    els.appDialog.classList.remove("hidden");
+  }
 
-  /**
-   * Gemini AI 深度預測核心
-   */
-  async function callAiApi() {
+  // Gemini AI 連線
+  async function callGeminiApi() {
     if (!els.aiResultBox) return;
     els.aiResultBox.style.display = "block";
-    els.aiResultBox.innerHTML = `
-      <div style="text-align:center; padding:20px; color:#60a5fa;">
-        <i class="fas fa-brain fa-spin fa-2x"></i><br><br>
-        Gemini 正在分析大數據...<br>
-        <small style="color:#94a3b8;">(首次啟動需 40 秒喚醒 Render 伺服器)</small>
-      </div>
-    `;
-
+    els.aiResultBox.innerHTML = `<div style="text-align:center; padding:15px;"><i class="fas fa-brain fa-spin fa-2x"></i><br>正在深度算牌 (約 40 秒)...</div>`;
     try {
-      const response = await fetch(`${AI_API_BASE}/api/predict`);
-      const data = await response.json();
+      const res = await fetch(`${AI_API_BASE}/api/predict`);
+      const data = await res.json();
       if (data.status === 'success') {
-        renderAiOutput(data);
-      } else { throw new Error(data.message); }
-    } catch (err) {
-      els.aiResultBox.innerHTML = `<div style="color:#f87171; padding:10px;">⚠️ 連線失敗：AI 正在熱機中，請於 30 秒後重新點擊。</div>`;
-    }
+        let html = `<h3 style="color:#60a5fa; margin-bottom:10px; text-align:center;">✨ Gemini AI 預測結果</h3>`;
+        html += `<div class="balls-row">` + data.predicted_numbers.map(n => `<span class="ball active range-1">${n}</span>`).join('') + `</div>`;
+        html += `<div style="margin-top:15px; background:rgba(0,0,0,0.2); padding:10px; border-radius:12px; font-size:12px;">`;
+        data.details.forEach((d, i) => { html += `<div style="display:flex; justify-content:space-between;"><span>${i+1}. 號碼 <b>${d.num}</b></span><span>權重: ${d.score.toFixed(2)}</span></div>`; });
+        html += `</div>`;
+        els.aiResultBox.innerHTML = html;
+      }
+    } catch (e) { els.aiResultBox.innerHTML = `<div style="color:#f87171;">AI 起床中，請於 30 秒後重試。</div>`; }
   }
 
-  function renderAiOutput(data) {
-    let html = `
-      <h3 style="color:#60a5fa; margin-bottom:12px; text-align:center;">✨ Gemini AI 預測號碼</h3>
-      <div class="balls-row">
-        ${data.predicted_numbers.map(n => `<span class="ball active range-1">${n}</span>`).join('')}
-      </div>
-      <div style="margin-top:15px; background:rgba(0,0,0,0.3); padding:12px; border-radius:12px; font-size:13px;">
-        <p style="color:#888; margin-bottom:8px;">機器學習權重分析：</p>
-        ${data.details.map((d, i) => `
-          <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-            <span>${i+1}. 號碼 <b style="color:#fff;">${d.num}</b></span>
-            <span style="color:#60a5fa;">權重: ${d.score.toFixed(2)}</span>
-          </div>
-        `).join('')}
-      </div>
-    `;
-    els.aiResultBox.innerHTML = html;
-  }
-
-  // ... (保留您原本的 initDashboard, generatePrediction, switchPage 等函式) ...
-
-  function bindActions() {
-    // ... (保留您原本所有的按鈕綁定) ...
-    if (els.btnGemini) els.btnGemini.onclick = callAiApi;
-  }
-
+  // 初始化開獎面板
   async function init() {
     try {
-      bindDialog();
-      bindActions();
-      bindNav();
+      const res = await fetch('./latest.json');
+      const data = await res.json();
+      const latest = Array.isArray(data) ? data[0] : data;
       
-      const latest = await loadLatestFromCandidates();
-      renderLatest(latest);
-      // 關鍵修復：確保快速分析數據在啟動時被計算出來
-      const history = sampleHistory(120, latest.numbers);
-      updateAnalysisViews(history);
+      if (els.latestPeriod) els.latestPeriod.textContent = latest.period || latest.latest_draw || '--';
+      if (els.latestDate) els.latestDate.textContent = latest.date || '--';
+      if (els.lastUpdateText) els.lastUpdateText.textContent = latest.updatedAt || '-';
+      if (els.latestBalls && latest.numbers) {
+        els.latestBalls.innerHTML = latest.numbers.map(n => `<span class="ball active range-${Math.ceil(n/10)}">${String(n).padStart(2, '0')}</span>`).join('');
+        els.recBallsHome.innerHTML = els.latestBalls.innerHTML;
+      }
+
+      // 導覽切換
+      els.navButtons.forEach(btn => {
+        btn.onclick = () => {
+          const target = btn.dataset.page;
+          els.pages.forEach(p => p.classList.add("hidden"));
+          $(`#page-${target}`)?.classList.remove("hidden");
+          els.navButtons.forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+        };
+      });
+
+      if (els.btnGemini) els.btnGemini.onclick = callGeminiApi;
+      if (els.appDialogConfirm) els.appDialogConfirm.onclick = () => els.appDialog.classList.add("hidden");
       
-      if (els.appVersionText) els.appVersionText.textContent = APP_VERSION;
-      switchPage("home");
       console.log("🚀 系統啟動成功");
     } catch (err) {
-      console.error("init error:", err);
-      showDialog("初始化失敗，請檢查 latest.json 檔案。");
+      console.error("啟動失敗:", err);
+      showDialog("系統啟動失敗，請檢查 latest.json 是否存在。");
     }
   }
 
