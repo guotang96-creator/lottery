@@ -1,5 +1,5 @@
 /**
- * 539 AI 預測中心 V4.4 - 完美細節版 (修復未知標籤)
+ * 539 AI 預測中心 V4.5 - 終極透明版 (顯示神經網路回溯期數)
  */
 const API_URL = "https://lottery-k099.onrender.com/api/predict";
 let globalHistoryData = []; 
@@ -73,7 +73,6 @@ function initTabs() {
     });
 }
 
-// ================= 資料載入 (優化日期顯示) =================
 async function loadLatestData() {
     try {
         const urls = [`./latest.json?t=${Date.now()}`, `../latest.json?t=${Date.now()}`];
@@ -85,16 +84,14 @@ async function loadLatestData() {
 
         let latest = data.daily539 || (Array.isArray(data) ? data[0] : data);
         
-        // 💡 智慧抓取期數與日期
         let p = latest.period || latest.Period || latest.drawTerm || latest.issue;
         let d = latest.date || latest.Date || latest.lotteryDate || latest.drawDate;
         
         document.getElementById("draw-period").textContent = p ? p : "最新一期";
         
-        // 💡 如果沒日期，直接隱藏徽章；有日期才顯示
         const dateBadge = document.getElementById("draw-date");
         if (d) {
-            dateBadge.textContent = d.split(' ')[0]; // 只取日期部分
+            dateBadge.textContent = d.split(' ')[0];
             dateBadge.style.display = "inline-block";
         } else {
             dateBadge.style.display = "none";
@@ -119,7 +116,6 @@ async function loadLatestData() {
     }
 }
 
-// ================= AI 預測 =================
 async function runGeminiAI() {
     const btn = document.getElementById("btn-run-ai");
     const outputArea = document.getElementById("ai-output-area");
@@ -133,10 +129,14 @@ async function runGeminiAI() {
         if (data.status === "success") {
             const ballsHtml = data.predicted_numbers.map(n => `<div class="ball ai-ball">${pad2(n)}</div>`).join("");
             const detailsHtml = data.details.map((d, i) => `<div class="ai-row"><span>${i+1}. 號碼 <b>${pad2(d.num)}</b></span><span class="ai-score">權重: ${d.score.toFixed(2)}</span></div>`).join("");
+            
+            // 💡 在這裡抓取時間序列期數，並顯示
+            let memoryText = data.time_steps ? `<span style="color:#fbbf24; margin-left:5px; font-size:12px;">(回溯 ${data.time_steps} 期走勢)</span>` : "";
+
             outputArea.innerHTML = `
                 <div style="margin-bottom:10px; font-weight:bold; color:white;">下期預測號碼：</div>
                 <div class="balls-display">${ballsHtml}</div>
-                <div class="ai-details"><div style="margin-bottom:8px; color:white;">神經網路權重解析：</div>${detailsHtml}</div>
+                <div class="ai-details"><div style="margin-bottom:8px; color:white;">神經網路權重解析${memoryText}：</div>${detailsHtml}</div>
                 <button class="action-btn secondary-btn" style="margin-top:15px; border-color:#3b82f6; color:#60a5fa;" onclick="saveFavorite('${data.predicted_numbers.join(',')}')"><i class="fas fa-star"></i> 收藏這組號碼</button>
             `;
             outputArea.classList.remove("hidden");
@@ -149,7 +149,6 @@ async function runGeminiAI() {
     } finally { btn.disabled = false; }
 }
 
-// ================= 歷史與收藏 =================
 function renderHistory() {
     const container = document.getElementById("history-list");
     if (!globalHistoryData.length) return container.innerHTML = "<p class='desc-text'>暫無歷史資料</p>";
@@ -182,10 +181,10 @@ function clearFavorites() {
     if (confirm("確定要清空嗎？")) { localStorage.removeItem('v4_favorites'); renderFavorites(); showToast("已清空收藏", true); }
 }
 
-// ================= 策略回測 =================
 function getFrequency(history) {
     const freq = {}; history.forEach(draw => draw.forEach(n => freq[n] = (freq[n] || 0) + 1)); return freq;
 }
+
 function localPredict(mode, history) {
     const freq = getFrequency(history);
     const sorted = Object.keys(freq).sort((a,b) => freq[b] - freq[a]).map(Number);
@@ -249,7 +248,6 @@ function runBacktest() {
     showToast("回測完成！");
 }
 
-// ================= 拖號查詢 =================
 function runDragQuery() {
     const target = Number(document.getElementById("drag-input").value);
     if (!target || target < 1 || target > 39) return showToast("請輸入 01-39 之間的號碼", true);
