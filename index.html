@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>539 AI 預測中心</title>
+    <title>今彩539 AI 分析中心</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=4.6">
+    <link rel="stylesheet" href="style.css?v=5.0">
 </head>
 <body>
 
     <header class="app-header">
         <div class="logo-box">539</div>
         <div class="header-titles">
-            <h1>Gemini AI 預測中心</h1>
-            <span class="version-badge">V4.6 深度學習終極版</span>
+            <h1>今彩539 AI 分析中心</h1>
+            <span class="version-badge">V5.0 正式版</span>
         </div>
     </header>
 
@@ -23,26 +23,29 @@
             
             <div class="glass-card">
                 <div class="card-header">
-                    <h2><i class="fas fa-trophy"></i> 最新開獎</h2>
-                    <span id="draw-date" class="badge" style="display: none;">載入中...</span>
+                    <h2><i class="fas fa-trophy"></i> 最新開獎結果</h2>
+                    <span id="draw-date" class="badge">資料同步中...</span>
                 </div>
-                <div class="info-row">
-                    <span>期數：<span id="draw-period">載入中...</span></span>
+                <div class="info-row" style="font-size: 13px; color: #94a3b8; margin-bottom: 10px;">
+                    <span>期數：<span id="draw-period">讀取中</span></span>
                 </div>
                 <div id="latest-balls" class="balls-display">
+                    <div style="font-size: 12px; color: #64748b; width: 100%; text-align: center;">
+                        <i class="fas fa-spinner fa-spin"></i> 正在連線台灣彩券資料庫...
                     </div>
+                </div>
             </div>
 
             <div class="glass-card ai-card">
                 <div class="card-header">
-                    <h2><i class="fas fa-brain"></i> Gemini 深度預測</h2>
+                    <h2><i class="fas fa-brain"></i> 智能選號參考</h2>
                 </div>
-                <p class="desc-text">呼叫雲端深度學習神經網路，執行多期大數據權重運算。</p>
+                <p class="desc-text">結合深度學習模型，推估歷史走勢與近期熱冷偏態。</p>
                 
                 <div id="ai-output-area" class="hidden" style="margin-top: 15px;"></div>
                 
                 <button id="btn-run-ai" class="action-btn primary-btn" style="margin-top: 15px;">
-                    <i class="fas fa-bolt"></i> 啟動 AI 運算
+                    <i class="fas fa-bolt"></i> 啟動 AI 大數據分析
                 </button>
             </div>
         </section>
@@ -52,9 +55,7 @@
                 <div class="card-header">
                     <h2><i class="fas fa-history"></i> 近期開獎歷史</h2>
                 </div>
-                <p class="desc-text">顯示最近 50 期開獎結果</p>
-                <div id="history-list" class="list-container">
-                    </div>
+                <div id="history-list" class="list-container"></div>
             </div>
         </section>
 
@@ -63,53 +64,42 @@
                 <div class="card-header">
                     <h2><i class="fas fa-star"></i> 我的專屬收藏</h2>
                 </div>
-                <p class="desc-text">儲存在本機的預測號碼紀錄</p>
-                <div id="favorites-list" class="list-container">
-                    </div>
-                <button id="btn-clear-fav" class="action-btn danger-btn" style="margin-top: 15px;">
-                    <i class="fas fa-trash-alt"></i> 清空所有收藏
-                </button>
+                <div id="favorites-list" class="list-container"></div>
+                <button id="btn-clear-fav" class="action-btn danger-btn" style="margin-top: 15px;">清空所有收藏</button>
             </div>
         </section>
 
         <section id="page-backtest" class="page hidden">
             <div class="glass-card">
                 <div class="card-header">
-                    <h2><i class="fas fa-chart-line"></i> 策略回測系統</h2>
+                    <h2><i class="fas fa-chart-line"></i> 策略回測表現</h2>
                 </div>
-                <p class="desc-text">用歷史資料驗證預測演算法勝率</p>
+                <p class="desc-text">驗證不同策略在歷史走勢中的真實勝率。</p>
                 
                 <div class="input-group">
-                    <label>回測期數：</label>
-                    <select id="bt-count" class="styled-select">
+                    <select id="bt-count" class="styled-select" style="margin-bottom: 10px;">
                         <option value="10">最近 10 期</option>
-                        <option value="20">最近 20 期</option>
-                        <option value="30">最近 30 期</option>
+                        <option value="30" selected>最近 30 期</option>
+                        <option value="50">最近 50 期</option>
                     </select>
-                </div>
-                <div class="input-group">
-                    <label>預測模式：</label>
                     <select id="bt-mode" class="styled-select">
-                        <option value="balance">均衡型 (熱+冷門)</option>
-                        <option value="hot">全熱門號碼</option>
-                        <option value="cold">全冷門號碼</option>
+                        <option value="balance">均衡型 (AI 推薦首選)</option>
+                        <option value="hot">熱門追蹤型</option>
+                        <option value="cold">冷門反彈型</option>
                     </select>
                 </div>
-                <button id="btn-run-bt" class="action-btn primary-btn" style="margin-top: 10px;">
-                    <i class="fas fa-play"></i> 開始回測
-                </button>
+                <button id="btn-run-bt" class="action-btn primary-btn" style="margin-top: 10px;">開始回測</button>
 
                 <div id="bt-stats-panel" class="hidden" style="margin-top: 20px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 12px;">
                     <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
                         <span>總計測試: <b id="bt-total" style="color:white;"></b></span>
-                        <span>平均命中: <b id="bt-avg" style="color:#60a5fa;"></b></span>
+                        <span>平均命中: <b id="bt-avg" style="color:#60a5fa;"></b> 顆</span>
                     </div>
                     <div style="display:flex; justify-content:space-between;">
-                        <span>最高命中: <b id="bt-max" style="color:#fbbf24;"></b></span>
-                        <span>模擬損益: <b id="bt-profit"></b></span>
+                        <span>最高單期命中: <b id="bt-max" style="color:#fbbf24;"></b></span>
+                        <span>模擬總損益: <b id="bt-profit"></b></span>
                     </div>
                 </div>
-
                 <div id="bt-list" class="list-container" style="margin-top: 15px;"></div>
             </div>
         </section>
@@ -117,11 +107,10 @@
         <section id="page-settings" class="page hidden">
             <div class="glass-card">
                 <div class="card-header">
-                    <h2><i class="fas fa-search"></i> 拖號大數據查詢</h2>
+                    <h2><i class="fas fa-search"></i> 拖號機率查詢</h2>
                 </div>
-                <p class="desc-text">查詢特定號碼開出後，下一期最常開出的號碼</p>
                 <div class="input-group" style="display: flex; gap: 10px; align-items: center;">
-                    <input type="number" id="drag-input" placeholder="輸入 01-39" min="1" max="39" class="styled-input" style="flex:1;">
+                    <input type="number" id="drag-input" placeholder="輸入球號 (01-39)" min="1" max="39" class="styled-input" style="flex:1;">
                     <button id="btn-run-drag" class="action-btn primary-btn" style="width: auto; padding: 10px 20px;">查詢</button>
                 </div>
                 <div id="drag-output" class="hidden"></div>
@@ -129,14 +118,9 @@
 
             <div class="glass-card" style="margin-top: 20px;">
                 <div class="card-header">
-                    <h2><i class="fas fa-cog"></i> 系統設定</h2>
+                    <h2><i class="fas fa-cog"></i> 系統維護</h2>
                 </div>
-                <button id="btn-reload" class="action-btn secondary-btn" style="margin-bottom: 10px;">
-                    <i class="fas fa-sync-alt"></i> 重新同步開獎資料
-                </button>
-                <div style="font-size: 12px; color: #64748b; text-align: center; margin-top: 15px;">
-                    Powered by Render Cloud & GitHub Actions
-                </div>
+                <button id="btn-reload" class="action-btn secondary-btn" style="margin-bottom: 10px;">重新同步資料庫</button>
             </div>
         </section>
 
@@ -145,25 +129,13 @@
     <nav class="bottom-nav">
         <div class="nav-item active" data-target="page-home"><i class="fas fa-home"></i><span>首頁</span></div>
         <div class="nav-item" data-target="page-history"><i class="fas fa-history"></i><span>歷史</span></div>
-        <div class="nav-item" data-target="page-fav"><i class="fas fa-star"></i><span>收藏</span></div>
         <div class="nav-item" data-target="page-backtest"><i class="fas fa-chart-line"></i><span>回測</span></div>
-        <div class="nav-item" data-target="page-settings"><i class="fas fa-cog"></i><span>設定</span></div>
+        <div class="nav-item" data-target="page-fav"><i class="fas fa-star"></i><span>收藏</span></div>
+        <div class="nav-item" data-target="page-settings"><i class="fas fa-bars"></i><span>更多</span></div>
     </nav>
 
     <div id="toast" class="toast hidden">操作成功</div>
 
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                for(let registration of registrations) {
-                    registration.unregister();
-                    console.log('✅ 已成功清除舊版 Service Worker 快取');
-                }
-            });
-        }
-    </script>
-
-    <script src="app.js?v=4.6"></script>
-
+    <script src="app.js?v=5.0"></script>
 </body>
 </html>
