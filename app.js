@@ -1,41 +1,16 @@
 /**
- * 539 AI 預測中心 V4.6 - 終極透明與完美細節版
+ * 今彩539 AI 分析中心 V5.0 - 專業數據對接版
  */
 const API_URL = "https://lottery-k099.onrender.com/api/predict";
 let globalHistoryData = []; 
 
 // 內建備用歷史庫 (防呆機制)
 const MOCK_HISTORY = [
-    { period: "115000084", date: "2026-04-04", numbers: [4, 17, 25, 31, 36] },
-    { period: "115000083", date: "2026-04-03", numbers: [6, 8, 9, 25, 35] },
-    { period: "115000082", date: "2026-04-02", numbers: [1, 9, 13, 18, 21] },
-    { period: "115000081", date: "2026-04-01", numbers: [3, 10, 11, 13, 23] },
-    { period: "115000080", date: "2026-03-31", numbers: [9, 16, 23, 35, 39] },
-    { period: "115000079", date: "2026-03-30", numbers: [6, 8, 20, 22, 32] },
-    { period: "115000078", date: "2026-03-28", numbers: [6, 9, 11, 16, 17] },
-    { period: "115000077", date: "2026-03-27", numbers: [8, 18, 24, 34, 35] },
-    { period: "115000076", date: "2026-03-26", numbers: [14, 17, 20, 24, 37] },
-    { period: "115000075", date: "2026-03-25", numbers: [3, 13, 31, 33, 36] },
-    { period: "115000074", date: "2026-03-24", numbers: [10, 20, 28, 29, 36] },
-    { period: "115000073", date: "2026-03-23", numbers: [7, 12, 24, 29, 35] },
-    { period: "115000072", date: "2026-03-21", numbers: [7, 14, 15, 19, 22] },
-    { period: "115000071", date: "2026-03-20", numbers: [3, 11, 15, 33, 39] },
-    { period: "115000070", date: "2026-03-19", numbers: [5, 23, 25, 30, 37] },
-    { period: "115000069", date: "2026-03-18", numbers: [21, 22, 31, 32, 35] },
-    { period: "115000068", date: "2026-03-17", numbers: [11, 13, 19, 22, 27] },
-    { period: "115000067", date: "2026-03-16", numbers: [17, 19, 21, 29, 34] },
-    { period: "115000066", date: "2026-03-14", numbers: [8, 10, 18, 20, 34] },
-    { period: "115000065", date: "2026-03-13", numbers: [2, 5, 11, 12, 15] },
-    { period: "115000064", date: "2026-03-12", numbers: [4, 5, 7, 23, 35] },
-    { period: "115000063", date: "2026-03-11", numbers: [5, 15, 26, 37, 38] },
-    { period: "115000062", date: "2026-03-10", numbers: [11, 12, 14, 17, 32] },
-    { period: "115000061", date: "2026-03-09", numbers: [7, 12, 15, 32, 38] },
-    { period: "115000060", date: "2026-03-07", numbers: [15, 17, 18, 34, 36] },
-    { period: "115000059", date: "2026-03-06", numbers: [19, 24, 29, 32, 34] },
-    { period: "115000058", date: "2026-03-05", numbers: [1, 4, 8, 12, 36] },
-    { period: "115000057", date: "2026-03-04", numbers: [4, 8, 12, 16, 17] },
-    { period: "115000056", date: "2026-03-03", numbers: [2, 19, 21, 32, 35] },
-    { period: "115000055", date: "2026-03-02", numbers: [3, 12, 20, 21, 27] }
+    { period: "115000084", lotteryDate: "2026-04-04T00:00:00", drawNumberSize: [4, 17, 25, 31, 36] },
+    { period: "115000083", lotteryDate: "2026-04-03T00:00:00", drawNumberSize: [6, 8, 9, 25, 35] },
+    { period: "115000082", lotteryDate: "2026-04-02T00:00:00", drawNumberSize: [1, 9, 13, 18, 21] },
+    { period: "115000081", lotteryDate: "2026-04-01T00:00:00", drawNumberSize: [3, 10, 11, 13, 23] },
+    { period: "115000080", lotteryDate: "2026-03-31T00:00:00", drawNumberSize: [9, 16, 23, 35, 39] }
 ];
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -52,6 +27,14 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function pad2(num) { return String(num).padStart(2, "0"); }
+
+// 💡 核心修正：日期清洗函數，處理 T00:00:00 問題
+function cleanDateStr(d) {
+    if (!d) return "";
+    // 先處理 ISO 格式的 T，再處理空白
+    return d.split('T')[0].split(' ')[0];
+}
+
 function showToast(msg, isError = false) {
     const toast = document.getElementById("toast");
     toast.textContent = msg;
@@ -80,29 +63,33 @@ async function loadLatestData() {
         for (let url of urls) {
             try { let res = await fetch(url); if (res.ok) { data = await res.json(); break; } } catch (e) {}
         }
-        if (!data) throw new Error("找不到 data");
+        if (!data) throw new Error("找不到資料");
 
+        // 💡 核心修正：適應新版 JSON 結構 (daily539)
         let latest = data.daily539 || (Array.isArray(data) ? data[0] : data);
         
+        // 💡 核心修正：相容所有可能的期數與日期欄位名
         let p = latest.period || latest.Period || latest.drawTerm || latest.issue;
-        let d = latest.date || latest.Date || latest.lotteryDate || latest.drawDate;
+        let d = latest.lotteryDate || latest.date || latest.Date || latest.drawDate;
         
         document.getElementById("draw-period").textContent = p ? p : "最新一期";
         
         const dateBadge = document.getElementById("draw-date");
         if (d) {
-            // 💡 修剪日期多餘的尾巴 (例如 T00:00:00)
-            dateBadge.textContent = d.split('T')[0].split(' ')[0];
+            dateBadge.textContent = cleanDateStr(d);
             dateBadge.style.display = "inline-block";
         } else {
             dateBadge.style.display = "none";
         }
         
-        let numbers = latest.numbers || latest.drawNumberSize || [];
+        // 💡 核心修正：適應新版號碼欄位 drawNumberSize
+        let numbers = latest.drawNumberSize || latest.numbers || [];
         document.getElementById("latest-balls").innerHTML = numbers.map(n => `<div class="ball">${pad2(n)}</div>`).join("");
 
-        let loadedHistory = data.recent50 || data.recent5 || [latest];
-        if (loadedHistory.length < 30) {
+        // 💡 核心修正：處理歷史清單 recent50
+        let loadedHistory = data.recent50 || data.recent5 || (Array.isArray(data) ? data : [latest]);
+        
+        if (loadedHistory.length < 15) {
             const existingPeriods = new Set(loadedHistory.map(r => r.period));
             const padding = MOCK_HISTORY.filter(r => !existingPeriods.has(r.period));
             globalHistoryData = [...loadedHistory, ...padding];
@@ -111,9 +98,10 @@ async function loadLatestData() {
         }
 
         renderHistory();
-        showToast("開獎資料已同步");
+        showToast("數據分析庫同步成功");
     } catch (err) {
-        document.getElementById("latest-balls").innerHTML = `<div style="color: #ef4444; font-size:14px;">資料載入失敗</div>`;
+        console.error(err);
+        document.getElementById("latest-balls").innerHTML = `<div style="color: #ef4444; font-size:14px;">資料連線失敗，請稍後重試</div>`;
     }
 }
 
@@ -121,7 +109,7 @@ async function runGeminiAI() {
     const btn = document.getElementById("btn-run-ai");
     const outputArea = document.getElementById("ai-output-area");
     btn.disabled = true;
-    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> 雲端運算中 (約 40 秒)...`;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> 數據分析中 (約 40 秒)...`;
     outputArea.classList.add("hidden");
 
     try {
@@ -131,49 +119,62 @@ async function runGeminiAI() {
             const ballsHtml = data.predicted_numbers.map(n => `<div class="ball ai-ball">${pad2(n)}</div>`).join("");
             const detailsHtml = data.details.map((d, i) => `<div class="ai-row"><span>${i+1}. 號碼 <b>${pad2(d.num)}</b></span><span class="ai-score">權重: ${d.score.toFixed(2)}</span></div>`).join("");
             
-            // 抓取時間序列期數
             let memoryText = data.time_steps ? `<span style="color:#fbbf24; margin-left:5px; font-size:12px;">(回溯 ${data.time_steps} 期走勢)</span>` : "";
 
             outputArea.innerHTML = `
-                <div style="margin-bottom:10px; font-weight:bold; color:white;">下期預測號碼：</div>
+                <div style="margin-bottom:10px; font-weight:bold; color:white;">AI 推薦號碼建議：</div>
                 <div class="balls-display">${ballsHtml}</div>
-                <div class="ai-details"><div style="margin-bottom:8px; color:white;">神經網路權重解析${memoryText}：</div>${detailsHtml}</div>
-                <button class="action-btn secondary-btn" style="margin-top:15px; border-color:#3b82f6; color:#60a5fa;" onclick="saveFavorite('${data.predicted_numbers.join(',')}')"><i class="fas fa-star"></i> 收藏這組號碼</button>
+                <div class="ai-details"><div style="margin-bottom:8px; color:white;">深度神經網路解析${memoryText}：</div>${detailsHtml}</div>
+                <button class="action-btn secondary-btn" style="margin-top:15px; border-color:#3b82f6; color:#60a5fa;" onclick="saveFavorite('${data.predicted_numbers.join(',')}')"><i class="fas fa-star"></i> 收藏此組分析</button>
             `;
             outputArea.classList.remove("hidden");
-            btn.innerHTML = `<i class="fas fa-check"></i> 預測完成`;
+            btn.innerHTML = `<i class="fas fa-check"></i> 分析完成`;
         } else throw new Error(data.message);
     } catch (err) {
-        outputArea.innerHTML = `<div style="color: #ef4444;">⚠️ 連線超時，伺服器休眠中，請重試。</div>`;
+        outputArea.innerHTML = `<div style="color: #ef4444; font-size:14px;">⚠️ 伺服器運算超時。AI 正在暖機中，請再次點擊下方按鈕。</div>`;
         outputArea.classList.remove("hidden");
-        btn.innerHTML = `<i class="fas fa-bolt"></i> 重新啟動 AI`;
+        btn.innerHTML = `<i class="fas fa-bolt"></i> 重新啟動 AI 分析`;
     } finally { btn.disabled = false; }
 }
 
 function renderHistory() {
     const container = document.getElementById("history-list");
     if (!globalHistoryData.length) return container.innerHTML = "<p class='desc-text'>暫無歷史資料</p>";
+    
     container.innerHTML = globalHistoryData.map(item => {
-        let ballsHtml = (item.numbers || item.drawNumberSize || []).map(n => `<div class="ball" style="width:34px; height:34px; font-size:14px;">${pad2(n)}</div>`).join("");
-        let showDate = item.date || item.Date || "";
-        // 💡 歷史紀錄的日期也修剪乾淨
-        let cleanDate = showDate.split('T')[0].split(' ')[0];
-        return `<div class="list-item"><div class="list-header"><span>${cleanDate}</span><span>第 ${item.period || ""} 期</span></div><div class="balls-display">${ballsHtml}</div></div>`;
+        let nums = item.drawNumberSize || item.numbers || [];
+        let ballsHtml = nums.map(n => `<div class="ball" style="width:34px; height:34px; font-size:14px;">${pad2(n)}</div>`).join("");
+        
+        // 💡 歷史紀錄日期修正
+        let rawDate = item.lotteryDate || item.date || item.Date || "";
+        let cleanDate = cleanDateStr(rawDate);
+        
+        return `
+            <div class="list-item">
+                <div class="list-header">
+                    <span style="color:#94a3b8;">${cleanDate}</span>
+                    <span style="font-weight:bold;">第 ${item.period || ""} 期</span>
+                </div>
+                <div class="balls-display">${ballsHtml}</div>
+            </div>`;
     }).join("");
 }
 
 function saveFavorite(numsStr) {
-    const favs = JSON.parse(localStorage.getItem('v4_favorites') || '[]');
+    const favs = JSON.parse(localStorage.getItem('v5_favorites') || '[]');
     const d = new Date();
-    favs.unshift({ date: `${d.getMonth()+1}/${d.getDate()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`, numbers: numsStr.split(',').map(Number) });
-    localStorage.setItem('v4_favorites', JSON.stringify(favs));
-    showToast("已加入收藏！"); renderFavorites();
+    favs.unshift({ 
+        date: `${d.getMonth()+1}/${d.getDate()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`, 
+        numbers: numsStr.split(',').map(Number) 
+    });
+    localStorage.setItem('v5_favorites', JSON.stringify(favs));
+    showToast("分析結果已收藏"); renderFavorites();
 }
 
 function renderFavorites() {
     const container = document.getElementById("favorites-list");
-    const favs = JSON.parse(localStorage.getItem('v4_favorites') || '[]');
-    if (!favs.length) return container.innerHTML = "<p class='desc-text'>尚無收藏號碼。</p>";
+    const favs = JSON.parse(localStorage.getItem('v5_favorites') || '[]');
+    if (!favs.length) return container.innerHTML = "<p class='desc-text'>尚無收藏紀錄。</p>";
     container.innerHTML = favs.map(item => {
         let ballsHtml = item.numbers.map(n => `<div class="ball ai-ball" style="width:34px; height:34px; font-size:14px;">${pad2(n)}</div>`).join("");
         return `<div class="list-item"><div class="list-header"><span>收藏時間：${item.date}</span></div><div class="balls-display">${ballsHtml}</div></div>`;
@@ -181,8 +182,14 @@ function renderFavorites() {
 }
 
 function clearFavorites() {
-    if (confirm("確定要清空嗎？")) { localStorage.removeItem('v4_favorites'); renderFavorites(); showToast("已清空收藏", true); }
+    if (confirm("確定要清空所有收藏紀錄嗎？")) { 
+        localStorage.removeItem('v5_favorites'); 
+        renderFavorites(); 
+        showToast("已清空", true); 
+    }
 }
+
+// ---------------- 策略回測邏輯 (保持原有功能) ----------------
 
 function getFrequency(history) {
     const freq = {}; history.forEach(draw => draw.forEach(n => freq[n] = (freq[n] || 0) + 1)); return freq;
@@ -216,9 +223,9 @@ function runBacktest() {
     let totalHits = 0, maxHit = 0;
 
     testData.forEach(targetRow => {
-        let historyForThisStep = [...baseData].map(r => r.numbers || r.drawNumberSize);
+        let historyForThisStep = [...baseData].map(r => r.drawNumberSize || r.numbers);
         let predicted = localPredict(mode, historyForThisStep);
-        let actual = targetRow.numbers || targetRow.drawNumberSize || [];
+        let actual = targetRow.drawNumberSize || targetRow.numbers || [];
         
         let hits = predicted.filter(n => actual.includes(n)).length;
         totalHits += hits;
@@ -228,13 +235,13 @@ function runBacktest() {
         baseData.push(targetRow); 
     });
 
-    document.getElementById("bt-avg").textContent = (totalHits / count).toFixed(1) + " 顆";
-    document.getElementById("bt-max").textContent = maxHit + " 顆";
-    document.getElementById("bt-total").textContent = count + " 期";
+    document.getElementById("bt-avg").textContent = (totalHits / count).toFixed(1);
+    document.getElementById("bt-max").textContent = maxHit;
+    document.getElementById("bt-total").textContent = count;
     
     let profit = results.reduce((acc, r) => acc + (r.hits===2?50 : r.hits===3?300 : r.hits===4?8000 : 0) - 50, 0);
     let pEl = document.getElementById("bt-profit");
-    pEl.textContent = profit + " 元";
+    pEl.textContent = (profit >= 0 ? "+" : "") + profit + " 元";
     pEl.style.color = profit >= 0 ? "#10b981" : "#ef4444";
 
     document.getElementById("bt-list").innerHTML = results.slice().reverse().map(r => {
@@ -248,20 +255,20 @@ function runBacktest() {
     }).join("");
 
     document.getElementById("bt-stats-panel").classList.remove("hidden");
-    showToast("回測完成！");
+    showToast("回測分析完成");
 }
 
 function runDragQuery() {
     const target = Number(document.getElementById("drag-input").value);
-    if (!target || target < 1 || target > 39) return showToast("請輸入 01-39 之間的號碼", true);
+    if (!target || target < 1 || target > 39) return showToast("請輸入有效號碼 (01-39)", true);
     
     let rows = globalHistoryData;
     let nextFreq = {};
     let triggerCount = 0;
 
     for (let i = 1; i < rows.length; i++) {
-        let currentDraw = rows[i].numbers || rows[i].drawNumberSize || [];
-        let nextDraw = rows[i-1].numbers || rows[i-1].drawNumberSize || [];
+        let currentDraw = rows[i].drawNumberSize || rows[i].numbers || [];
+        let nextDraw = rows[i-1].drawNumberSize || rows[i-1].numbers || [];
         
         if (currentDraw.includes(target)) {
             triggerCount++;
@@ -273,14 +280,14 @@ function runDragQuery() {
     outputArea.classList.remove("hidden");
 
     if (triggerCount === 0) {
-        outputArea.innerHTML = `<div style="color:#94a3b8; font-size:14px; margin-top:15px;">資料庫中尚未開出過 ${pad2(target)}。</div>`;
+        outputArea.innerHTML = `<div style="color:#94a3b8; font-size:14px; margin-top:15px;">數據庫中近 50 期尚未開出過 ${pad2(target)}。</div>`;
         return;
     }
 
     let sortedTops = Object.keys(nextFreq).map(Number).sort((a,b) => nextFreq[b] - nextFreq[a]).slice(0, 5);
     
     let html = `<div style="margin-top:15px; padding:12px; background:rgba(0,0,0,0.2); border-radius:12px; font-size:14px; color:#cbd5e1;">`;
-    html += `<div style="margin-bottom:10px;"><b>${pad2(target)}</b> 曾開出 ${triggerCount} 次，下期最常跟著開出：</div>`;
+    html += `<div style="margin-bottom:10px;">數據顯示：<b>${pad2(target)}</b> 曾開出 ${triggerCount} 次，下期最常帶出：</div>`;
     sortedTops.forEach((n, idx) => {
         let rate = Math.round((nextFreq[n] / triggerCount) * 100);
         html += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;">
