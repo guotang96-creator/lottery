@@ -6,14 +6,14 @@ import pandas as pd
 import numpy as np
 from sklearn.neural_network import MLPRegressor
 import re
-import os # 新增 os 模組處理 Render 通訊埠
+import os 
 
 app = Flask(__name__)
 CORS(app) 
 
 @app.route('/')
 def home():
-    return "✅ 539 AI 深度學習神經網路 (5期穩定版) 已啟動！"
+    return "✅ 539 AI 深度學習神經網路 (7期優化版) 已啟動！"
 
 @app.route('/api/predict')
 def predict():
@@ -40,9 +40,9 @@ def predict():
         sequences = np.array([to_vector(row[1:6]) for row in data_list])
 
         # ==========================================
-        # 🌟 降回安全黃金區間：回溯 5 期走勢
+        # 🌟 調整為 7 期走勢 (黃金平衡點)
         # ==========================================
-        TIME_STEPS = 5
+        TIME_STEPS = 7
         
         if len(sequences) <= TIME_STEPS:
             TIME_STEPS = len(sequences) - 1
@@ -65,7 +65,7 @@ def predict():
         
         return jsonify({
             "status": "success",
-            "time_steps": TIME_STEPS,
+            "time_steps": TIME_STEPS, # 這裡會把 7 傳給手機網頁
             "predicted_numbers": [str(s[0]).zfill(2) for s in scores[:5]],
             "details": [{"num": str(s[0]).zfill(2), "score": round(s[1], 2)} for s in scores[:5]]
         })
@@ -73,6 +73,5 @@ def predict():
         return jsonify({"status": "error", "message": str(e)})
 
 if __name__ == '__main__':
-    # 讓 Render 自動指派通訊埠，避免 Timeout
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
