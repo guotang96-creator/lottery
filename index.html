@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>539 AI 預測中心 V4.0</title>
-  <link rel="stylesheet" href="style.css?v=4.0.0" />
+  <title>539 AI 預測中心 V4.1</title>
+  <link rel="stylesheet" href="style.css?v=4.1.0" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </head>
 <body>
@@ -13,46 +13,87 @@
       <div class="logo-box">539</div>
       <div class="title-box">
         <h1>Gemini AI 預測中心</h1>
-        <span class="version-tag">V4.0 全新架構</span>
+        <span class="version-tag">V4.1 完整版</span>
       </div>
     </header>
 
     <main class="app-main">
       
-      <div class="glass-card">
-        <div class="card-header">
-          <h2><i class="fas fa-trophy"></i> 最新開獎</h2>
-          <span id="draw-date" class="badge">--</span>
-        </div>
-        <div class="draw-info">期數：<span id="draw-period">--</span></div>
-        <div class="balls-display" id="latest-balls">
+      <section id="page-home" class="page active">
+        <div class="glass-card">
+          <div class="card-header">
+            <h2><i class="fas fa-trophy"></i> 最新開獎</h2>
+            <span id="draw-date" class="badge">--</span>
           </div>
-      </div>
-
-      <div class="glass-card ai-card">
-        <div class="card-header">
-          <h2 style="color: #60a5fa;"><i class="fas fa-brain"></i> Gemini 深度預測</h2>
-        </div>
-        <p class="desc-text">點擊下方按鈕，呼叫雲端隨機森林模型進行下期大數據權重運算。</p>
-        
-        <div id="ai-output-area" class="ai-output hidden">
+          <div class="draw-info">期數：<span id="draw-period">--</span></div>
+          <div class="balls-display" id="latest-balls">
+            <div style="font-size:14px; color:#94a3b8;">資料載入中...</div>
           </div>
+        </div>
 
-        <button id="btn-run-ai" class="action-btn primary-btn">
-          <i class="fas fa-bolt"></i> 啟動 AI 運算
-        </button>
-      </div>
+        <div class="glass-card ai-card">
+          <div class="card-header">
+            <h2 style="color: #60a5fa;"><i class="fas fa-brain"></i> Gemini 深度預測</h2>
+          </div>
+          <p class="desc-text">呼叫雲端隨機森林模型，執行下期大數據權重運算。</p>
+          
+          <div id="ai-output-area" class="ai-output hidden"></div>
+
+          <button id="btn-run-ai" class="action-btn primary-btn">
+            <i class="fas fa-bolt"></i> 啟動 AI 運算
+          </button>
+        </div>
+      </section>
+
+      <section id="page-history" class="page hidden">
+        <div class="glass-card">
+          <div class="card-header">
+            <h2><i class="fas fa-history"></i> 歷史開獎紀錄</h2>
+            <span class="badge">最近 50 期</span>
+          </div>
+          <div id="history-list" class="list-container">
+            </div>
+        </div>
+      </section>
+
+      <section id="page-favorites" class="page hidden">
+        <div class="glass-card">
+          <div class="card-header">
+            <h2><i class="fas fa-star" style="color: #fbbf24;"></i> 我的收藏號碼</h2>
+          </div>
+          <div id="favorites-list" class="list-container">
+            </div>
+        </div>
+      </section>
+
+      <section id="page-settings" class="page hidden">
+        <div class="glass-card">
+          <div class="card-header">
+            <h2><i class="fas fa-cog"></i> 系統設定</h2>
+          </div>
+          <div class="settings-menu">
+            <button id="btn-reload" class="action-btn secondary-btn" style="margin-bottom: 15px;">
+              <i class="fas fa-sync-alt"></i> 重新抓取最新開獎
+            </button>
+            <button id="btn-clear-fav" class="action-btn secondary-btn" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);">
+              <i class="fas fa-trash-alt"></i> 清空所有收藏號碼
+            </button>
+          </div>
+        </div>
+      </section>
 
     </main>
 
     <nav class="bottom-nav">
-      <button class="nav-item active"><i class="fas fa-home"></i>首頁</button>
-      <button class="nav-item"><i class="fas fa-history"></i>歷史</button>
-      <button class="nav-item"><i class="fas fa-star"></i>收藏</button>
-      <button class="nav-item"><i class="fas fa-cog"></i>設定</button>
+      <button class="nav-item active" data-target="page-home"><i class="fas fa-home"></i>首頁</button>
+      <button class="nav-item" data-target="page-history"><i class="fas fa-history"></i>歷史</button>
+      <button class="nav-item" data-target="page-favorites"><i class="fas fa-star"></i>收藏</button>
+      <button class="nav-item" data-target="page-settings"><i class="fas fa-cog"></i>設定</button>
     </nav>
   </div>
 
-  <script src="app.js?v=4.0.0"></script>
+  <div id="toast" class="toast hidden">系統提示</div>
+
+  <script src="app.js?v=4.1.0"></script>
 </body>
 </html>
