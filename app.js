@@ -1,10 +1,10 @@
 /**
- * 539 AI 預測中心 V4.5 - 終極透明版 (顯示神經網路回溯期數)
+ * 539 AI 預測中心 V4.6 - 終極透明與完美細節版
  */
 const API_URL = "https://lottery-k099.onrender.com/api/predict";
 let globalHistoryData = []; 
 
-// 內建備用歷史庫
+// 內建備用歷史庫 (防呆機制)
 const MOCK_HISTORY = [
     { period: "115000084", date: "2026-04-04", numbers: [4, 17, 25, 31, 36] },
     { period: "115000083", date: "2026-04-03", numbers: [6, 8, 9, 25, 35] },
@@ -91,7 +91,8 @@ async function loadLatestData() {
         
         const dateBadge = document.getElementById("draw-date");
         if (d) {
-            dateBadge.textContent = d.split(' ')[0];
+            // 💡 修剪日期多餘的尾巴 (例如 T00:00:00)
+            dateBadge.textContent = d.split('T')[0].split(' ')[0];
             dateBadge.style.display = "inline-block";
         } else {
             dateBadge.style.display = "none";
@@ -130,7 +131,7 @@ async function runGeminiAI() {
             const ballsHtml = data.predicted_numbers.map(n => `<div class="ball ai-ball">${pad2(n)}</div>`).join("");
             const detailsHtml = data.details.map((d, i) => `<div class="ai-row"><span>${i+1}. 號碼 <b>${pad2(d.num)}</b></span><span class="ai-score">權重: ${d.score.toFixed(2)}</span></div>`).join("");
             
-            // 💡 在這裡抓取時間序列期數，並顯示
+            // 抓取時間序列期數
             let memoryText = data.time_steps ? `<span style="color:#fbbf24; margin-left:5px; font-size:12px;">(回溯 ${data.time_steps} 期走勢)</span>` : "";
 
             outputArea.innerHTML = `
@@ -155,7 +156,9 @@ function renderHistory() {
     container.innerHTML = globalHistoryData.map(item => {
         let ballsHtml = (item.numbers || item.drawNumberSize || []).map(n => `<div class="ball" style="width:34px; height:34px; font-size:14px;">${pad2(n)}</div>`).join("");
         let showDate = item.date || item.Date || "";
-        return `<div class="list-item"><div class="list-header"><span>${showDate.split(' ')[0]}</span><span>第 ${item.period || ""} 期</span></div><div class="balls-display">${ballsHtml}</div></div>`;
+        // 💡 歷史紀錄的日期也修剪乾淨
+        let cleanDate = showDate.split('T')[0].split(' ')[0];
+        return `<div class="list-item"><div class="list-header"><span>${cleanDate}</span><span>第 ${item.period || ""} 期</span></div><div class="balls-display">${ballsHtml}</div></div>`;
     }).join("");
 }
 
