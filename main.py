@@ -6,18 +6,18 @@ import pandas as pd
 import numpy as np
 from sklearn.neural_network import MLPRegressor
 import re
+import os # 新增 os 模組處理 Render 通訊埠
 
 app = Flask(__name__)
 CORS(app) 
 
 @app.route('/')
 def home():
-    return "✅ 539 AI 深度學習神經網路 (10期長線版) 已啟動！"
+    return "✅ 539 AI 深度學習神經網路 (5期穩定版) 已啟動！"
 
 @app.route('/api/predict')
 def predict():
     try:
-        # 1. 爬取最新開獎資料
         url = "https://www.lotto-8.com/listlto539.asp"
         res = requests.get(url, timeout=10)
         res.encoding = 'utf-8'
@@ -29,7 +29,6 @@ def predict():
         if not matches:
             return jsonify({"status": "error", "message": "無法抓取歷史資料"})
 
-        # 將資料反轉，由舊到新
         data_list = [[m[0]] + [int(n) for n in m[1:6]] for m in matches][::-1]
 
         def to_vector(nums):
@@ -41,32 +40,27 @@ def predict():
         sequences = np.array([to_vector(row[1:6]) for row in data_list])
 
         # ==========================================
-        # 🌟 設定時間序列 (回溯版路期數) - 已改為 10 期
+        # 🌟 降回安全黃金區間：回溯 5 期走勢
         # ==========================================
-        TIME_STEPS = 10
+        TIME_STEPS = 5
         
-        # 檢查資料量是否足夠 10 期
         if len(sequences) <= TIME_STEPS:
             TIME_STEPS = len(sequences) - 1
 
         X, y = [], []
         for i in range(len(sequences) - TIME_STEPS):
-            # 攤平過去 10 期的特徵
             X.append(sequences[i : i + TIME_STEPS].flatten()) 
             y.append(sequences[i + TIME_STEPS]) 
             
         X = np.array(X)
         y = np.array(y)
 
-        # 訓練神經網路 (深度學習模型)
         model = MLPRegressor(hidden_layer_sizes=(128, 64), activation='relu', max_iter=500, random_state=42)
         model.fit(X, y)
 
-        # 根據最新的 10 期版路進行預測
         last_sequence = sequences[-TIME_STEPS:].flatten().reshape(1, -1)
         predicted_probs = model.predict(last_sequence)[0]
 
-        # 產出強度評分
         scores = sorted([(i+1, float(predicted_probs[i]) * 100) for i in range(39)], key=lambda x: x[1], reverse=True)
         
         return jsonify({
@@ -79,4 +73,6 @@ def predict():
         return jsonify({"status": "error", "message": str(e)})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+    # 讓 Render 自動指派通訊埠，避免 Timeout
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
