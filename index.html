@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>539 AI 預測中心 V4.1</title>
-  <link rel="stylesheet" href="style.css?v=4.1.0" />
+  <title>539 AI 預測中心 V4.2</title>
+  <link rel="stylesheet" href="style.css?v=4.2.0" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </head>
 <body>
@@ -13,7 +13,7 @@
       <div class="logo-box">539</div>
       <div class="title-box">
         <h1>Gemini AI 預測中心</h1>
-        <span class="version-tag">V4.1 完整版</span>
+        <span class="version-tag">V4.2 終極合體版</span>
       </div>
     </header>
 
@@ -36,9 +36,7 @@
             <h2 style="color: #60a5fa;"><i class="fas fa-brain"></i> Gemini 深度預測</h2>
           </div>
           <p class="desc-text">呼叫雲端隨機森林模型，執行下期大數據權重運算。</p>
-          
           <div id="ai-output-area" class="ai-output hidden"></div>
-
           <button id="btn-run-ai" class="action-btn primary-btn">
             <i class="fas fa-bolt"></i> 啟動 AI 運算
           </button>
@@ -51,8 +49,7 @@
             <h2><i class="fas fa-history"></i> 歷史開獎紀錄</h2>
             <span class="badge">最近 50 期</span>
           </div>
-          <div id="history-list" class="list-container">
-            </div>
+          <div id="history-list" class="list-container"></div>
         </div>
       </section>
 
@@ -61,12 +58,63 @@
           <div class="card-header">
             <h2><i class="fas fa-star" style="color: #fbbf24;"></i> 我的收藏號碼</h2>
           </div>
-          <div id="favorites-list" class="list-container">
-            </div>
+          <div id="favorites-list" class="list-container"></div>
+        </div>
+      </section>
+
+      <section id="page-backtest" class="page hidden">
+        <div class="glass-card">
+          <div class="card-header">
+            <h2><i class="fas fa-chart-line"></i> 策略回測</h2>
+          </div>
+          <div class="input-group">
+            <label>回測期數</label>
+            <select id="bt-count" class="glass-input">
+              <option value="10">10 期</option>
+              <option value="20" selected>20 期</option>
+              <option value="30">30 期</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label>預測模式</label>
+            <select id="bt-mode" class="glass-input">
+              <option value="balanced" selected>均衡型</option>
+              <option value="hot">熱號型</option>
+              <option value="cold">冷號型</option>
+            </select>
+          </div>
+          <button id="btn-run-bt" class="action-btn primary-btn">
+            <i class="fas fa-play"></i> 開始執行回測
+          </button>
+        </div>
+        
+        <div id="bt-stats-panel" class="glass-card hidden">
+          <h3 style="font-size:15px; margin-bottom:10px;">回測統計結果</h3>
+          <div class="stats-grid">
+            <div class="stat-box"><span>平均命中</span><strong id="bt-avg">0 顆</strong></div>
+            <div class="stat-box"><span>最高命中</span><strong id="bt-max">0 顆</strong></div>
+            <div class="stat-box"><span>總期數</span><strong id="bt-total">0 期</strong></div>
+            <div class="stat-box"><span>模擬損益</span><strong id="bt-profit" style="color:#10b981;">0 元</strong></div>
+          </div>
+          <div id="bt-list" style="margin-top: 15px;"></div>
         </div>
       </section>
 
       <section id="page-settings" class="page hidden">
+        <div class="glass-card">
+          <div class="card-header">
+            <h2><i class="fas fa-search"></i> 拖號查詢</h2>
+          </div>
+          <p class="desc-text" style="margin-bottom:10px;">查詢過去 50 期內，某號碼開出後，下一期最常跟著開出的號碼。</p>
+          <div class="input-group">
+            <input type="number" id="drag-input" class="glass-input" placeholder="輸入查詢號碼 (01~39)" min="1" max="39">
+          </div>
+          <button id="btn-run-drag" class="action-btn primary-btn" style="margin-bottom: 15px;">
+            <i class="fas fa-search"></i> 查詢拖號
+          </button>
+          <div id="drag-output" class="hidden"></div>
+        </div>
+
         <div class="glass-card">
           <div class="card-header">
             <h2><i class="fas fa-cog"></i> 系統設定</h2>
@@ -88,12 +136,12 @@
       <button class="nav-item active" data-target="page-home"><i class="fas fa-home"></i>首頁</button>
       <button class="nav-item" data-target="page-history"><i class="fas fa-history"></i>歷史</button>
       <button class="nav-item" data-target="page-favorites"><i class="fas fa-star"></i>收藏</button>
+      <button class="nav-item" data-target="page-backtest"><i class="fas fa-chart-line"></i>回測</button>
       <button class="nav-item" data-target="page-settings"><i class="fas fa-cog"></i>設定</button>
     </nav>
   </div>
 
   <div id="toast" class="toast hidden">系統提示</div>
-
-  <script src="app.js?v=4.1.0"></script>
+  <script src="app.js?v=4.2.0"></script>
 </body>
 </html>
