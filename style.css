@@ -7,7 +7,7 @@
   --text-muted: #94a3b8;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; -webkit-tap-highlight-color: transparent; }
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
 body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; display: flex; justify-content: center; padding-bottom: 80px; }
 .hidden { display: none !important; }
 
@@ -24,7 +24,7 @@ body { background-color: var(--bg-dark); color: var(--text-main); min-height: 10
 .ai-card { border: 1px solid rgba(59,130,246,0.3); box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
 .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 .card-header h2 { font-size: 18px; display: flex; align-items: center; gap: 8px; }
-.badge { background: rgba(255,255,255,0.1); font-size: 12px; padding: 4px 8px; border-radius: 6px; }
+.badge { background: rgba(255,255,255,0.1); font-size: 12px; padding: 4px 8px; border-radius: 6px; color: #cbd5e1; }
 .draw-info { font-size: 14px; color: var(--text-muted); margin-bottom: 10px; }
 .desc-text { font-size: 14px; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px; }
 
@@ -36,7 +36,8 @@ body { background-color: var(--bg-dark); color: var(--text-main); min-height: 10
 /* 按鈕 */
 .action-btn { width: 100%; padding: 15px; border-radius: 14px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; }
 .primary-btn { background: linear-gradient(135deg, #1d4ed8, #3b82f6); color: white; }
-.primary-btn:active { transform: scale(0.98); }
+.secondary-btn { background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); font-size: 14px; padding: 12px; }
+.primary-btn:active, .secondary-btn:active { transform: scale(0.98); }
 
 /* AI 輸出區 */
 .ai-output { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 14px; margin-bottom: 20px; }
@@ -45,8 +46,21 @@ body { background-color: var(--bg-dark); color: var(--text-main); min-height: 10
 .ai-row b { color: white; font-size: 14px; }
 .ai-score { color: #60a5fa; font-family: monospace; }
 
+/* 清單 (歷史、收藏) */
+.list-item { border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px; margin-bottom: 15px; }
+.list-item:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+.list-header { display: flex; justify-content: space-between; font-size: 14px; color: var(--text-muted); margin-bottom: 10px; }
+
 /* 底部導覽 */
-.bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(15,23,42,0.95); backdrop-filter: blur(10px); border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-around; padding: 10px 0 calc(10px + env(safe-area-inset-bottom)); }
-.nav-item { background: none; border: none; color: var(--text-muted); font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 60px; }
+.bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(15,23,42,0.95); backdrop-filter: blur(10px); border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-around; padding: 10px 0 calc(10px + env(safe-area-inset-bottom)); z-index: 100; }
+.nav-item { background: none; border: none; color: var(--text-muted); font-size: 11px; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 60px; cursor: pointer; }
 .nav-item i { font-size: 20px; }
 .nav-item.active { color: var(--primary); }
+
+/* 分頁動畫 */
+.page { animation: fadeIn 0.3s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Toast 提示 */
+.toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 10px 20px; border-radius: 999px; font-size: 14px; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 1000; animation: slideDown 0.3s ease-in-out; }
+@keyframes slideDown { from { top: -20px; opacity: 0; } to { top: 20px; opacity: 1; } }
