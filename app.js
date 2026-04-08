@@ -1,10 +1,10 @@
 /**
- * 539 AI 預測中心 V4.3 - 終極防呆合體版
+ * 539 AI 預測中心 V4.4 - 完美細節版 (修復未知標籤)
  */
 const API_URL = "https://lottery-k099.onrender.com/api/predict";
 let globalHistoryData = []; 
 
-// 💡 內建備用歷史庫：當 latest.json 資料不足時自動補齊，保證回測不崩潰
+// 內建備用歷史庫
 const MOCK_HISTORY = [
     { period: "115000084", date: "2026-04-04", numbers: [4, 17, 25, 31, 36] },
     { period: "115000083", date: "2026-04-03", numbers: [6, 8, 9, 25, 35] },
@@ -73,7 +73,7 @@ function initTabs() {
     });
 }
 
-// ================= 資料載入 =================
+// ================= 資料載入 (優化日期顯示) =================
 async function loadLatestData() {
     try {
         const urls = [`./latest.json?t=${Date.now()}`, `../latest.json?t=${Date.now()}`];
@@ -84,13 +84,25 @@ async function loadLatestData() {
         if (!data) throw new Error("找不到 data");
 
         let latest = data.daily539 || (Array.isArray(data) ? data[0] : data);
-        document.getElementById("draw-period").textContent = latest.period || "未知";
-        document.getElementById("draw-date").textContent = latest.date || "未知";
+        
+        // 💡 智慧抓取期數與日期
+        let p = latest.period || latest.Period || latest.drawTerm || latest.issue;
+        let d = latest.date || latest.Date || latest.lotteryDate || latest.drawDate;
+        
+        document.getElementById("draw-period").textContent = p ? p : "最新一期";
+        
+        // 💡 如果沒日期，直接隱藏徽章；有日期才顯示
+        const dateBadge = document.getElementById("draw-date");
+        if (d) {
+            dateBadge.textContent = d.split(' ')[0]; // 只取日期部分
+            dateBadge.style.display = "inline-block";
+        } else {
+            dateBadge.style.display = "none";
+        }
         
         let numbers = latest.numbers || latest.drawNumberSize || [];
         document.getElementById("latest-balls").innerHTML = numbers.map(n => `<div class="ball">${pad2(n)}</div>`).join("");
 
-        // 💡 防呆機制：如果 JSON 的歷史資料不夠，自動從 MOCK_HISTORY 補齊
         let loadedHistory = data.recent50 || data.recent5 || [latest];
         if (loadedHistory.length < 30) {
             const existingPeriods = new Set(loadedHistory.map(r => r.period));
@@ -124,7 +136,7 @@ async function runGeminiAI() {
             outputArea.innerHTML = `
                 <div style="margin-bottom:10px; font-weight:bold; color:white;">下期預測號碼：</div>
                 <div class="balls-display">${ballsHtml}</div>
-                <div class="ai-details"><div style="margin-bottom:8px; color:white;">隨機森林權重解析：</div>${detailsHtml}</div>
+                <div class="ai-details"><div style="margin-bottom:8px; color:white;">神經網路權重解析：</div>${detailsHtml}</div>
                 <button class="action-btn secondary-btn" style="margin-top:15px; border-color:#3b82f6; color:#60a5fa;" onclick="saveFavorite('${data.predicted_numbers.join(',')}')"><i class="fas fa-star"></i> 收藏這組號碼</button>
             `;
             outputArea.classList.remove("hidden");
@@ -143,7 +155,8 @@ function renderHistory() {
     if (!globalHistoryData.length) return container.innerHTML = "<p class='desc-text'>暫無歷史資料</p>";
     container.innerHTML = globalHistoryData.map(item => {
         let ballsHtml = (item.numbers || item.drawNumberSize || []).map(n => `<div class="ball" style="width:34px; height:34px; font-size:14px;">${pad2(n)}</div>`).join("");
-        return `<div class="list-item"><div class="list-header"><span>${item.date || ""}</span><span>第 ${item.period || ""} 期</span></div><div class="balls-display">${ballsHtml}</div></div>`;
+        let showDate = item.date || item.Date || "";
+        return `<div class="list-item"><div class="list-header"><span>${showDate.split(' ')[0]}</span><span>第 ${item.period || ""} 期</span></div><div class="balls-display">${ballsHtml}</div></div>`;
     }).join("");
 }
 
@@ -191,11 +204,7 @@ function localPredict(mode, history) {
 function runBacktest() {
     const count = Number(document.getElementById("bt-count").value);
     const mode = document.getElementById("bt-mode").value;
-    
-    // 防呆檢查
-    if(globalHistoryData.length <= count) {
-        return showToast(`資料不足 ${count} 期無法回測`, true);
-    }
+    if(globalHistoryData.length <= count) return showToast(`資料不足 ${count} 期無法回測`, true);
     
     let sortedData = [...globalHistoryData].reverse(); 
     let testData = sortedData.slice(-count); 
