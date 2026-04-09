@@ -279,3 +279,4 @@ async function runBacktest() {
     btn.disabled = false;
     btn.innerHTML = '<i class="fas fa-redo"></i> 重新執行回測';
 }
+
