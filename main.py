@@ -1,17 +1,15 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify
 from flask_cors import CORS
 import requests
-from bs4 import BeautifulSoup
-import pandas as pd
 import numpy as np
 from sklearn.neural_network import MLPRegressor
-import re
+import time
 import os 
 
 app = Flask(__name__)
 CORS(app) 
 
-# --- 通用預測核心函數 ---
+# --- AI 預測核心模組 ---
 def train_and_predict(data_list, steps=7):
     def to_vector(nums):
         m = np.zeros(39)
@@ -34,23 +32,29 @@ def train_and_predict(data_list, steps=7):
     scores = sorted([(i+1, float(predicted_probs[i]) * 100) for i in range(39)], key=lambda x: x[1], reverse=True)
     return scores, steps
 
+# --- API 路由 ---
 @app.route('/')
 def home():
-    return "✅ 539 & 天天樂 AI 雙核心引擎已啟動！"
+    return "✅ V5.2 AI 雙核心已啟動 (直接對接 GitHub 資料庫)"
 
-# 1️⃣ 今彩 539 接口
 @app.route('/api/predict')
 def predict_539():
     try:
-        url = "https://www.lotto-8.com/listlto539.asp"
+        # 💡 直接讀取您網頁本身的 latest.json，保證不被擋
+        url = f"https://guotang96-creator.github.io/lottery/latest.json?t={int(time.time())}"
         res = requests.get(url, timeout=10)
-        res.encoding = 'utf-8'
-        soup = BeautifulSoup(res.text, 'html.parser')
-        pattern = r'(\d{4}/\d{2}/\d{2})\s+(\d{2})\s+(\d{2})\s+(\d{2})\s+(\d{2})\s+(\d{2})'
-        matches = re.findall(pattern, soup.get_text(separator=' '))
-        data = [[int(n) for n in m[1:6]] for m in matches][::-1]
+        data_json = res.json()
         
+        recent_data = data_json.get("recent50", data_json) if isinstance(data_json, dict) else data_json
+        
+        data = []
+        for item in recent_data:
+            nums = item.get("drawNumberSize", item.get("numbers", []))
+            if len(nums) == 5: data.append(nums)
+            
+        data = data[::-1] # 反轉為由舊到新
         scores, steps = train_and_predict(data)
+        
         return jsonify({
             "status": "success", "type": "539", "time_steps": steps,
             "predicted_numbers": [str(s[0]).zfill(2) for s in scores[:5]],
@@ -58,20 +62,28 @@ def predict_539():
         })
     except Exception as e: return jsonify({"status": "error", "message": str(e)})
 
-# 2️⃣ 加州天天樂 接口
 @app.route('/api/predict_daily')
 def predict_daily():
     try:
-        # 爬取天天樂網址 (範例網址，請確認抓取來源)
-        url = "https://www.lotto-8.com/list_Daily39.asp" 
+        # 💡 直接讀取您網頁本身的 daily.json，保證不被擋
+        url = f"https://guotang96-creator.github.io/lottery/daily.json?t={int(time.time())}"
         res = requests.get(url, timeout=10)
-        res.encoding = 'utf-8'
-        soup = BeautifulSoup(res.text, 'html.parser')
-        pattern = r'(\d{4}/\d{2}/\d{2})\s+(\d{2})\s+(\d{2})\s+(\d{2})\s+(\d{2})\s+(\d{2})'
-        matches = re.findall(pattern, soup.get_text(separator=' '))
-        data = [[int(n) for n in m[1:6]] for m in matches][::-1]
+        data_json = res.json()
         
+        recent_data = data_json.get("recent50", [])
+        
+        data = []
+        for item in recent_data:
+            nums = item.get("drawNumberSize", item.get("numbers", []))
+            if len(nums) == 5: data.append(nums)
+            
+        data = data[::-1] # 反轉為由舊到新
+        
+        if len(data) < 2:
+            raise Exception("資料庫歷史期數不足")
+            
         scores, steps = train_and_predict(data)
+        
         return jsonify({
             "status": "success", "type": "DAILY", "time_steps": steps,
             "predicted_numbers": [str(s[0]).zfill(2) for s in scores[:5]],
