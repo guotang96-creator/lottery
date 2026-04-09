@@ -17,13 +17,16 @@ def train_and_predict(data_list, steps=7):
         return m
     
     sequences = np.array([to_vector(row) for row in data_list])
-    if len(sequences) <= steps: steps = len(sequences) - 1
+    if len(sequences) <= steps: steps = max(1, len(sequences) - 1)
     
     X, y = [], []
     for i in range(len(sequences) - steps):
         X.append(sequences[i : i + steps].flatten()) 
         y.append(sequences[i + steps]) 
             
+    if len(X) == 0:
+        raise Exception("歷史數據不足以訓練模型")
+        
     model = MLPRegressor(hidden_layer_sizes=(128, 64), activation='relu', max_iter=500, random_state=42)
     model.fit(np.array(X), np.array(y))
     
@@ -32,25 +35,37 @@ def train_and_predict(data_list, steps=7):
     scores = sorted([(i+1, float(predicted_probs[i]) * 100) for i in range(39)], key=lambda x: x[1], reverse=True)
     return scores, steps
 
+# --- 💡 萬用資料解析器 ---
+def extract_history(data_json):
+    if isinstance(data_json, dict):
+        return data_json.get("recent50") or data_json.get("history") or data_json.get("data") or []
+    elif isinstance(data_json, list):
+        return data_json
+    return []
+
 # --- API 路由 ---
 @app.route('/')
 def home():
-    return "✅ V5.2 AI 雙核心已啟動 (直接對接 GitHub 資料庫)"
+    return "✅ V5.2.3 AI 雙核心已啟動 (高相容版)"
 
 @app.route('/api/predict')
 def predict_539():
     try:
-        # 💡 直接讀取您網頁本身的 latest.json，保證不被擋
         url = f"https://guotang96-creator.github.io/lottery/latest.json?t={int(time.time())}"
         res = requests.get(url, timeout=10)
         data_json = res.json()
         
-        recent_data = data_json.get("recent50", data_json) if isinstance(data_json, dict) else data_json
+        # 使用萬用解析器提取 539 歷史紀錄
+        recent_data = extract_history(data_json)
         
         data = []
         for item in recent_data:
-            nums = item.get("drawNumberSize", item.get("numbers", []))
-            if len(nums) == 5: data.append(nums)
+            if isinstance(item, dict):
+                nums = item.get("drawNumberSize", item.get("numbers", []))
+                if len(nums) == 5: data.append(nums)
+            
+        if len(data) < 2:
+            raise Exception("539 歷史期數不足")
             
         data = data[::-1] # 反轉為由舊到新
         scores, steps = train_and_predict(data)
@@ -65,23 +80,23 @@ def predict_539():
 @app.route('/api/predict_daily')
 def predict_daily():
     try:
-        # 💡 直接讀取您網頁本身的 daily.json，保證不被擋
         url = f"https://guotang96-creator.github.io/lottery/daily.json?t={int(time.time())}"
         res = requests.get(url, timeout=10)
         data_json = res.json()
         
-        recent_data = data_json.get("recent50", [])
+        # 使用萬用解析器提取天天樂歷史紀錄
+        recent_data = extract_history(data_json)
         
         data = []
         for item in recent_data:
-            nums = item.get("drawNumberSize", item.get("numbers", []))
-            if len(nums) == 5: data.append(nums)
+            if isinstance(item, dict):
+                nums = item.get("drawNumberSize", item.get("numbers", []))
+                if len(nums) == 5: data.append(nums)
+            
+        if len(data) < 2:
+            raise Exception("天天樂 歷史期數不足")
             
         data = data[::-1] # 反轉為由舊到新
-        
-        if len(data) < 2:
-            raise Exception("資料庫歷史期數不足")
-            
         scores, steps = train_and_predict(data)
         
         return jsonify({
