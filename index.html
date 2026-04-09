@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>今彩539 & 天天樂 AI 分析中心</title>
+    <title>彩券 AI 數據分析中心</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css?v=5.2">
 </head>
@@ -22,15 +22,15 @@
             
             <div class="glass-card">
                 <div class="card-header">
-                    <h2><i class="fas fa-trophy"></i> 最新開獎結果 (539)</h2>
-                    <span id="draw-date" class="badge">資料載入中</span>
+                    <h2><i class="fas fa-trophy"></i> 最新開獎結果 (<span id="home-title-type">今彩 539</span>)</h2>
+                    <span id="draw-date" class="badge">載入中</span>
                 </div>
                 <div class="info-row" style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b; margin-bottom: 12px; padding: 0 5px;">
                     <span>期數：<span id="draw-period" style="color:#94a3b8;">---</span></span>
                     <span>最後更新：<span id="update-time" style="color:#94a3b8;">--:--</span></span>
                 </div>
                 <div id="latest-balls" class="balls-display">
-                    <div style="font-size: 12px; color: #475569;"><i class="fas fa-sync fa-spin"></i> 正在連線官方資料庫...</div>
+                    <div style="font-size: 12px; color: #475569;"><i class="fas fa-sync fa-spin"></i> 正在連線資料庫...</div>
                 </div>
             </div>
 
@@ -54,27 +54,34 @@
                 </div>
                 
                 <button id="btn-run-ai" class="action-btn primary-btn" style="margin-top: 20px;">
-                    <i class="fas fa-play-circle"></i> 產生本期推薦號碼
+                    <i class="fas fa-play-circle"></i> 開始智能分析
                 </button>
             </div>
         </section>
 
-        <section id="page-history" class="page hidden"><div class="glass-card"><h2>歷史紀錄</h2><div id="history-list"></div></div></section>
-        <section id="page-backtest" class="page hidden"><div class="glass-card"><h2>勝率回測</h2><div id="bt-stats-panel"></div><div id="bt-list"></div></div></section>
-        <section id="page-fav" class="page hidden"><div class="glass-card"><h2>收藏清單</h2><div id="favorites-list"></div></div></section>
-        <section id="page-settings" class="page hidden"><div class="glass-card"><h2>工具箱</h2><button id="btn-reload">手動同步</button></div></section>
+        <section id="page-history" class="page hidden">
+            <div class="glass-card">
+                <h2><i class="fas fa-history"></i> 歷史紀錄</h2>
+                <div id="history-list" style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;"></div>
+            </div>
+        </section>
 
-    </main>
+        <section id="page-backtest" class="page hidden">
+            <div class="glass-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-chart-line"></i> 勝率回測 (<span id="bt-type-label">今彩 539</span>)</h2>
+                </div>
+                <p class="desc-text" style="margin-bottom: 15px;">使用本地演算法對過去 5 期進行模擬預測，驗證抓牌準確度。</p>
+                
+                <button id="btn-run-bt" class="action-btn primary-btn">
+                    <i class="fas fa-play"></i> 啟動大數據回測
+                </button>
+                
+                <div id="bt-stats-panel" style="margin-top: 20px;"></div>
+                <div id="bt-list" style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;"></div>
+            </div>
+        </section>
 
-    <nav class="bottom-nav">
-        <div class="nav-item active" data-target="page-home"><i class="fas fa-home"></i><span>首頁</span></div>
-        <div class="nav-item" data-target="page-history"><i class="fas fa-history"></i><span>歷史</span></div>
-        <div class="nav-item" data-target="page-backtest"><i class="fas fa-chart-line"></i><span>回測</span></div>
-        <div class="nav-item" data-target="page-fav"><i class="fas fa-star"></i><span>收藏</span></div>
-        <div class="nav-item" data-target="page-settings"><i class="fas fa-tools"></i><span>工具</span></div>
-    </nav>
-
-    <div id="toast" class="toast hidden"></div>
-    <script src="app.js?v=5.2"></script>
-</body>
-</html>
+        <section id="page-fav" class="page hidden">
+            <div class="glass-card">
+                <h2><i class="fas fa-
