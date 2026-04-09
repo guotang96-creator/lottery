@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>今彩539 AI 分析中心</title>
+    <title>今彩539 & 天天樂 AI 分析中心</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=5.1">
+    <link rel="stylesheet" href="style.css?v=5.2">
 </head>
 <body>
 
     <header class="app-header">
-        <div class="logo-box">539</div>
+        <div class="logo-box">AI</div>
         <div class="header-titles">
-            <h1>今彩539 AI 分析中心</h1>
-            <span class="version-badge">V5.1 正式版</span>
+            <h1>彩券 AI 數據分析中心</h1>
+            <span class="version-badge">V5.2 雙核心版</span>
         </div>
     </header>
 
@@ -22,7 +22,7 @@
             
             <div class="glass-card">
                 <div class="card-header">
-                    <h2><i class="fas fa-trophy"></i> 最新開獎結果</h2>
+                    <h2><i class="fas fa-trophy"></i> 最新開獎結果 (539)</h2>
                     <span id="draw-date" class="badge">資料載入中</span>
                 </div>
                 <div class="info-row" style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b; margin-bottom: 12px; padding: 0 5px;">
@@ -30,7 +30,7 @@
                     <span>最後更新：<span id="update-time" style="color:#94a3b8;">--:--</span></span>
                 </div>
                 <div id="latest-balls" class="balls-display">
-                    <div style="font-size: 12px; color: #475569;"><i class="fas fa-sync fa-spin"></i> 正在對接官方資料庫...</div>
+                    <div style="font-size: 12px; color: #475569;"><i class="fas fa-sync fa-spin"></i> 正在連線官方資料庫...</div>
                 </div>
             </div>
 
@@ -38,35 +38,31 @@
                 <div class="card-header">
                     <h2><i class="fas fa-magic"></i> 智能選號建議</h2>
                 </div>
-                <p class="desc-text">依近期期數、熱冷分布、尾數走勢與歷史頻率產生本期推薦參考。</p>
+                
+                <div class="type-selector" style="display: flex; gap: 8px; margin: 15px 0;">
+                    <button id="tab-539" class="type-btn active-tab" style="flex:1; padding: 10px; border-radius: 12px; border: 1px solid #3b82f6; background: rgba(59,130,246,0.2); color: white; font-size: 13px; cursor: pointer; transition: 0.3s;">今彩 539</button>
+                    <button id="tab-daily" class="type-btn" style="flex:1; padding: 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #94a3b8; font-size: 13px; cursor: pointer; transition: 0.3s;">加州天天樂</button>
+                </div>
+
+                <p id="ai-desc" class="desc-text" style="margin-bottom: 15px;">目前針對 [今彩 539] 執行深度學習趨勢分析。</p>
                 
                 <div id="ai-output-area" class="analysis-placeholder">
-                    <div style="text-align: center; padding: 25px; border: 1px dashed rgba(255,255,255,0.08); border-radius: 16px; background: rgba(0,0,0,0.1);">
-                        <i class="fas fa-microchip" style="font-size: 26px; color: #3b82f6; margin-bottom: 12px; opacity: 0.3;"></i>
-                        <div style="font-size: 13px; color: #64748b; letter-spacing: 1px;">大數據引擎就緒，請啟動分析</div>
+                    <div style="text-align: center; padding: 25px; border: 1px dashed rgba(255,255,255,0.08); border-radius: 16px;">
+                        <i class="fas fa-brain" style="font-size: 26px; color: #3b82f6; margin-bottom: 12px; opacity: 0.3;"></i>
+                        <div id="ai-placeholder-text" style="font-size: 13px; color: #64748b;">引擎就緒，準備產生推薦號碼</div>
                     </div>
                 </div>
                 
-                <button id="btn-run-ai" class="action-btn primary-btn" style="margin-top: 20px; letter-spacing: 1px;">
-                    <i class="fas fa-play-circle"></i> 開始智能選號分析
+                <button id="btn-run-ai" class="action-btn primary-btn" style="margin-top: 20px;">
+                    <i class="fas fa-play-circle"></i> 產生本期推薦號碼
                 </button>
             </div>
         </section>
 
-        <section id="page-history" class="page hidden"><div class="glass-card"><div class="card-header"><h2><i class="fas fa-history"></i> 歷史開獎紀錄</h2></div><div id="history-list"></div></div></section>
-        <section id="page-fav" class="page hidden"><div class="glass-card"><div class="card-header"><h2><i class="fas fa-star"></i> 收藏號碼清單</h2></div><div id="favorites-list"></div><button id="btn-clear-fav" class="action-btn danger-btn" style="margin-top:15px;">清空收藏</button></div></section>
-        <section id="page-backtest" class="page hidden">
-            <div class="glass-card">
-                <div class="card-header"><h2><i class="fas fa-chart-line"></i> 策略勝率回測</h2></div>
-                <div class="input-group"><select id="bt-count" class="styled-select" style="margin-bottom:10px;"><option value="30">最近 30 期回測</option><option value="50">最近 50 期回測</option></select><select id="bt-mode" class="styled-select"><option value="balance">均衡型 (AI 推薦模式)</option><option value="hot">熱門追蹤模式</option><option value="cold">冷門反彈模式</option></select></div>
-                <button id="btn-run-bt" class="action-btn primary-btn" style="margin-top:10px;">執行回測模擬</button>
-                <div id="bt-stats-panel" class="hidden" style="margin-top:15px;"></div><div id="bt-list"></div>
-            </div>
-        </section>
-        <section id="page-settings" class="page hidden">
-            <div class="glass-card"><div class="card-header"><h2><i class="fas fa-search"></i> 拖號機率查詢</h2></div><div class="input-group" style="display:flex; gap:8px;"><input type="number" id="drag-input" placeholder="01-39" class="styled-input"><button id="btn-run-drag" class="action-btn primary-btn" style="width:auto; padding:0 20px;">查詢</button></div><div id="drag-output"></div></div>
-            <div class="glass-card" style="margin-top:20px;"><div class="card-header"><h2><i class="fas fa-cog"></i> 系統管理</h2></div><button id="btn-reload" class="action-btn secondary-btn">手動同步資料庫</button></div>
-        </section>
+        <section id="page-history" class="page hidden"><div class="glass-card"><h2>歷史紀錄</h2><div id="history-list"></div></div></section>
+        <section id="page-backtest" class="page hidden"><div class="glass-card"><h2>勝率回測</h2><div id="bt-stats-panel"></div><div id="bt-list"></div></div></section>
+        <section id="page-fav" class="page hidden"><div class="glass-card"><h2>收藏清單</h2><div id="favorites-list"></div></div></section>
+        <section id="page-settings" class="page hidden"><div class="glass-card"><h2>工具箱</h2><button id="btn-reload">手動同步</button></div></section>
 
     </main>
 
@@ -79,6 +75,6 @@
     </nav>
 
     <div id="toast" class="toast hidden"></div>
-    <script src="app.js?v=5.1"></script>
+    <script src="app.js?v=5.2"></script>
 </body>
 </html>
