@@ -5,16 +5,16 @@
     "drawNumberSize": [2, 14, 25, 26, 39]
   },
   "recent50": [
-    {
-      "period": "115000088",
-      "lotteryDate": "2026-04-09",
-      "drawNumberSize": [2, 14, 25, 26, 39]
-    },
-    {
-      "period": "115000087",
-      "lotteryDate": "2026-04-08",
-      "drawNumberSize": [5, 12, 18, 22, 31]
-    }
+    { "period": "115000088", "lotteryDate": "2026-04-09", "drawNumberSize": [2, 14, 25, 26, 39] },
+    { "period": "115000087", "lotteryDate": "2026-04-08", "drawNumberSize": [5, 12, 18, 22, 31] },
+    { "period": "115000086", "lotteryDate": "2026-04-07", "drawNumberSize": [10, 15, 20, 33, 38] },
+    { "period": "115000085", "lotteryDate": "2026-04-06", "drawNumberSize": [1, 9, 21, 24, 30] },
+    { "period": "115000084", "lotteryDate": "2026-04-05", "drawNumberSize": [7, 11, 19, 28, 35] },
+    { "period": "115000083", "lotteryDate": "2026-04-04", "drawNumberSize": [3, 8, 17, 26, 39] },
+    { "period": "115000082", "lotteryDate": "2026-04-03", "drawNumberSize": [4, 13, 22, 29, 32] },
+    { "period": "115000081", "lotteryDate": "2026-04-02", "drawNumberSize": [6, 16, 23, 36, 37] },
+    { "period": "115000080", "lotteryDate": "2026-04-01", "drawNumberSize": [2, 14, 18, 25, 34] },
+    { "period": "115000079", "lotteryDate": "2026-03-31", "drawNumberSize": [9, 10, 27, 31, 38] }
   ],
-  "updatedAt": "2026-04-09T12:50:00Z"
+  "updatedAt": "2026-04-09T13:00:00Z"
 }
