@@ -4,49 +4,58 @@ import json
 from datetime import datetime
 
 def crawl_daily_39():
-    # 改用另一個資料來源，通常這個比較不會擋 GitHub IP
-    url = "https://www.lotto-8.com/list_Daily39.asp"
+    # 💡 換成另一個較易抓取且更新快速的來源
+    url = "https://www.99-lotto.com/daily39.php"
     
     try:
         header = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
         }
         
-        print(f"🌐 正在連線: {url}")
-        # 加入 allow_redirects=True 處理可能的跳轉
-        res = requests.get(url, headers=header, timeout=20, allow_redirects=True)
+        print(f"🌐 嘗試連線至: {url}")
+        res = requests.get(url, headers=header, timeout=20)
         res.encoding = 'utf-8'
         
-        # 偵錯：印出前 200 字，看看是不是被擋 (如果是 <html><head><title>Just a moment...</title> 就是被擋)
-        print(f"📄 網頁內容片段: {res.text[:200].strip()}")
+        if res.status_code != 200:
+            print(f"❌ 連線失敗，狀態碼: {res.status_code}")
+            return
 
         soup = BeautifulSoup(res.text, 'html.parser')
+        
+        # 尋找所有開獎列表列
+        # 該站點結構通常為 <ul> 或 <table>
+        rows = soup.find_all('tr')
         recent_data = []
 
-        # 針對 lotto-8 的表格特徵進行精準抓取
-        # 該站的天天樂號碼通常放在 class 為 "td_a" 或 "td_b" 的 tr 裡面
-        rows = soup.find_all('tr')
-        
         for row in rows:
             tds = row.find_all('td')
-            if len(tds) >= 7:
-                # 取得文字並清理
+            # 天天樂資料通常包含：期數, 日期, 號碼1~5
+            if len(tds) >= 6:
                 txt = [t.get_text(strip=True) for t in tds]
-                # 判斷格式：第一格是日期 (2026/04/09)，第二格是期數 (115000088)
-                if '/' in txt[0] and txt[1].isdigit() and len(txt[1]) > 5:
+                # 尋找包含斜線的日期和數字期數
+                if '/' in txt[0] and txt[1].isdigit():
                     try:
-                        recent_data.append({
-                            "period": txt[1],
-                            "lotteryDate": txt[0].replace('/', '-'),
-                            "drawNumberSize": [int(txt[2]), int(txt[3]), int(txt[4]), int(txt[5]), int(txt[6])]
-                        })
+                        # 擷取號碼 (有些站在同一格，有些分開，這裡做相容處理)
+                        nums = []
+                        if len(txt) >= 7: # 號碼分開
+                            nums = [int(txt[2]), int(txt[3]), int(txt[4]), int(txt[5]), int(txt[6])]
+                        else: # 號碼可能擠在同一格
+                            raw_nums = re.findall(r'\d+', txt[2])
+                            nums = [int(n) for n in raw_nums[:5]]
+                        
+                        if len(nums) == 5:
+                            recent_data.append({
+                                "period": txt[1],
+                                "lotteryDate": txt[0].replace('/', '-'),
+                                "drawNumberSize": nums
+                            })
                     except:
                         continue
 
         if not recent_data:
-            print("❌ 解析後未發現資料，可能是結構改變或被導向驗證頁面。")
-            # 建立一個空的但格式正確的檔案，避免 Workflow 報錯，方便偵錯
-            return 
+            print("❌ 解析資料失敗，請檢查網頁內容片段:")
+            print(res.text[:300])
+            return
 
         output = {
             "daily_latest": recent_data[0],
@@ -57,10 +66,11 @@ def crawl_daily_39():
         with open('daily.json', 'w', encoding='utf-8') as f:
             json.dump(output, f, ensure_ascii=False, indent=2)
         
-        print(f"✅ 成功產出 daily.json，包含 {len(recent_data)} 期資料。")
+        print(f"✅ 天天樂資料更新成功，共 {len(recent_data)} 期。")
 
     except Exception as e:
-        print(f"💥 錯誤原因: {str(e)}")
+        print(f"💥 發生錯誤: {str(e)}")
 
 if __name__ == "__main__":
+    import re # 補上 re
     crawl_daily_39()
