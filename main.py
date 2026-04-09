@@ -9,11 +9,12 @@ import os
 app = Flask(__name__)
 CORS(app) 
 
-# --- AI 預測核心模組 (防死背優化版) ---
 def train_and_predict(data_list, steps=7):
     def to_vector(nums):
         m = np.zeros(39)
-        for n in nums: m[int(n) - 1] = 1
+        for n in nums: 
+            try: m[int(n) - 1] = 1
+            except: pass
         return m
     
     sequences = np.array([to_vector(row) for row in data_list])
@@ -24,58 +25,51 @@ def train_and_predict(data_list, steps=7):
         X.append(sequences[i : i + steps].flatten()) 
         y.append(sequences[i + steps]) 
             
-    if len(X) == 0:
-        raise Exception("歷史數據不足以訓練模型")
+    if len(X) == 0: raise Exception("歷史數據不足以訓練")
         
-    # 💡 降低神經元數量(64, 32)，並加入 alpha=0.1 (正則化懲罰)，強迫 AI 尋找大趨勢
-    model = MLPRegressor(hidden_layer_sizes=(64, 32), activation='relu', max_iter=800, alpha=0.1, random_state=42)
+    # 💡 輕量化神經網路，避免 Render 免費主機記憶體爆滿當機
+    model = MLPRegressor(hidden_layer_sizes=(100,), activation='relu', max_iter=500, random_state=42)
     model.fit(np.array(X), np.array(y))
     
     last_sequence = sequences[-steps:].flatten().reshape(1, -1)
     predicted_probs = model.predict(last_sequence)[0]
     
-    # 💡 防連莊機制：將上一期剛開出過的號碼權重打 8 折，強迫 AI 分散選號
-    last_draw = data_list[-1]
-    for n in last_draw:
-        idx = int(n) - 1
-        if 0 <= idx < 39:
-            predicted_probs[idx] *= 0.8  
+    # 💡 防連莊機制：剛開出的號碼權重直接「打 5 折」，強迫分散預測
+    for n in data_list[-1]:
+        try:
+            idx = int(n) - 1
+            if 0 <= idx < 39: predicted_probs[idx] *= 0.5  
+        except: pass
             
     scores = sorted([(i+1, float(predicted_probs[i]) * 100) for i in range(39)], key=lambda x: x[1], reverse=True)
     return scores, steps
 
-# --- 💡 萬用資料解析器 ---
 def extract_history(data_json):
     if isinstance(data_json, dict):
         return data_json.get("recent50") or data_json.get("history") or data_json.get("data") or []
-    elif isinstance(data_json, list):
-        return data_json
+    if isinstance(data_json, list): return data_json
     return []
 
-# --- API 路由 ---
 @app.route('/')
 def home():
-    return "✅ V5.2.4 AI 雙核心已啟動 (防過度擬合優化版)"
+    return "✅ 系統運作正常 (輕量化防彈版)"
 
 @app.route('/api/predict')
 def predict_539():
     try:
         url = f"https://guotang96-creator.github.io/lottery/latest.json?t={int(time.time())}"
         res = requests.get(url, timeout=10)
-        data_json = res.json()
-        
-        recent_data = extract_history(data_json)
+        recent_data = extract_history(res.json())
         
         data = []
         for item in recent_data:
             if isinstance(item, dict):
                 nums = item.get("drawNumberSize", item.get("numbers", []))
                 if len(nums) == 5: data.append(nums)
+                    
+        if len(data) < 2: raise Exception("歷史期數不足")
             
-        if len(data) < 2:
-            raise Exception("539 歷史期數不足")
-            
-        data = data[::-1] # 反轉為由舊到新
+        data = data[::-1]
         scores, steps = train_and_predict(data)
         
         return jsonify({
@@ -90,20 +84,17 @@ def predict_daily():
     try:
         url = f"https://guotang96-creator.github.io/lottery/daily.json?t={int(time.time())}"
         res = requests.get(url, timeout=10)
-        data_json = res.json()
-        
-        recent_data = extract_history(data_json)
+        recent_data = extract_history(res.json())
         
         data = []
         for item in recent_data:
             if isinstance(item, dict):
                 nums = item.get("drawNumberSize", item.get("numbers", []))
                 if len(nums) == 5: data.append(nums)
+                    
+        if len(data) < 2: raise Exception("歷史期數不足")
             
-        if len(data) < 2:
-            raise Exception("天天樂 歷史期數不足")
-            
-        data = data[::-1] # 反轉為由舊到新
+        data = data[::-1]
         scores, steps = train_and_predict(data)
         
         return jsonify({
