@@ -9,7 +9,7 @@ import os
 app = Flask(__name__)
 CORS(app) 
 
-# --- AI 預測核心模組 ---
+# --- AI 預測核心模組 (防死背優化版) ---
 def train_and_predict(data_list, steps=7):
     def to_vector(nums):
         m = np.zeros(39)
@@ -27,11 +27,20 @@ def train_and_predict(data_list, steps=7):
     if len(X) == 0:
         raise Exception("歷史數據不足以訓練模型")
         
-    model = MLPRegressor(hidden_layer_sizes=(128, 64), activation='relu', max_iter=500, random_state=42)
+    # 💡 降低神經元數量(64, 32)，並加入 alpha=0.1 (正則化懲罰)，強迫 AI 尋找大趨勢
+    model = MLPRegressor(hidden_layer_sizes=(64, 32), activation='relu', max_iter=800, alpha=0.1, random_state=42)
     model.fit(np.array(X), np.array(y))
     
     last_sequence = sequences[-steps:].flatten().reshape(1, -1)
     predicted_probs = model.predict(last_sequence)[0]
+    
+    # 💡 防連莊機制：將上一期剛開出過的號碼權重打 8 折，強迫 AI 分散選號
+    last_draw = data_list[-1]
+    for n in last_draw:
+        idx = int(n) - 1
+        if 0 <= idx < 39:
+            predicted_probs[idx] *= 0.8  
+            
     scores = sorted([(i+1, float(predicted_probs[i]) * 100) for i in range(39)], key=lambda x: x[1], reverse=True)
     return scores, steps
 
@@ -46,7 +55,7 @@ def extract_history(data_json):
 # --- API 路由 ---
 @app.route('/')
 def home():
-    return "✅ V5.2.3 AI 雙核心已啟動 (高相容版)"
+    return "✅ V5.2.4 AI 雙核心已啟動 (防過度擬合優化版)"
 
 @app.route('/api/predict')
 def predict_539():
@@ -55,7 +64,6 @@ def predict_539():
         res = requests.get(url, timeout=10)
         data_json = res.json()
         
-        # 使用萬用解析器提取 539 歷史紀錄
         recent_data = extract_history(data_json)
         
         data = []
@@ -84,7 +92,6 @@ def predict_daily():
         res = requests.get(url, timeout=10)
         data_json = res.json()
         
-        # 使用萬用解析器提取天天樂歷史紀錄
         recent_data = extract_history(data_json)
         
         data = []
