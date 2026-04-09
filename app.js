@@ -1,5 +1,5 @@
 /**
- * 彩券 AI 分析中心 V5.2.2 - 雙核心引擎 & 完整回測版
+ * 彩券 AI 分析中心 V5.2.3 - 雙核心引擎 & 萬用相容回測版
  */
 const API_BASE = "https://lottery-k099.onrender.com";
 let currentType = "539"; 
@@ -14,12 +14,10 @@ document.addEventListener("DOMContentLoaded", () => {
     initTypeSelector();
     loadLatestData();
     
-    // 綁定所有按鈕事件
     document.getElementById("btn-run-ai").addEventListener("click", runGeminiAI);
     document.getElementById("btn-reload").addEventListener("click", loadLatestData);
     document.getElementById("btn-clear-fav").addEventListener("click", clearFavorites);
     
-    // 綁定回測按鈕
     const btnBt = document.getElementById("btn-run-bt");
     if(btnBt) btnBt.addEventListener("click", runBacktest);
     
@@ -37,7 +35,6 @@ function showToast(msg, isError = false) {
     setTimeout(() => toast.classList.add("hidden"), 3000);
 }
 
-// --- 雙核心切換邏輯 ---
 function initTypeSelector() {
     const btn539 = document.getElementById("tab-539");
     const btnDaily = document.getElementById("tab-daily");
@@ -48,7 +45,6 @@ function initTypeSelector() {
         currentType = type;
         const label = type === "539" ? "今彩 539" : "加州天天樂";
         
-        // 切換按鈕顏色
         if(type === "539") {
             btn539.style.background = "rgba(59,130,246,0.2)"; btn539.style.borderColor = "#3b82f6"; btn539.style.color = "white";
             btnDaily.style.background = "rgba(255,255,255,0.05)"; btnDaily.style.borderColor = "rgba(255,255,255,0.1)"; btnDaily.style.color = "#94a3b8";
@@ -57,18 +53,15 @@ function initTypeSelector() {
             btn539.style.background = "rgba(255,255,255,0.05)"; btn539.style.borderColor = "rgba(255,255,255,0.1)"; btn539.style.color = "#94a3b8";
         }
 
-        // 更新介面文字
         if(descText) descText.textContent = `目前針對 [${label}] 執行深度學習趨勢分析。`;
         if(placeholderText) placeholderText.textContent = `${label} 分析引擎就緒，準備產生推薦號碼`;
         
         const titleEl = document.querySelector(".glass-card h2");
         if(titleEl) titleEl.innerHTML = `<i class="fas fa-trophy"></i> 最新開獎結果 (${label})`;
         
-        // 更新回測頁面的標題
         const btLabel = document.getElementById("bt-type-label");
         if(btLabel) btLabel.textContent = label;
         
-        // 載入對應資料
         loadLatestData();
     };
 
@@ -76,7 +69,6 @@ function initTypeSelector() {
     if(btnDaily) btnDaily.addEventListener("click", () => updateUIState("daily"));
 }
 
-// --- 抓取資料庫 ---
 async function loadLatestData() {
     const ballsContainer = document.getElementById("latest-balls");
     if(ballsContainer) ballsContainer.innerHTML = `<div style="font-size: 12px; color: #475569;"><i class="fas fa-sync fa-spin"></i> 同步 ${currentType} 資料中...</div>`;
@@ -100,17 +92,18 @@ async function loadLatestData() {
         let nums = latest.drawNumberSize || latest.numbers || [];
         if(ballsContainer) ballsContainer.innerHTML = nums.map(n => `<div class="ball">${pad2(n)}</div>`).join("");
 
-        globalHistoryData = data.recent50 || [];
+        // 💡 修復點：萬用資料格式相容，無論是哪種 JSON 都能成功抓出歷史紀錄陣列
+        globalHistoryData = data.recent50 || data.history || data.data || (Array.isArray(data) ? data : []);
+        
         renderHistory();
 
     } catch (err) {
-        if(ballsContainer) ballsContainer.innerHTML = `<div style="color:#64748b; font-size:12px;">${currentType} 數據載入中或尚未建立</div>`;
-        globalHistoryData = MOCK_HISTORY;
+        if(ballsContainer) ballsContainer.innerHTML = `<div style="color:#64748b; font-size:12px;">${currentType} 數據載入中</div>`;
+        globalHistoryData = [];
         renderHistory();
     }
 }
 
-// --- 呼叫 Render AI 引擎 ---
 async function runGeminiAI() {
     const btn = document.getElementById("btn-run-ai");
     const outputArea = document.getElementById("ai-output-area");
@@ -150,23 +143,23 @@ async function runGeminiAI() {
     } finally { btn.disabled = false; }
 }
 
-// --- 歷史紀錄渲染 ---
 function renderHistory() {
     const container = document.getElementById("history-list");
     if(!container) return;
-    if (!globalHistoryData.length || globalHistoryData === MOCK_HISTORY) return container.innerHTML = "<p class='desc-text'>暫無資料</p>";
+    if (!globalHistoryData || globalHistoryData.length === 0) {
+        return container.innerHTML = "<p class='desc-text'>暫無資料</p>";
+    }
     
     container.innerHTML = globalHistoryData.map(item => {
         let nums = item.drawNumberSize || item.numbers || [];
         let date = cleanDateStr(item.lotteryDate || item.date);
         return `<div class="list-item">
-            <div class="list-header"><span>${date}</span><span>第 ${item.period} 期</span></div>
+            <div class="list-header"><span>${date}</span><span>第 ${item.period || '---'} 期</span></div>
             <div class="balls-display" style="gap:8px;">${nums.map(n=>`<div class="ball" style="width:30px;height:30px;font-size:12px;">${pad2(n)}</div>`).join("")}</div>
         </div>`;
     }).join("");
 }
 
-// --- 收藏功能 ---
 function saveFavorite(numsStr, label) {
     const favs = JSON.parse(localStorage.getItem('v5_favorites') || '[]');
     const d = new Date();
@@ -196,7 +189,6 @@ function clearFavorites() {
     if (confirm("確定清空所有紀錄？")) { localStorage.removeItem('v5_favorites'); renderFavorites(); showToast("已清空", true); }
 }
 
-// --- 頁面切換 ---
 function initTabs() {
     document.querySelectorAll(".nav-item").forEach(item => {
         item.addEventListener("click", () => {
@@ -213,14 +205,15 @@ function initTabs() {
     });
 }
 
-// --- 勝率回測系統 ---
+// --- 勝率回測系統 (增強相容版) ---
 async function runBacktest() {
     const btn = document.getElementById("btn-run-bt");
     const listArea = document.getElementById("bt-list");
     const statsArea = document.getElementById("bt-stats-panel");
     
-    if (!globalHistoryData || globalHistoryData.length < 10) {
-        showToast("歷史數據不足，無法執行回測", true);
+    // 💡 修復點：降低門檻，只要有 6 筆以上資料就能跑
+    if (!globalHistoryData || globalHistoryData.length < 6) {
+        showToast(`歷史數據不足 (目前 ${globalHistoryData ? globalHistoryData.length : 0} 筆)，無法執行回測`, true);
         return;
     }
 
@@ -229,11 +222,12 @@ async function runBacktest() {
     listArea.innerHTML = "";
     statsArea.innerHTML = "";
 
-    await new Promise(r => setTimeout(r, 800)); // 模擬運算感
+    await new Promise(r => setTimeout(r, 800)); 
 
     let hitsTotal = 0;
     let html = "";
-    const testCount = 5; 
+    // 最多測 5 期，如果資料不夠就測能測的數量
+    const testCount = Math.min(5, globalHistoryData.length - 2); 
 
     for (let i = 0; i < testCount; i++) {
         if(!globalHistoryData[i] || !globalHistoryData[i+1]) continue;
@@ -259,7 +253,7 @@ async function runBacktest() {
         
         html += `
         <div class="list-item" style="flex-direction: column; align-items: flex-start; gap: 10px;">
-            <div style="font-size: 12px; color: #94a3b8;">第 ${targetDraw.period} 期 (${dateStr})</div>
+            <div style="font-size: 12px; color: #94a3b8;">第 ${targetDraw.period || '---'} 期 (${dateStr})</div>
             <div style="display: flex; gap: 15px; width: 100%;">
                 <div style="flex: 1;">
                     <div style="font-size: 11px; color: #3b82f6; margin-bottom: 5px;"><i class="fas fa-robot"></i> 趨勢預測</div>
