@@ -7,48 +7,46 @@ def crawl_daily_39():
     url = "https://www.lotto-8.com/list_Daily39.asp"
     try:
         header = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+            'Accept-Language': 'zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7'
         }
-        res = requests.get(url, headers=header, timeout=15)
+        
+        print(f"🌐 正在連線至: {url}")
+        res = requests.get(url, headers=header, timeout=20)
         res.encoding = 'utf-8'
         
         if res.status_code != 200:
-            print(f"❌ 伺服器回傳錯誤狀態碼: {res.status_code}")
+            print(f"❌ 狀態碼異常: {res.status_code}")
             return
 
         soup = BeautifulSoup(res.text, 'html.parser')
         
-        # 尋找所有 class 為 td_a, td_b 的儲存格 (這是該網站常用的格式)
-        # 或者直接找表格中的行
+        # 尋找所有行
         rows = soup.find_all('tr')
+        print(f"📊 找到表格列數: {len(rows)}")
+        
         recent_data = []
-
         for row in rows:
             tds = row.find_all('td')
-            # 天天樂一列通常有 7 個欄位: 日期, 期數, 號1, 號2, 號3, 號4, 號5
-            if len(tds) == 7:
-                date_str = tds[0].get_text(strip=True)
-                period_str = tds[1].get_text(strip=True)
-                # 檢查是否為正確的日期格式 (YYYY/MM/DD)
-                if '/' in date_str and period_str.isdigit():
-                    nums = [
-                        int(tds[2].get_text(strip=True)),
-                        int(tds[3].get_text(strip=True)),
-                        int(tds[4].get_text(strip=True)),
-                        int(tds[5].get_text(strip=True)),
-                        int(tds[6].get_text(strip=True))
-                    ]
-                    recent_data.append({
-                        "period": period_str,
-                        "lotteryDate": date_str.replace('/', '-'),
-                        "drawNumberSize": nums
-                    })
+            # 偵錯：如果列數接近 7，印出來看看
+            if 6 <= len(tds) <= 8:
+                txt_list = [td.get_text(strip=True) for td in tds]
+                # 判斷是否為天天樂資料行 (日期, 期數, 1, 2, 3, 4, 5)
+                if '/' in txt_list[0] and txt_list[1].isdigit():
+                    try:
+                        recent_data.append({
+                            "period": txt_list[1],
+                            "lotteryDate": txt_list[0].replace('/', '-'),
+                            "drawNumberSize": [int(txt_list[2]), int(txt_list[3]), int(txt_list[4]), int(txt_list[5]), int(txt_list[6])]
+                        })
+                    except:
+                        continue
 
         if not recent_data:
-            print("❌ 解析 HTML 後找不到任何符合格式的資料行")
+            print("❌ 解析失敗。抓取到的部分 HTML 內容摘要:")
+            print(res.text[:500]) # 印出前 500 字幫助判斷是否被擋或導向
             return
 
-        # 封裝成標準格式
         output = {
             "daily_latest": recent_data[0],
             "recent50": recent_data[:50],
@@ -58,10 +56,10 @@ def crawl_daily_39():
         with open('daily.json', 'w', encoding='utf-8') as f:
             json.dump(output, f, ensure_ascii=False, indent=2)
         
-        print(f"✅ 成功解析 {len(recent_data)} 期天天樂資料，已寫入 daily.json")
+        print(f"✅ 成功產出 daily.json，共 {len(recent_data)} 期")
 
     except Exception as e:
-        print(f"💥 發生錯誤: {str(e)}")
+        print(f"💥 程式崩潰: {str(e)}")
 
 if __name__ == "__main__":
     crawl_daily_39()
