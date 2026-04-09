@@ -2,14 +2,19 @@
   "daily_latest": {
     "period": "115000088",
     "lotteryDate": "2026-04-09",
-    "drawNumberSize": [02, 14, 25, 26, 39]
+    "drawNumberSize": [2, 14, 25, 26, 39]
   },
   "recent50": [
     {
       "period": "115000088",
       "lotteryDate": "2026-04-09",
-      "drawNumberSize": [02, 14, 25, 26, 39]
+      "drawNumberSize": [2, 14, 25, 26, 39]
+    },
+    {
+      "period": "115000087",
+      "lotteryDate": "2026-04-08",
+      "drawNumberSize": [5, 12, 18, 22, 31]
     }
   ],
-  "updatedAt": "2026-04-09T11:20:00Z"
+  "updatedAt": "2026-04-09T12:50:00Z"
 }
