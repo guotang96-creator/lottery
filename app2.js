@@ -1,5 +1,5 @@
 /**
- * 彩券 AI 分析中心 V5.3 - 雙核心引擎 & 拖牌工具版 (排版修復版)
+ * 彩券 AI 分析中心 V5.3 - 雙核心引擎 & 6碼包牌版 (完整防呆版)
  */
 const API_BASE = "https://lottery-k099.onrender.com";
 let currentType = "539"; 
@@ -66,6 +66,39 @@ function initTypeSelector() {
     if(btnDaily) btnDaily.addEventListener("click", () => updateUIState("daily"));
 }
 
+async function loadLatestData() {
+    const ballsContainer = document.getElementById("latest-balls");
+    if(ballsContainer) ballsContainer.innerHTML = `<div style="font-size: 12px; color: #475569;"><i class="fas fa-sync fa-spin"></i> 同步 ${currentType} 資料中...</div>`;
+
+    try {
+        const fileName = currentType === "539" ? "latest.json" : "daily.json";
+        const res = await fetch(`./${fileName}?t=${Date.now()}`);
+        if (!res.ok) throw new Error("尚未生成資料庫");
+        
+        const data = await res.json();
+        let latest = data.daily_latest || data.daily539 || (Array.isArray(data) ? data[0] : data);
+        
+        document.getElementById("draw-period").textContent = latest.period || "---";
+        document.getElementById("draw-date").textContent = cleanDateStr(latest.lotteryDate || latest.date);
+        
+        if (data.updatedAt) {
+            const d = new Date(data.updatedAt);
+            document.getElementById("update-time").textContent = `${d.getMonth()+1}-${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        }
+
+        let nums = latest.drawNumberSize || latest.numbers || [];
+        if(ballsContainer) ballsContainer.innerHTML = nums.map(n => `<div class="ball">${pad2(n)}</div>`).join("");
+
+        globalHistoryData = data.history || data.recent50 || data.data || (Array.isArray(data) ? data : []);
+        renderHistory();
+
+    } catch (err) {
+        if(ballsContainer) ballsContainer.innerHTML = `<div style="color:#64748b; font-size:12px;">${currentType} 數據載入中</div>`;
+        globalHistoryData = [];
+        renderHistory();
+    }
+}
+
 async function runGeminiAI() {
     const btn = document.getElementById("btn-run-ai");
     const outputArea = document.getElementById("ai-output-area");
@@ -83,7 +116,7 @@ async function runGeminiAI() {
         const data = await res.json();
         if (data.status === "success") {
             
-            // 💡 排版升級：前 5 顆藍色主力，後 1 顆綠色防漏保險
+            // 🔥 5碼主力 + 1碼防漏 的精美排版
             const mainBalls = data.predicted_numbers.slice(0, 5).map(n => `<div class="ball ai-ball">${pad2(n)}</div>`).join("");
             const extraBalls = data.predicted_numbers.slice(5, 6).map(n => `<div class="ball" style="background: linear-gradient(145deg, #10b981, #059669); text-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1px solid #34d399; color: white;">${pad2(n)}</div>`).join("");
             
@@ -118,46 +151,6 @@ async function runGeminiAI() {
     } finally { btn.disabled = false; }
 }
 
-async function runGeminiAI() {
-    const btn = document.getElementById("btn-run-ai");
-    const outputArea = document.getElementById("ai-output-area");
-    if(!btn || !outputArea) return;
-    
-    btn.disabled = true;
-    const apiPath = currentType === "539" ? "/api/predict" : "/api/predict_daily";
-    const label = currentType === "539" ? "539" : "天天樂";
-
-    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> 正在分析 ${label} 大數據...`;
-    outputArea.innerHTML = `<div style="text-align:center; padding:25px; color:#60a5fa;"><i class="fas fa-microchip fa-spin"></i> 正在回溯神經網路模型...</div>`;
-
-    try {
-        const res = await fetch(`${API_BASE}${apiPath}`);
-        const data = await res.json();
-        if (data.status === "success") {
-            const ballsHtml = data.predicted_numbers.map(n => `<div class="ball ai-ball">${pad2(n)}</div>`).join("");
-            const detailsHtml = data.details.map((d, i) => `
-                <div class="ai-row"><span>${i+1}. 號碼 <b>${pad2(d.num)}</b></span><span class="ai-score">綜合權重: ${d.score.toFixed(2)}</span></div>`).join("");
-            
-            outputArea.innerHTML = `
-                <div style="padding: 15px; background: rgba(0,0,0,0.2); border-radius: 16px;">
-                    <div style="margin-bottom:12px; font-weight:bold; color:#e2e8f0; font-size:14px;">[${label}] 智能分析建議：</div>
-                    <div class="balls-display">${ballsHtml}</div>
-                    <div class="ai-details" style="margin-top:15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top:10px;">
-                        ${detailsHtml}
-                    </div>
-                    <button class="action-btn secondary-btn" style="margin-top:15px;" onclick="saveFavorite('${data.predicted_numbers.join(',')}', '${label}')">
-                        <i class="fas fa-save"></i> 儲存分析結果
-                    </button>
-                </div>`;
-            btn.innerHTML = `<i class="fas fa-check-circle"></i> 分析完成`;
-        } else throw new Error();
-    } catch (err) {
-        outputArea.innerHTML = `<div style="color:#fca5a5; padding:15px; text-align:center; font-size:13px;">⚠️ 伺服器暖機中，請再次點擊下方按鈕。</div>`;
-        btn.innerHTML = `<i class="fas fa-redo"></i> 再次啟動智能分析`;
-    } finally { btn.disabled = false; }
-}
-
-// 💡 【排版修復點 1】歷史紀錄：改為上下堆疊，強制號碼球站同一排
 function renderHistory() {
     const container = document.getElementById("history-list");
     if(!container) return;
@@ -193,7 +186,6 @@ function saveFavorite(numsStr, label) {
     renderFavorites();
 }
 
-// 💡 【排版修復點 2】收藏夾：同步改為上下堆疊
 function renderFavorites() {
     const container = document.getElementById("favorites-list");
     if(!container) return;
@@ -230,7 +222,6 @@ function initTabs() {
     });
 }
 
-// --- 勝率回測系統 ---
 async function runBacktest() {
     const btn = document.getElementById("btn-run-bt");
     const listArea = document.getElementById("bt-list");
@@ -303,7 +294,6 @@ async function runBacktest() {
     btn.innerHTML = '<i class="fas fa-redo"></i> 重新執行回測';
 }
 
-// --- 實用工具：歷史拖牌統計 ---
 function initTools() {
     const select = document.getElementById("tool-target-num");
     if(!select) return;
