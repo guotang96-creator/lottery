@@ -87,10 +87,11 @@ async function main() {
   const now = new Date();
   const year = now.getFullYear();
 
+  // 💡 升級點 1：將搜尋範圍擴大到「去年到今年」，並把 pageSize 放大到 1000，確保能吃下 500 期
   const apiUrl =
-    `https://api.taiwanlottery.com/TLCAPIWeB/Lottery/Daily539Result?period&month=${year}-01&endMonth=${year}-12&pageNum=1&pageSize=200`;
+    `https://api.taiwanlottery.com/TLCAPIWeB/Lottery/Daily539Result?period&month=${year-1}-01&endMonth=${year}-12&pageNum=1&pageSize=1000`;
 
-  console.log("🚀 開始抓取今彩539官方資料...");
+  console.log("🚀 開始抓取今彩539官方資料 (500期大數據模式)...");
   console.log(`📡 API: ${apiUrl}`);
 
   const raw = await fetchJson(apiUrl);
@@ -117,15 +118,15 @@ async function main() {
     date: latest.date,
     numbers: latest.numbers,
     recent5: sorted.slice(0, 5),
-    recent50: sorted.slice(0, 50),
+    // 💡 升級點 2：解開 50 期的枷鎖，正式升級為 history 500 期
+    history: sorted.slice(0, 500), 
     updatedAt: getTaiwanDateTime(),
     source: "official-api"
   };
 
   OUTPUT_CANDIDATES.forEach((filePath) => writeJson(filePath, output));
 
-  console.log("🎉 latest.json 產生完成");
-  console.log(JSON.stringify(output, null, 2));
+  console.log(`🎉 latest.json 產生完成！共成功寫入 ${output.history.length} 筆歷史資料。`);
 }
 
 main().catch((err) => {
