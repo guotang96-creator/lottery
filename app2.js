@@ -1,5 +1,5 @@
 /**
- * 彩券 AI 分析中心 V5.3 - 雙核心引擎 & 拖牌工具版
+ * 彩券 AI 分析中心 V5.3 - 雙核心引擎 & 拖牌工具版 (排版修復版)
  */
 const API_BASE = "https://lottery-k099.onrender.com";
 let currentType = "539"; 
@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initTabs();
     initTypeSelector();
     loadLatestData();
-    initTools(); // 啟動拖牌工具
+    initTools(); 
     
     document.getElementById("btn-run-ai").addEventListener("click", runGeminiAI);
     document.getElementById("btn-reload").addEventListener("click", loadLatestData);
@@ -138,6 +138,7 @@ async function runGeminiAI() {
     } finally { btn.disabled = false; }
 }
 
+// 💡 【排版修復點 1】歷史紀錄：改為上下堆疊，強制號碼球站同一排
 function renderHistory() {
     const container = document.getElementById("history-list");
     if(!container) return;
@@ -148,9 +149,14 @@ function renderHistory() {
     container.innerHTML = globalHistoryData.map(item => {
         let nums = item.drawNumberSize || item.numbers || [];
         let date = cleanDateStr(item.lotteryDate || item.date);
-        return `<div class="list-item">
-            <div class="list-header"><span>${date}</span><span>第 ${item.period || '---'} 期</span></div>
-            <div class="balls-display" style="gap:8px;">${nums.map(n=>`<div class="ball" style="width:30px;height:30px;font-size:12px;">${pad2(n)}</div>`).join("")}</div>
+        return `<div class="list-item" style="flex-direction: column; align-items: flex-start; gap: 12px;">
+            <div style="display: flex; justify-content: space-between; width: 100%; font-size: 13px; color: #94a3b8; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                <span><i class="far fa-calendar-alt"></i> ${date}</span>
+                <span>第 ${item.period || '---'} 期</span>
+            </div>
+            <div class="balls-display" style="margin: 0; gap: 8px;">
+                ${nums.map(n=>`<div class="ball" style="width:32px;height:32px;font-size:13px;">${pad2(n)}</div>`).join("")}
+            </div>
         </div>`;
     }).join("");
 }
@@ -168,15 +174,20 @@ function saveFavorite(numsStr, label) {
     renderFavorites();
 }
 
+// 💡 【排版修復點 2】收藏夾：同步改為上下堆疊
 function renderFavorites() {
     const container = document.getElementById("favorites-list");
     if(!container) return;
     const favs = JSON.parse(localStorage.getItem('v5_favorites') || '[]');
     if (!favs.length) return container.innerHTML = "<p class='desc-text'>尚無收藏。</p>";
     container.innerHTML = favs.map(item => `
-        <div class="list-item">
-            <div class="list-header"><span>[${item.label}] ${item.date}</span></div>
-            <div class="balls-display" style="gap:8px;">${item.numbers.map(n=>`<div class="ball ai-ball" style="width:30px;height:30px;font-size:12px;">${pad2(n)}</div>`).join("")}</div>
+        <div class="list-item" style="flex-direction: column; align-items: flex-start; gap: 12px;">
+            <div style="width: 100%; font-size: 13px; color: #94a3b8; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+                <i class="fas fa-tag"></i> [${item.label}] ${item.date}
+            </div>
+            <div class="balls-display" style="margin: 0; gap: 8px;">
+                ${item.numbers.map(n=>`<div class="ball ai-ball" style="width:32px;height:32px;font-size:13px;">${pad2(n)}</div>`).join("")}
+            </div>
         </div>`).join("");
 }
 
@@ -250,11 +261,11 @@ async function runBacktest() {
             <div style="display: flex; gap: 15px; width: 100%;">
                 <div style="flex: 1;">
                     <div style="font-size: 11px; color: #3b82f6; margin-bottom: 5px;"><i class="fas fa-robot"></i> 趨勢預測</div>
-                    <div class="balls-display" style="gap: 4px;">${predicted.map(n => `<div class="ball ai-ball" style="width:26px;height:26px;font-size:11px;">${pad2(n)}</div>`).join("")}</div>
+                    <div class="balls-display" style="gap: 4px; margin: 0;">${predicted.map(n => `<div class="ball ai-ball" style="width:26px;height:26px;font-size:11px;">${pad2(n)}</div>`).join("")}</div>
                 </div>
                 <div style="flex: 1;">
                     <div style="font-size: 11px; color: #e2e8f0; margin-bottom: 5px;"><i class="fas fa-trophy"></i> 實際開出</div>
-                    <div class="balls-display" style="gap: 4px;">${actual.map(n => `<div class="ball ${hits.includes(n) ? 'ai-ball' : ''}" style="width:26px;height:26px;font-size:11px;${hits.includes(n) ? 'box-shadow: 0 0 8px #3b82f6;' : ''}">${pad2(n)}</div>`).join("")}</div>
+                    <div class="balls-display" style="gap: 4px; margin: 0;">${actual.map(n => `<div class="ball ${hits.includes(n) ? 'ai-ball' : ''}" style="width:26px;height:26px;font-size:11px;${hits.includes(n) ? 'box-shadow: 0 0 8px #3b82f6;' : ''}">${pad2(n)}</div>`).join("")}</div>
                 </div>
             </div>
             <div style="font-size: 12px; color: #10b981; align-self: flex-end; font-weight: bold;">命中 ${hits.length} 碼</div>
@@ -278,7 +289,6 @@ function initTools() {
     const select = document.getElementById("tool-target-num");
     if(!select) return;
     
-    // 生成 1~39 的選項
     select.innerHTML = Array.from({length: 39}, (_, i) => `<option value="${i + 1}">${pad2(i + 1)}</option>`).join("");
 
     document.getElementById("btn-run-tool").addEventListener("click", () => {
@@ -296,14 +306,11 @@ function initTools() {
             const nextNums = {};
             let matchCount = 0;
 
-            // 陣列 0 是最新，從索引 1 開始找歷史
             for (let i = 1; i < globalHistoryData.length; i++) {
                 const currentDraw = globalHistoryData[i].drawNumberSize || globalHistoryData[i].numbers || [];
                 
-                // 如果這一期有開出目標號碼
                 if (currentDraw.includes(target)) {
                     matchCount++;
-                    // 抓取它「下一期」(在時間軸上是 i-1) 的號碼
                     const nextDraw = globalHistoryData[i - 1].drawNumberSize || globalHistoryData[i - 1].numbers || [];
                     nextDraw.forEach(n => {
                         nextNums[n] = (nextNums[n] || 0) + 1;
@@ -311,7 +318,7 @@ function initTools() {
                 }
             }
 
-            const sorted = Object.entries(nextNums).sort((a, b) => b[1] - a[1]).slice(0, 5); // 取前五名
+            const sorted = Object.entries(nextNums).sort((a, b) => b[1] - a[1]).slice(0, 5); 
 
             if (sorted.length === 0) {
                 resArea.innerHTML = `<div style="color:#94a3b8; font-size:13px; text-align:center;">目前數據庫中尚未有足夠的跟牌紀錄。</div>`;
@@ -336,6 +343,6 @@ function initTools() {
             
             html += `</div></div>`;
             resArea.innerHTML = html;
-        }, 500); // 模擬一點運算延遲，增加高級感
+        }, 500); 
     });
 }
