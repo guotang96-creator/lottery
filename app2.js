@@ -1,5 +1,5 @@
 /**
- * 彩券 AI 分析中心 V5.3 - 雙核心引擎 & 6碼包牌版 (完整防呆版)
+ * 彩券 AI 分析中心 V5.3 - 超光速矩陣雙核心 & 6碼完整包牌版
  */
 const API_BASE = "https://lottery-k099.onrender.com";
 let currentType = "539"; 
@@ -50,7 +50,7 @@ function initTypeSelector() {
             btn539.style.background = "rgba(255,255,255,0.05)"; btn539.style.borderColor = "rgba(255,255,255,0.1)"; btn539.style.color = "#94a3b8";
         }
 
-        if(descText) descText.textContent = `目前針對 [${label}] 執行深度學習趨勢分析。`;
+        if(descText) descText.textContent = `目前針對 [${label}] 執行極速矩陣趨勢分析。`;
         if(placeholderText) placeholderText.textContent = `${label} 分析引擎就緒，準備產生推薦號碼`;
         
         const homeLabel = document.getElementById("home-type-label");
@@ -89,11 +89,12 @@ async function loadLatestData() {
         let nums = latest.drawNumberSize || latest.numbers || [];
         if(ballsContainer) ballsContainer.innerHTML = nums.map(n => `<div class="ball">${pad2(n)}</div>`).join("");
 
+        // 支援新版大數據 history 欄位
         globalHistoryData = data.history || data.recent50 || data.data || (Array.isArray(data) ? data : []);
         renderHistory();
 
     } catch (err) {
-        if(ballsContainer) ballsContainer.innerHTML = `<div style="color:#64748b; font-size:12px;">${currentType} 數據載入中</div>`;
+        if(ballsContainer) ballsContainer.innerHTML = `<div style="color:#fca5a5; font-size:12px;">讀取失敗，請確認爬蟲是否執行</div>`;
         globalHistoryData = [];
         renderHistory();
     }
@@ -108,8 +109,8 @@ async function runGeminiAI() {
     const apiPath = currentType === "539" ? "/api/predict" : "/api/predict_daily";
     const label = currentType === "539" ? "539" : "天天樂";
 
-    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> 正在分析 ${label} 500期大數據...`;
-    outputArea.innerHTML = `<div style="text-align:center; padding:25px; color:#60a5fa;"><i class="fas fa-microchip fa-spin"></i> 正在回溯神經網路模型...</div>`;
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> 正在分析 ${label} 雲端大數據...`;
+    outputArea.innerHTML = `<div style="text-align:center; padding:25px; color:#60a5fa;"><i class="fas fa-microchip fa-spin"></i> 正在啟動超光速矩陣引擎...</div>`;
 
     try {
         const res = await fetch(`${API_BASE}${apiPath}`);
@@ -144,10 +145,11 @@ async function runGeminiAI() {
                     </button>
                 </div>`;
             btn.innerHTML = `<i class="fas fa-check-circle"></i> 分析完成`;
-        } else throw new Error();
+        } else throw new Error(data.message || "未知錯誤");
     } catch (err) {
-        outputArea.innerHTML = `<div style="color:#fca5a5; padding:15px; text-align:center; font-size:13px;">⚠️ 伺服器暖機中或數據過大，請再次點擊。</div>`;
+        outputArea.innerHTML = `<div style="color:#fca5a5; padding:15px; text-align:center; font-size:13px;">⚠️ 伺服器連線異常，請稍後重試。</div>`;
         btn.innerHTML = `<i class="fas fa-redo"></i> 再次啟動智能分析`;
+        console.error(err);
     } finally { btn.disabled = false; }
 }
 
@@ -158,7 +160,10 @@ function renderHistory() {
         return container.innerHTML = "<p class='desc-text'>暫無資料</p>";
     }
     
-    container.innerHTML = globalHistoryData.map(item => {
+    // 為了效能，前端最多顯示近 100 期
+    const displayData = globalHistoryData.slice(0, 100);
+    
+    container.innerHTML = displayData.map(item => {
         let nums = item.drawNumberSize || item.numbers || [];
         let date = cleanDateStr(item.lotteryDate || item.date);
         return `<div class="list-item" style="flex-direction: column; align-items: flex-start; gap: 12px;">
@@ -196,8 +201,9 @@ function renderFavorites() {
             <div style="width: 100%; font-size: 13px; color: #94a3b8; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
                 <i class="fas fa-tag"></i> [${item.label}] ${item.date}
             </div>
-            <div class="balls-display" style="margin: 0; gap: 8px;">
-                ${item.numbers.map(n=>`<div class="ball ai-ball" style="width:32px;height:32px;font-size:13px;">${pad2(n)}</div>`).join("")}
+            <div class="balls-display" style="margin: 0; gap: 8px; justify-content: flex-start;">
+                ${item.numbers.slice(0,5).map(n=>`<div class="ball ai-ball" style="width:32px;height:32px;font-size:13px;">${pad2(n)}</div>`).join("")}
+                ${item.numbers.length > 5 ? `<div class="ball" style="width:32px;height:32px;font-size:13px; background: linear-gradient(145deg, #10b981, #059669); border: 1px solid #34d399;">${pad2(item.numbers[5])}</div>` : ''}
             </div>
         </div>`).join("");
 }
@@ -222,22 +228,23 @@ function initTabs() {
     });
 }
 
+// --- 進化版勝率回測系統 (動能加權與防連莊機制) ---
 async function runBacktest() {
     const btn = document.getElementById("btn-run-bt");
     const listArea = document.getElementById("bt-list");
     const statsArea = document.getElementById("bt-stats-panel");
     
     if (!globalHistoryData || globalHistoryData.length < 6) {
-        showToast(`歷史數據不足 (目前 ${globalHistoryData ? globalHistoryData.length : 0} 筆)，無法執行回測`, true);
+        showToast(`歷史數據不足，無法執行回測`, true);
         return;
     }
 
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 回測運算中...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 回測精密運算中...';
     listArea.innerHTML = "";
     statsArea.innerHTML = "";
 
-    await new Promise(r => setTimeout(r, 800)); 
+    await new Promise(r => setTimeout(r, 600)); 
 
     let hitsTotal = 0;
     let html = "";
@@ -245,18 +252,28 @@ async function runBacktest() {
 
     for (let i = 0; i < testCount; i++) {
         if(!globalHistoryData[i] || !globalHistoryData[i+1]) continue;
-        const targetDraw = globalHistoryData[i];
-        const trainData = globalHistoryData.slice(i + 1, i + 21); 
+        const targetDraw = globalHistoryData[i]; 
+        const trainData = globalHistoryData.slice(i + 1, i + 31); // 用前 30 期當數據庫
         
         const freqs = {};
-        trainData.forEach(d => {
+        const previousDraw = trainData[0].drawNumberSize || trainData[0].numbers || []; 
+        
+        // 1. 動態加權統計
+        trainData.forEach((d, idx) => {
             let nums = d.drawNumberSize || d.numbers || [];
-            nums.forEach(n => freqs[n] = (freqs[n] || 0) + 1);
+            let weight = idx < 5 ? 3 : (idx < 15 ? 1.5 : 1); 
+            nums.forEach(n => freqs[n] = (freqs[n] || 0) + weight);
         });
         
+        // 2. 防連莊懲罰
+        previousDraw.forEach(n => {
+            if(freqs[n]) freqs[n] *= 0.3; 
+        });
+        
+        // 3. 輸出前 6 碼
         const predicted = Object.entries(freqs)
             .sort((a, b) => b[1] - a[1])
-            .slice(0, 5)
+            .slice(0, 6)
             .map(x => parseInt(x[0]));
         
         const actual = targetDraw.drawNumberSize || targetDraw.numbers || [];
@@ -270,15 +287,18 @@ async function runBacktest() {
             <div style="font-size: 12px; color: #94a3b8;">第 ${targetDraw.period || '---'} 期 (${dateStr})</div>
             <div style="display: flex; gap: 15px; width: 100%;">
                 <div style="flex: 1;">
-                    <div style="font-size: 11px; color: #3b82f6; margin-bottom: 5px;"><i class="fas fa-robot"></i> 趨勢預測</div>
-                    <div class="balls-display" style="gap: 4px; margin: 0;">${predicted.map(n => `<div class="ball ai-ball" style="width:26px;height:26px;font-size:11px;">${pad2(n)}</div>`).join("")}</div>
+                    <div style="font-size: 11px; color: #3b82f6; margin-bottom: 5px;"><i class="fas fa-robot"></i> 趨勢預測 (6碼)</div>
+                    <div class="balls-display" style="gap: 4px; margin: 0; justify-content: flex-start;">
+                        ${predicted.slice(0,5).map(n => `<div class="ball ai-ball" style="width:26px;height:26px;font-size:11px;">${pad2(n)}</div>`).join("")}
+                        <div class="ball" style="width:26px;height:26px;font-size:11px; background: linear-gradient(145deg, #10b981, #059669); border: 1px solid #34d399;">${pad2(predicted[5])}</div>
+                    </div>
                 </div>
                 <div style="flex: 1;">
                     <div style="font-size: 11px; color: #e2e8f0; margin-bottom: 5px;"><i class="fas fa-trophy"></i> 實際開出</div>
-                    <div class="balls-display" style="gap: 4px; margin: 0;">${actual.map(n => `<div class="ball ${hits.includes(n) ? 'ai-ball' : ''}" style="width:26px;height:26px;font-size:11px;${hits.includes(n) ? 'box-shadow: 0 0 8px #3b82f6;' : ''}">${pad2(n)}</div>`).join("")}</div>
+                    <div class="balls-display" style="gap: 4px; margin: 0; justify-content: flex-start;">${actual.map(n => `<div class="ball ${hits.includes(n) ? 'ai-ball' : ''}" style="width:26px;height:26px;font-size:11px;${hits.includes(n) ? 'box-shadow: 0 0 8px #3b82f6;' : ''}">${pad2(n)}</div>`).join("")}</div>
                 </div>
             </div>
-            <div style="font-size: 12px; color: #10b981; align-self: flex-end; font-weight: bold;">命中 ${hits.length} 碼</div>
+            <div style="font-size: 12px; color: ${hits.length > 0 ? '#10b981' : '#fca5a5'}; align-self: flex-end; font-weight: bold;">命中 ${hits.length} 碼</div>
         </div>`;
     }
 
