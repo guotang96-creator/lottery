@@ -66,37 +66,56 @@ function initTypeSelector() {
     if(btnDaily) btnDaily.addEventListener("click", () => updateUIState("daily"));
 }
 
-async function loadLatestData() {
-    const ballsContainer = document.getElementById("latest-balls");
-    if(ballsContainer) ballsContainer.innerHTML = `<div style="font-size: 12px; color: #475569;"><i class="fas fa-sync fa-spin"></i> 同步 ${currentType} 資料中...</div>`;
+async function runGeminiAI() {
+    const btn = document.getElementById("btn-run-ai");
+    const outputArea = document.getElementById("ai-output-area");
+    if(!btn || !outputArea) return;
+    
+    btn.disabled = true;
+    const apiPath = currentType === "539" ? "/api/predict" : "/api/predict_daily";
+    const label = currentType === "539" ? "539" : "天天樂";
+
+    btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> 正在分析 ${label} 500期大數據...`;
+    outputArea.innerHTML = `<div style="text-align:center; padding:25px; color:#60a5fa;"><i class="fas fa-microchip fa-spin"></i> 正在回溯神經網路模型...</div>`;
 
     try {
-        const fileName = currentType === "539" ? "latest.json" : "daily.json";
-        const res = await fetch(`./${fileName}?t=${Date.now()}`);
-        if (!res.ok) throw new Error("尚未生成資料庫");
-        
+        const res = await fetch(`${API_BASE}${apiPath}`);
         const data = await res.json();
-        let latest = data.daily_latest || data.daily539 || (Array.isArray(data) ? data[0] : data);
-        
-        document.getElementById("draw-period").textContent = latest.period || "---";
-        document.getElementById("draw-date").textContent = cleanDateStr(latest.lotteryDate || latest.date);
-        
-        if (data.updatedAt) {
-            const d = new Date(data.updatedAt);
-            document.getElementById("update-time").textContent = `${d.getMonth()+1}-${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-        }
-
-        let nums = latest.drawNumberSize || latest.numbers || [];
-        if(ballsContainer) ballsContainer.innerHTML = nums.map(n => `<div class="ball">${pad2(n)}</div>`).join("");
-
-        globalHistoryData = data.recent50 || data.history || data.data || (Array.isArray(data) ? data : []);
-        renderHistory();
-
+        if (data.status === "success") {
+            
+            // 💡 排版升級：前 5 顆藍色主力，後 1 顆綠色防漏保險
+            const mainBalls = data.predicted_numbers.slice(0, 5).map(n => `<div class="ball ai-ball">${pad2(n)}</div>`).join("");
+            const extraBalls = data.predicted_numbers.slice(5, 6).map(n => `<div class="ball" style="background: linear-gradient(145deg, #10b981, #059669); text-shadow: 0 2px 4px rgba(0,0,0,0.3); border: 1px solid #34d399; color: white;">${pad2(n)}</div>`).join("");
+            
+            const detailsHtml = data.details.map((d, i) => `
+                <div class="ai-row" style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:13px;">
+                    <span style="color:${i < 5 ? '#e2e8f0' : '#10b981'}">${i+1}. 號碼 <b>${pad2(d.num)}</b></span>
+                    <span class="ai-score" style="color:#94a3b8">權重: ${d.score.toFixed(2)}</span>
+                </div>`).join("");
+            
+            outputArea.innerHTML = `
+                <div style="padding: 15px; background: rgba(0,0,0,0.2); border-radius: 16px;">
+                    <div style="margin-bottom:12px; font-weight:bold; color:#e2e8f0; font-size:14px;">[${label}] 6 碼精選包牌池：</div>
+                    
+                    <div style="font-size: 11px; color: #60a5fa; margin-bottom: 5px; text-align: left;">🔥 主力推薦 (5碼)</div>
+                    <div class="balls-display" style="margin-top: 0; margin-bottom: 15px;">${mainBalls}</div>
+                    
+                    <div style="font-size: 11px; color: #10b981; margin-bottom: 5px; text-align: left;">🛡️ 防漏保險 (1碼)</div>
+                    <div class="balls-display" style="margin-top: 0; margin-bottom: 15px;">${extraBalls}</div>
+                    
+                    <div class="ai-details" style="margin-top:15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top:10px;">
+                        ${detailsHtml}
+                    </div>
+                    <button class="action-btn secondary-btn" style="margin-top:15px;" onclick="saveFavorite('${data.predicted_numbers.join(',')}', '${label}')">
+                        <i class="fas fa-save"></i> 儲存分析結果
+                    </button>
+                </div>`;
+            btn.innerHTML = `<i class="fas fa-check-circle"></i> 分析完成`;
+        } else throw new Error();
     } catch (err) {
-        if(ballsContainer) ballsContainer.innerHTML = `<div style="color:#64748b; font-size:12px;">${currentType} 數據載入中</div>`;
-        globalHistoryData = [];
-        renderHistory();
-    }
+        outputArea.innerHTML = `<div style="color:#fca5a5; padding:15px; text-align:center; font-size:13px;">⚠️ 伺服器暖機中或數據過大，請再次點擊。</div>`;
+        btn.innerHTML = `<i class="fas fa-redo"></i> 再次啟動智能分析`;
+    } finally { btn.disabled = false; }
 }
 
 async function runGeminiAI() {
