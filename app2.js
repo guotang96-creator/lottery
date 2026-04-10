@@ -1,18 +1,15 @@
 /**
- * 彩券 AI 分析中心 V5.2.3 - 雙核心引擎 & 萬用相容回測版
+ * 彩券 AI 分析中心 V5.3 - 雙核心引擎 & 拖牌工具版
  */
 const API_BASE = "https://lottery-k099.onrender.com";
 let currentType = "539"; 
 let globalHistoryData = []; 
 
-const MOCK_HISTORY = [
-    { period: "載入中...", lotteryDate: "", drawNumberSize: [0, 0, 0, 0, 0] }
-];
-
 document.addEventListener("DOMContentLoaded", () => {
     initTabs();
     initTypeSelector();
     loadLatestData();
+    initTools(); // 啟動拖牌工具
     
     document.getElementById("btn-run-ai").addEventListener("click", runGeminiAI);
     document.getElementById("btn-reload").addEventListener("click", loadLatestData);
@@ -56,8 +53,8 @@ function initTypeSelector() {
         if(descText) descText.textContent = `目前針對 [${label}] 執行深度學習趨勢分析。`;
         if(placeholderText) placeholderText.textContent = `${label} 分析引擎就緒，準備產生推薦號碼`;
         
-        const titleEl = document.querySelector(".glass-card h2");
-        if(titleEl) titleEl.innerHTML = `<i class="fas fa-trophy"></i> 最新開獎結果 (${label})`;
+        const homeLabel = document.getElementById("home-type-label");
+        if(homeLabel) homeLabel.textContent = label;
         
         const btLabel = document.getElementById("bt-type-label");
         if(btLabel) btLabel.textContent = label;
@@ -92,9 +89,7 @@ async function loadLatestData() {
         let nums = latest.drawNumberSize || latest.numbers || [];
         if(ballsContainer) ballsContainer.innerHTML = nums.map(n => `<div class="ball">${pad2(n)}</div>`).join("");
 
-        // 💡 修復點：萬用資料格式相容，無論是哪種 JSON 都能成功抓出歷史紀錄陣列
         globalHistoryData = data.recent50 || data.history || data.data || (Array.isArray(data) ? data : []);
-        
         renderHistory();
 
     } catch (err) {
@@ -122,7 +117,7 @@ async function runGeminiAI() {
         if (data.status === "success") {
             const ballsHtml = data.predicted_numbers.map(n => `<div class="ball ai-ball">${pad2(n)}</div>`).join("");
             const detailsHtml = data.details.map((d, i) => `
-                <div class="ai-row"><span>${i+1}. 號碼 <b>${pad2(d.num)}</b></span><span class="ai-score">權重: ${d.score.toFixed(2)}</span></div>`).join("");
+                <div class="ai-row"><span>${i+1}. 號碼 <b>${pad2(d.num)}</b></span><span class="ai-score">綜合權重: ${d.score.toFixed(2)}</span></div>`).join("");
             
             outputArea.innerHTML = `
                 <div style="padding: 15px; background: rgba(0,0,0,0.2); border-radius: 16px;">
@@ -205,13 +200,12 @@ function initTabs() {
     });
 }
 
-// --- 勝率回測系統 (增強相容版) ---
+// --- 勝率回測系統 ---
 async function runBacktest() {
     const btn = document.getElementById("btn-run-bt");
     const listArea = document.getElementById("bt-list");
     const statsArea = document.getElementById("bt-stats-panel");
     
-    // 💡 修復點：降低門檻，只要有 6 筆以上資料就能跑
     if (!globalHistoryData || globalHistoryData.length < 6) {
         showToast(`歷史數據不足 (目前 ${globalHistoryData ? globalHistoryData.length : 0} 筆)，無法執行回測`, true);
         return;
@@ -226,7 +220,6 @@ async function runBacktest() {
 
     let hitsTotal = 0;
     let html = "";
-    // 最多測 5 期，如果資料不夠就測能測的數量
     const testCount = Math.min(5, globalHistoryData.length - 2); 
 
     for (let i = 0; i < testCount; i++) {
@@ -280,3 +273,69 @@ async function runBacktest() {
     btn.innerHTML = '<i class="fas fa-redo"></i> 重新執行回測';
 }
 
+// --- 實用工具：歷史拖牌統計 ---
+function initTools() {
+    const select = document.getElementById("tool-target-num");
+    if(!select) return;
+    
+    // 生成 1~39 的選項
+    select.innerHTML = Array.from({length: 39}, (_, i) => `<option value="${i + 1}">${pad2(i + 1)}</option>`).join("");
+
+    document.getElementById("btn-run-tool").addEventListener("click", () => {
+        const target = parseInt(select.value);
+        const resArea = document.getElementById("tool-result-area");
+        
+        if (!globalHistoryData || globalHistoryData.length < 5) {
+            resArea.innerHTML = `<div style="color:#fca5a5; font-size:13px; text-align:center;">⚠️ 歷史數據不足，無法分析版路。</div>`;
+            return;
+        }
+
+        resArea.innerHTML = `<div style="text-align:center; color:#3b82f6; font-size:14px;"><i class="fas fa-spinner fa-spin"></i> 正在比對歷史版路...</div>`;
+
+        setTimeout(() => {
+            const nextNums = {};
+            let matchCount = 0;
+
+            // 陣列 0 是最新，從索引 1 開始找歷史
+            for (let i = 1; i < globalHistoryData.length; i++) {
+                const currentDraw = globalHistoryData[i].drawNumberSize || globalHistoryData[i].numbers || [];
+                
+                // 如果這一期有開出目標號碼
+                if (currentDraw.includes(target)) {
+                    matchCount++;
+                    // 抓取它「下一期」(在時間軸上是 i-1) 的號碼
+                    const nextDraw = globalHistoryData[i - 1].drawNumberSize || globalHistoryData[i - 1].numbers || [];
+                    nextDraw.forEach(n => {
+                        nextNums[n] = (nextNums[n] || 0) + 1;
+                    });
+                }
+            }
+
+            const sorted = Object.entries(nextNums).sort((a, b) => b[1] - a[1]).slice(0, 5); // 取前五名
+
+            if (sorted.length === 0) {
+                resArea.innerHTML = `<div style="color:#94a3b8; font-size:13px; text-align:center;">目前數據庫中尚未有足夠的跟牌紀錄。</div>`;
+                return;
+            }
+
+            let html = `
+                <div style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 15px;">
+                    <div style="font-size: 13px; color: #94a3b8; margin-bottom: 15px;">在目前的數據庫中，號碼 <b style="color:#fff;">${pad2(target)}</b> 共出現過 ${matchCount} 次。其下一期最常開出的號碼為：</div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+            `;
+            
+            sorted.forEach((item, index) => {
+                const isTop = index === 0;
+                html += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: ${isTop ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.03)'}; padding: 10px 15px; border-radius: 8px; border: 1px solid ${isTop ? 'rgba(16, 185, 129, 0.3)' : 'transparent'};">
+                        <div class="ball ${isTop ? 'ai-ball' : ''}" style="width:30px; height:30px; font-size:12px;">${pad2(item[0])}</div>
+                        <div style="font-size: 13px; color: ${isTop ? '#10b981' : '#e2e8f0'}; font-weight: bold;">跟出 ${item[1]} 次</div>
+                    </div>
+                `;
+            });
+            
+            html += `</div></div>`;
+            resArea.innerHTML = html;
+        }, 500); // 模擬一點運算延遲，增加高級感
+    });
+}
