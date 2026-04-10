@@ -27,32 +27,43 @@ def train_and_predict(data_list, steps=7):
             
     if len(X) == 0: raise Exception("歷史數據不足以訓練")
         
-    # 💡 輕量化神經網路，避免 Render 免費主機記憶體爆滿當機
     model = MLPRegressor(hidden_layer_sizes=(100,), activation='relu', max_iter=500, random_state=42)
     model.fit(np.array(X), np.array(y))
-    
     last_sequence = sequences[-steps:].flatten().reshape(1, -1)
     predicted_probs = model.predict(last_sequence)[0]
     
-    # 💡 防連莊機制：剛開出的號碼權重直接「打 5 折」，強迫分散預測
-    for n in data_list[-1]:
-        try:
-            idx = int(n) - 1
-            if 0 <= idx < 39: predicted_probs[idx] *= 0.5  
-        except: pass
+    recent_draws = data_list[-15:] if len(data_list) >= 15 else data_list
+    hot_counts = np.zeros(39)
+    for draw in recent_draws:
+        for n in draw:
+            try: hot_counts[int(n)-1] += 1
+            except: pass
+
+    final_scores = []
+    last_draw = [int(n) for n in data_list[-1] if str(n).isdigit()]
+
+    for i in range(39):
+        ai_score = float(predicted_probs[i]) * 100 
+        stat_score = (hot_counts[i] / max(1, len(recent_draws))) * 150 
+        total_score = (ai_score * 0.6) + (stat_score * 0.4)
+        
+        if (i + 1) in last_draw:
+            total_score *= 0.4
             
-    scores = sorted([(i+1, float(predicted_probs[i]) * 100) for i in range(39)], key=lambda x: x[1], reverse=True)
+        final_scores.append((i+1, total_score))
+            
+    scores = sorted(final_scores, key=lambda x: x[1], reverse=True)
     return scores, steps
 
 def extract_history(data_json):
     if isinstance(data_json, dict):
-        return data_json.get("recent50") or data_json.get("history") or data_json.get("data") or []
+        return data_json.get("history") or data_json.get("recent50") or data_json.get("data") or []
     if isinstance(data_json, list): return data_json
     return []
 
 @app.route('/')
 def home():
-    return "✅ 系統運作正常 (輕量化防彈版)"
+    return "✅ 系統運作正常 (AI + 500期大數據 + 6碼精簡版)"
 
 @app.route('/api/predict')
 def predict_539():
@@ -74,8 +85,9 @@ def predict_539():
         
         return jsonify({
             "status": "success", "type": "539", "time_steps": steps,
-            "predicted_numbers": [str(s[0]).zfill(2) for s in scores[:5]],
-            "details": [{"num": str(s[0]).zfill(2), "score": round(s[1], 2)} for s in scores[:5]]
+            # 💡 改為輸出前 6 顆號碼
+            "predicted_numbers": [str(s[0]).zfill(2) for s in scores[:6]],
+            "details": [{"num": str(s[0]).zfill(2), "score": round(s[1], 2)} for s in scores[:6]]
         })
     except Exception as e: return jsonify({"status": "error", "message": str(e)})
 
@@ -99,8 +111,9 @@ def predict_daily():
         
         return jsonify({
             "status": "success", "type": "DAILY", "time_steps": steps,
-            "predicted_numbers": [str(s[0]).zfill(2) for s in scores[:5]],
-            "details": [{"num": str(s[0]).zfill(2), "score": round(s[1], 2)} for s in scores[:5]]
+            # 💡 改為輸出前 6 顆號碼
+            "predicted_numbers": [str(s[0]).zfill(2) for s in scores[:6]],
+            "details": [{"num": str(s[0]).zfill(2), "score": round(s[1], 2)} for s in scores[:6]]
         })
     except Exception as e: return jsonify({"status": "error", "message": str(e)})
 
