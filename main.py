@@ -10,6 +10,10 @@ app = Flask(__name__)
 CORS(app) 
 
 def train_and_predict(data_list, steps=7):
+    # 💡 效能救星：即使抓到了 500 期，AI 只取最近 150 期來訓練，防止 Render 免費主機過熱當機！
+    if len(data_list) > 150:
+        data_list = data_list[-150:]
+
     def to_vector(nums):
         m = np.zeros(39)
         for n in nums: 
@@ -27,8 +31,10 @@ def train_and_predict(data_list, steps=7):
             
     if len(X) == 0: raise Exception("歷史數據不足以訓練")
         
-    model = MLPRegressor(hidden_layer_sizes=(100,), activation='relu', max_iter=500, random_state=42)
+    # 💡 輕量化神經網路結構，加快運算速度
+    model = MLPRegressor(hidden_layer_sizes=(64,), activation='relu', max_iter=200, random_state=42)
     model.fit(np.array(X), np.array(y))
+    
     last_sequence = sequences[-steps:].flatten().reshape(1, -1)
     predicted_probs = model.predict(last_sequence)[0]
     
@@ -63,7 +69,7 @@ def extract_history(data_json):
 
 @app.route('/')
 def home():
-    return "✅ 系統運作正常 (AI + 500期大數據 + 6碼精簡版)"
+    return "✅ 系統運作正常 (AI 輕量化引擎 + 6碼版)"
 
 @app.route('/api/predict')
 def predict_539():
@@ -85,7 +91,6 @@ def predict_539():
         
         return jsonify({
             "status": "success", "type": "539", "time_steps": steps,
-            # 💡 改為輸出前 6 顆號碼
             "predicted_numbers": [str(s[0]).zfill(2) for s in scores[:6]],
             "details": [{"num": str(s[0]).zfill(2), "score": round(s[1], 2)} for s in scores[:6]]
         })
@@ -111,7 +116,6 @@ def predict_daily():
         
         return jsonify({
             "status": "success", "type": "DAILY", "time_steps": steps,
-            # 💡 改為輸出前 6 顆號碼
             "predicted_numbers": [str(s[0]).zfill(2) for s in scores[:6]],
             "details": [{"num": str(s[0]).zfill(2), "score": round(s[1], 2)} for s in scores[:6]]
         })
