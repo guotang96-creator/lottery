@@ -1,135 +1,63 @@
-const fs = require("fs");
-const path = require("path");
+const fs = require('fs');
+const path = require('path');
 
-const ROOT = process.cwd();
+async function fetch539Data() {
+    try {
+        // 💡 升級1：動態取得「當前年份」，徹底解除跨年當機的未爆彈
+        const now = new Date();
+        // 加上 8 小時轉換為台灣時間 (UTC+8)，避免跨年交界那一晚產生時差 Bug
+        now.setHours(now.getHours() + 8);
+        const currentYear = now.getFullYear();
+        
+        console.log(`🌐 準備抓取 ${currentYear} 年度 539 官方開獎資料...`);
 
-const OUTPUT_CANDIDATES = [
-  path.join(ROOT, "latest.json"),
-  path.join(ROOT, "docs", "latest.json")
-];
+        // 💡 升級2：網址動態帶入 currentYear
+        const url = `https://api.taiwanlottery.com/TLCAPIWEB/Lottery/Daily539Result?period&month=${currentYear}-01&endMonth=${currentYear}-12&pageNum=1&pageSize=500`;
+        
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`API 請求失敗，狀態碼: ${response.status}`);
+        
+        const data = await response.json();
+        
+        if (!data.content || !data.content.daily539Res) {
+            throw new Error("台灣彩券 API 回傳格式異常或無資料");
+        }
 
-function ensureDir(dirPath) {
-  fs.mkdirSync(dirPath, { recursive: true });
-}
+        const rawData = data.content.daily539Res;
+        
+        // 整理資料格式
+        const history = rawData.map(item => ({
+            period: item.period,
+            lotteryDate: item.lotteryDate.split('T')[0], // 裁切時間，只保留 YYYY-MM-DD
+            drawNumberSize: item.drawNumberSize
+        }));
 
-function writeJson(filePath, data) {
-  ensureDir(path.dirname(filePath));
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
-  console.log(`✅ 已寫入 ${filePath}`);
-}
+        // 確保依照期數由大到小排序 (最新期數排在最上面)
+        history.sort((a, b) => parseInt(b.period) - parseInt(a.period));
 
-function pad2(n) {
-  return String(n).padStart(2, "0");
-}
+        // 💡 升級3：產生完美的台灣時間 updatedAt，讓前端顯示不會錯亂
+        const taiwanTime = new Date(new Date().getTime() + 8 * 60 * 60 * 1000);
 
-function getTaiwanDateTime() {
-  const now = new Date();
-  const taiwan = new Date(now.getTime() + 8 * 60 * 60 * 1000);
+        const output = {
+            daily_latest: history[0], // 最新一期 (統一名稱，與天天樂對齊)
+            history: history.slice(0, 500), // 精準擷取近 500 期給 AI 當大數據庫
+            updatedAt: taiwanTime.toISOString()
+        };
 
-  const y = taiwan.getUTCFullYear();
-  const m = pad2(taiwan.getUTCMonth() + 1);
-  const d = pad2(taiwan.getUTCDate());
-  const hh = pad2(taiwan.getUTCHours());
-  const mm = pad2(taiwan.getUTCMinutes());
-  const ss = pad2(taiwan.getUTCSeconds());
+        // 寫入主要的 latest.json
+        fs.writeFileSync('latest.json', JSON.stringify(output, null, 2), 'utf8');
+        console.log(`✅ 539 資料更新成功！共寫入 ${output.history.length} 期。最後更新時間(台灣): ${taiwanTime.toISOString()}`);
 
-  return `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
-}
+        // 防呆機制：如果專案裡有 docs 資料夾，也順便寫一份進去
+        if (fs.existsSync('docs')) {
+            fs.writeFileSync(path.join('docs', 'latest.json'), JSON.stringify(output, null, 2), 'utf8');
+            console.log(`✅ docs/latest.json 備用檔案同步更新成功！`);
+        }
 
-function normalizeDateOnly(value) {
-  if (!value) return "";
-  const text = String(value).replace("T00:00:00", "").replace("T", " ");
-  return text.slice(0, 10);
-}
-
-function uniqueSorted(nums) {
-  return [...new Set(nums)].sort((a, b) => a - b);
-}
-
-function normalizeRow(item) {
-  const period = item?.period ? String(item.period) : "";
-  const date = normalizeDateOnly(item?.lotteryDate || item?.drawDate || item?.date || "");
-  const numbers = Array.isArray(item?.drawNumberSize)
-    ? item.drawNumberSize
-        .map(Number)
-        .filter((n) => Number.isFinite(n) && n >= 1 && n <= 39)
-    : [];
-
-  if (!period || numbers.length < 5) return null;
-
-  return {
-    period,
-    date,
-    numbers: uniqueSorted(numbers.slice(0, 5))
-  };
-}
-
-async function fetchJson(url) {
-  const res = await fetch(url, {
-    method: "GET",
-    headers: {
-      Accept: "application/json"
+    } catch (error) {
+        console.error("💥 抓取 539 資料時發生嚴重錯誤:", error);
+        process.exit(1); // 讓 GitHub Actions 知道這次任務失敗
     }
-  });
-
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status}`);
-  }
-
-  return await res.json();
 }
 
-function sortRowsDesc(rows) {
-  return [...rows].sort((a, b) => Number(b.period) - Number(a.period));
-}
-
-async function main() {
-  const now = new Date();
-  const year = now.getFullYear();
-
-  // 💡 升級點 1：將搜尋範圍擴大到「去年到今年」，並把 pageSize 放大到 1000，確保能吃下 500 期
-  const apiUrl =
-    `https://api.taiwanlottery.com/TLCAPIWeB/Lottery/Daily539Result?period&month=${year-1}-01&endMonth=${year}-12&pageNum=1&pageSize=1000`;
-
-  console.log("🚀 開始抓取今彩539官方資料 (500期大數據模式)...");
-  console.log(`📡 API: ${apiUrl}`);
-
-  const raw = await fetchJson(apiUrl);
-
-  if (raw?.rtCode !== 0) {
-    throw new Error(`官方 API rtCode 異常: ${raw?.rtCode}`);
-  }
-
-  const list = Array.isArray(raw?.content?.daily539Res) ? raw.content.daily539Res : [];
-  if (!list.length) {
-    throw new Error("官方 API 沒有 daily539Res 資料");
-  }
-
-  const normalizedRows = list.map(normalizeRow).filter(Boolean);
-  if (!normalizedRows.length) {
-    throw new Error("資料正規化後為空");
-  }
-
-  const sorted = sortRowsDesc(normalizedRows);
-  const latest = sorted[0];
-
-  const output = {
-    period: latest.period,
-    date: latest.date,
-    numbers: latest.numbers,
-    recent5: sorted.slice(0, 5),
-    // 💡 升級點 2：解開 50 期的枷鎖，正式升級為 history 500 期
-    history: sorted.slice(0, 500), 
-    updatedAt: getTaiwanDateTime(),
-    source: "official-api"
-  };
-
-  OUTPUT_CANDIDATES.forEach((filePath) => writeJson(filePath, output));
-
-  console.log(`🎉 latest.json 產生完成！共成功寫入 ${output.history.length} 筆歷史資料。`);
-}
-
-main().catch((err) => {
-  console.error("❌ 抓取失敗:", err);
-  process.exit(1);
-});
+fetch539Data();
