@@ -2,11 +2,9 @@ import requests
 from bs4 import BeautifulSoup
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 
 def crawl_daily_39():
-    # 💡 已經幫您換成左邊螢幕的「速彩開獎」加州天天樂網址！
-    # ⚠️ 請將這行引號內的網址，換成您左邊瀏覽器實際最完整的網址
     url = "https://sc888.net/index.php?s=/LotteryFan/index" 
     
     try:
@@ -30,7 +28,7 @@ def crawl_daily_39():
 
         for row in rows:
             tds = row.find_all('td')
-            # 根據您左邊的螢幕：期數與時間在第一格(tds[0])，號碼在第二格(tds[1])
+            # 根據速彩開獎：期數與時間在第一格(tds[0])，號碼在第二格(tds[1])
             if len(tds) >= 2:
                 col1 = tds[0].get_text(separator=' ', strip=True)
                 col2 = tds[1].get_text(separator=' ', strip=True)
@@ -68,17 +66,20 @@ def crawl_daily_39():
             print("❌ 解析失敗，請確認網址是否正確，或網站結構是否改變。")
             return
 
+        # 💡 強制轉換為台灣時間 (UTC+8)
+        taiwan_time = datetime.utcnow() + timedelta(hours=8)
+
         # 整理輸出 JSON (抓好抓滿最高 500 期)
         output = {
             "daily_latest": unique_data[0],
             "history": unique_data[:500],
-            "updatedAt": datetime.now().isoformat()
+            "updatedAt": taiwan_time.isoformat()
         }
 
         with open('daily.json', 'w', encoding='utf-8') as f:
             json.dump(output, f, ensure_ascii=False, indent=2)
         
-        print(f"✅ 天天樂自動更新成功！共抓取 {len(output['history'])} 期歷史大數據。")
+        print(f"✅ 天天樂自動更新成功！共抓取 {len(output['history'])} 期。最後更新時間(台灣): {taiwan_time.strftime('%Y-%m-%d %H:%M:%S')}")
 
     except Exception as e:
         print(f"💥 發生錯誤: {str(e)}")
