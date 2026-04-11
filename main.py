@@ -4,44 +4,57 @@ import requests
 import time
 import os 
 import traceback
+import random
 
 app = Flask(__name__)
 CORS(app) 
 
-def fast_statistical_predict(data_list):
-    # 🚀 超光速矩陣引擎：不使用 sklearn，記憶體佔用極低，保證 100% 不當機！
+def dynamic_trend_predict(data_list):
     if len(data_list) > 150:
         data_list = data_list[-150:]
         
     scores = {i: 0.0 for i in range(1, 40)}
     
-    # 1. 長期趨勢權重 (Long-term Frequency)
-    for draw in data_list:
+    # 1. 基礎熱度：只看近 30 期 (讓大腦專注於「最近」的趨勢，不被遠古數據綁架)
+    recent_30 = data_list[-30:]
+    for draw in recent_30:
         for n in draw:
             if str(n).isdigit() and 1 <= int(n) <= 39:
-                scores[int(n)] += 1.0
+                scores[int(n)] += 1.5
                 
-    # 將長期分數標準化到 0~40 分
-    max_freq = max(scores.values()) if scores.values() else 1
-    for i in scores:
-        scores[i] = (scores[i] / max_freq) * 40.0
-        
-    # 2. 短期爆發力與動能 (Short-term Momentum)
-    # 越近期的開獎號碼，給予越高的加權分數
-    recent_10 = data_list[-10:]
-    for idx, draw in enumerate(recent_10):
-        weight = (idx + 1) * 1.5  # 越近期的權重越高
+    # 2. 超短期爆發力：近 5 期給予極高權重 (抓短線強勢號碼)
+    recent_5 = data_list[-5:]
+    for idx, draw in enumerate(recent_5):
+        weight = (idx + 1) * 3.0  
         for n in draw:
             if str(n).isdigit() and 1 <= int(n) <= 39:
                 scores[int(n)] += weight
                 
-    # 3. 防連莊與極端值懲罰 (Anti-Repeat Penalty)
+    # 3. 尋找「冷門反彈號」：計算已經幾期沒開了
+    last_seen = {i: 50 for i in range(1, 40)}
+    for idx, draw in enumerate(reversed(data_list[-50:])):
+        for n in draw:
+            if str(n).isdigit() and 1 <= int(n) <= 39:
+                if last_seen[int(n)] == 50:
+                    last_seen[int(n)] = idx # 記錄距離現在幾期沒開
+
+    for i in range(1, 40):
+        # 如果超過 8 期沒開，開始給予反彈加分，越久沒開加越多
+        if last_seen[i] >= 8:
+            scores[i] += (last_seen[i] * 0.8) 
+            
+    # 4. 防連莊極端懲罰
     last_draw = [int(n) for n in data_list[-1] if str(n).isdigit()]
     for n in last_draw:
         if n in scores:
-            scores[n] *= 0.3  # 上一期剛開過的號碼，總分直接打 3 折強迫避開
+            scores[n] *= 0.1  # 剛開過的號碼，總分直接打 1 折強迫避開
             
-    # 排序並輸出結果
+    # 5. 每日活性因子：加入微小波動，讓分數相近的號碼每天洗牌
+    random.seed(int(time.time() / 86400)) # 以今天的日期作為種子
+    for i in scores:
+        scores[i] += random.uniform(0, 5.0)
+        
+    # 排序並輸出
     sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)
     return sorted_scores, len(data_list)
 
@@ -53,7 +66,7 @@ def extract_history(data_json):
 
 @app.route('/')
 def home():
-    return "✅ 系統運作正常 (超光速矩陣引擎 V6 - 絕對防當機版)"
+    return "✅ 系統運作正常 (高動態 AI 引擎 V7 - 徹底解決霸榜問題)"
 
 @app.route('/api/predict')
 def predict_539():
@@ -70,8 +83,8 @@ def predict_539():
                     
         if len(data) < 2: raise Exception("歷史期數不足")
             
-        data = data[::-1] # 反轉為時間正序
-        scores, steps = fast_statistical_predict(data)
+        data = data[::-1]
+        scores, steps = dynamic_trend_predict(data)
         
         return jsonify({
             "status": "success", "type": "539", "time_steps": steps,
@@ -98,7 +111,7 @@ def predict_daily():
         if len(data) < 2: raise Exception("歷史期數不足")
             
         data = data[::-1]
-        scores, steps = fast_statistical_predict(data)
+        scores, steps = dynamic_trend_predict(data)
         
         return jsonify({
             "status": "success", "type": "DAILY", "time_steps": steps,
