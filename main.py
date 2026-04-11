@@ -4,59 +4,89 @@ import requests
 import time
 import os 
 import traceback
-import random
+import math
 
 app = Flask(__name__)
 CORS(app) 
 
-def dynamic_trend_predict(data_list):
-    if len(data_list) > 150:
-        data_list = data_list[-150:]
+def advanced_quantitative_predict(data_list):
+    # 確保資料量足夠進行深度運算，最多取近 500 期
+    if len(data_list) > 500:
+        data_list = data_list[-500:]
         
     scores = {i: 0.0 for i in range(1, 40)}
+    total_draws = len(data_list)
     
-    # 1. 基礎熱度：只看近 30 期 (讓大腦專注於「最近」的趨勢，不被遠古數據綁架)
-    recent_30 = data_list[-30:]
-    for draw in recent_30:
-        for n in draw:
-            if str(n).isdigit() and 1 <= int(n) <= 39:
-                scores[int(n)] += 1.5
-                
-    # 2. 超短期爆發力：近 5 期給予極高權重 (抓短線強勢號碼)
-    recent_5 = data_list[-5:]
-    for idx, draw in enumerate(recent_5):
-        weight = (idx + 1) * 3.0  
+    if total_draws < 10:
+        return sorted(scores.items(), key=lambda x: x[1], reverse=True), total_draws
+
+    # ==========================================
+    # 核心 1：EMA 指數移動平均 (捕捉短期極強動能)
+    # ==========================================
+    # alpha 值設定衰減率，越近的期數權重越高
+    alpha = 0.12 
+    for idx, draw in enumerate(data_list):
+        # 計算時間衰減權重 (最近一期為最大值，往過去呈指數遞減)
+        weight = math.exp(alpha * (idx - total_draws)) * 100 
         for n in draw:
             if str(n).isdigit() and 1 <= int(n) <= 39:
                 scores[int(n)] += weight
-                
-    # 3. 尋找「冷門反彈號」：計算已經幾期沒開了
-    last_seen = {i: 50 for i in range(1, 40)}
-    for idx, draw in enumerate(reversed(data_list[-50:])):
+
+    # ==========================================
+    # 核心 2：馬可夫鏈 (Markov Chain) 拖牌矩陣計算
+    # ==========================================
+    # 取得最新一期開出的號碼作為「當前狀態」
+    last_draw = [int(n) for n in data_list[-1] if str(n).isdigit()]
+    markov_scores = {i: 0.0 for i in range(1, 40)}
+    
+    # 掃描歷史，尋找這 5 顆球過去開出後，下一期跟著開什麼
+    for i in range(total_draws - 1):
+        current_draw = [int(n) for n in data_list[i] if str(n).isdigit()]
+        next_draw = [int(n) for n in data_list[i+1] if str(n).isdigit()]
+        
+        # 尋找交集：如果歷史上的這一期，有包含我們昨天開出的號碼
+        matches = set(last_draw).intersection(set(current_draw))
+        if matches:
+            # 根據重合的球數給予權重，重合越多，跟牌參考價值越高
+            match_weight = len(matches) * 2.5
+            for nxt in next_draw:
+                if 1 <= nxt <= 39:
+                    markov_scores[nxt] += match_weight
+                    
+    # 將馬可夫拖牌分數正規化並疊加到總分
+    for i in range(1, 40):
+        scores[i] += markov_scores[i]
+
+    # ==========================================
+    # 核心 3：極端偏差回歸 (Mean Reversion)
+    # ==========================================
+    # 計算每個號碼已經幾期沒開了
+    gaps = {i: total_draws for i in range(1, 40)}
+    for idx, draw in enumerate(reversed(data_list)):
         for n in draw:
             if str(n).isdigit() and 1 <= int(n) <= 39:
-                if last_seen[int(n)] == 50:
-                    last_seen[int(n)] = idx # 記錄距離現在幾期沒開
-
+                if gaps[int(n)] == total_draws:
+                    gaps[int(n)] = idx # 距離現在幾期
+                    
+    # 理論上 539 每個號碼平均約 8 期會開出一次
+    # 如果超過 15 期沒開，開始給予指數級的反彈分數補償
     for i in range(1, 40):
-        # 如果超過 8 期沒開，開始給予反彈加分，越久沒開加越多
-        if last_seen[i] >= 8:
-            scores[i] += (last_seen[i] * 0.8) 
-            
-    # 4. 防連莊極端懲罰
-    last_draw = [int(n) for n in data_list[-1] if str(n).isdigit()]
+        if gaps[i] > 15:
+            # 距離越遠，反彈力道呈非線性放大
+            reversion_force = math.pow((gaps[i] - 15), 1.5) * 0.5
+            scores[i] += reversion_force
+
+    # ==========================================
+    # 核心 4：防連莊懲罰因子 (避免絕對霸榜)
+    # ==========================================
+    # 雖然連莊有可能，但在機率上連續出現會大幅壓低期望值
     for n in last_draw:
         if n in scores:
-            scores[n] *= 0.1  # 剛開過的號碼，總分直接打 1 折強迫避開
-            
-    # 5. 每日活性因子：加入微小波動，讓分數相近的號碼每天洗牌
-    random.seed(int(time.time() / 86400)) # 以今天的日期作為種子
-    for i in scores:
-        scores[i] += random.uniform(0, 5.0)
-        
-    # 排序並輸出
+            scores[n] *= 0.15 # 將剛開過的號碼權重強力壓縮
+
+    # 進行最終排序，取分數最高者
     sorted_scores = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-    return sorted_scores, len(data_list)
+    return sorted_scores, total_draws
 
 def extract_history(data_json):
     if isinstance(data_json, dict):
@@ -66,7 +96,7 @@ def extract_history(data_json):
 
 @app.route('/')
 def home():
-    return "✅ 系統運作正常 (高動態 AI 引擎 V7 - 徹底解決霸榜問題)"
+    return "✅ 系統運作正常 (V8 終極量化數學引擎 - EMA/Markov/Reversion 啟動中)"
 
 @app.route('/api/predict')
 def predict_539():
@@ -84,7 +114,7 @@ def predict_539():
         if len(data) < 2: raise Exception("歷史期數不足")
             
         data = data[::-1]
-        scores, steps = dynamic_trend_predict(data)
+        scores, steps = advanced_quantitative_predict(data)
         
         return jsonify({
             "status": "success", "type": "539", "time_steps": steps,
@@ -111,7 +141,7 @@ def predict_daily():
         if len(data) < 2: raise Exception("歷史期數不足")
             
         data = data[::-1]
-        scores, steps = dynamic_trend_predict(data)
+        scores, steps = advanced_quantitative_predict(data)
         
         return jsonify({
             "status": "success", "type": "DAILY", "time_steps": steps,
