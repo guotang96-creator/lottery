@@ -7,7 +7,7 @@ body {
     margin: 0;
     background-color: #0f1123;
     color: #ffffff;
-    padding-bottom: 80px; /* 避免底部導覽遮擋內容 */
+    padding-bottom: 80px; 
 }
 
 header { text-align: center; padding: 20px 15px; }
