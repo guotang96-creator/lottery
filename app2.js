@@ -1,5 +1,6 @@
 let hftTimerInterval = null;
-const API_BASE_URL = 'https://empty-python-project--guotang96.replit.app';
+// 換回 Render 的網址！
+const API_BASE_URL = 'https://lottery-k099.onrender.com';
 // ==========================================
 // 🏆 抓取並顯示當期開獎結果 (包含真實期數顯示)
 // ==========================================
