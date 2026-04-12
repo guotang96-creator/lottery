@@ -5,7 +5,6 @@ import threading
 import datetime
 import time
 import os 
-import traceback
 import math
 import json 
 
@@ -13,7 +12,7 @@ app = Flask(__name__)
 CORS(app) 
 
 # =====================================================================
-# 🌟 【第一部分：539 / 天天樂 V9 貝氏動態引擎】 (保持不變)
+# 🌟 【第一部分：539 / 天天樂 V9 貝氏動態引擎】
 # =====================================================================
 def calc_ema(data_list, total_draws):
     scores = {i: 0.0 for i in range(1, 40)}
@@ -67,8 +66,7 @@ def calc_fourier(data_list, total_draws):
             if power > max_power:
                 max_power = power
                 best_period = period
-        expected_phase = signal_length % best_period
-        if expected_phase == 0 and max_power > 3.0: scores[num] = max_power * 5.0
+        if signal_length % best_period == 0 and max_power > 3.0: scores[num] = max_power * 5.0
     return scores
 
 def bayesian_ensemble_predict(data_list):
@@ -110,12 +108,12 @@ def extract_history(data_json):
     return []
 
 # =====================================================================
-# ⚡ 【第二部分：台灣賓果 V10 高頻量化引擎 (嚴格實彈)】 ⚡
+# ⚡ 【第二部分：台灣賓果 V10 高頻量化引擎 (嚴格實彈)】
 # =====================================================================
 BINGO_CACHE = {
     "history": [], 
     "last_update": None,
-    "latest_period": None, # 新增：鎖定最新期數
+    "latest_period": None,
     "weights": {'ema': 1.0, 'markov': 1.0, 'co_occurrence': 1.0, 'fourier': 1.0}
 }
 
@@ -192,17 +190,12 @@ def bayesian_ensemble_bingo():
 
     return sorted(final_scores.items(), key=lambda x: x[1], reverse=True), total_draws
 
-# =====================================================================
-# 🩸 嚴格實彈心臟：徹底捨棄假資料，只依賴真實期數更新
-# =====================================================================
 def bingo_heartbeat():
-    print("🎯 [系統] 進入嚴格實彈模式：只等待真實期數，絕不使用模擬數據！")
-    
+    print("🎯 [系統] 進入嚴格實彈模式：多重跳板尋找真實期數...")
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
         "Accept": "application/json"
     }
-    
     target_url = "https://api.taiwanlottery.com/TLCAPIWeB/Lottery/BingoResult?limit=50"
     routes = [
         target_url,
@@ -231,7 +224,6 @@ def bingo_heartbeat():
 
                             if isinstance(data, dict) and "content" in data:
                                 results = data["content"].get("bingoResults", [])
-                                # 確保按照期數由舊到新排序 (很重要，這樣最後一個才是最新一期)
                                 results = sorted(results, key=lambda x: int(x.get("period", 0)) if str(x.get("period", 0)).isdigit() else 0)
                                 
                                 for item in results:
@@ -241,11 +233,9 @@ def bingo_heartbeat():
                                         latest_period = str(item.get("period", ""))
                                         latest_time = str(item.get("drawDate", current_time_str))
 
-                            # 嚴格判斷：只有當「有資料」且「期數有更新」或是「初次載入」時，才寫入資料庫
                             if real_draws and (not BINGO_CACHE["history"] or BINGO_CACHE["latest_period"] != latest_period):
-                                BINGO_CACHE["history"] = real_draws[-500:] # 保留近500期
+                                BINGO_CACHE["history"] = real_draws[-500:] 
                                 BINGO_CACHE["latest_period"] = latest_period
-                                # 格式化時間去掉 T
                                 BINGO_CACHE["last_update"] = latest_time.replace('T', ' ')[:19]
                                 print(f"🔥 [實彈命中] 成功載入真實賓果！最新期數: {latest_period}")
                                 success = True
@@ -253,13 +243,9 @@ def bingo_heartbeat():
                         pass 
 
                 if not success:
-                    print(f"⏳ [{current_time_str}] 尚未取得最新期數或連線受阻，等待下次開獎...")
-            else:
-                pass
+                    print(f"⏳ [{current_time_str}] 等待官方發布最新期數...")
         except Exception as e:
             pass
-        
-        # 改為每 30 秒查一次，更快捕捉到最新期數
         time.sleep(30)
 
 # =====================================================================
@@ -308,12 +294,7 @@ def predict_bingo():
 def latest_bingo():
     try:
         if not BINGO_CACHE["history"]: return jsonify({"status": "waiting"})
-        return jsonify({
-            "status": "success", 
-            "numbers": BINGO_CACHE["history"][-1], 
-            "period": BINGO_CACHE["latest_period"], # 把期數傳給前端
-            "time": BINGO_CACHE["last_update"]
-        })
+        return jsonify({"status": "success", "numbers": BINGO_CACHE["history"][-1], "period": BINGO_CACHE["latest_period"], "time": BINGO_CACHE["last_update"]})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
@@ -321,5 +302,6 @@ heartbeat_thread = threading.Thread(target=bingo_heartbeat, daemon=True)
 heartbeat_thread.start()
 
 if __name__ == '__main__':
+    # 改回 Render 的預設 Port
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
