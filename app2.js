@@ -1,6 +1,55 @@
 let hftTimerInterval = null;
 
-// 切換彩券模式
+// ==========================================
+// 🏆 抓取並顯示當期開獎結果 (上方卡片)
+// ==========================================
+async function fetchLatestResult(type) {
+    const card = document.getElementById('latest-result-card');
+    const titleType = document.getElementById('latest-title-type');
+    const issueSpan = document.getElementById('latest-issue');
+    const dateSpan = document.getElementById('latest-date');
+    const ballsContainer = document.getElementById('latest-balls');
+
+    // ⚡ 如果是高頻賓果，隱藏上方卡片讓畫面保持簡潔戰鬥感
+    if (type === 'bingo') {
+        card.style.display = 'none';
+        return;
+    } else {
+        card.style.display = 'block';
+    }
+
+    titleType.textContent = type === '539' ? '今彩 539' : '加州天天樂';
+    ballsContainer.innerHTML = '<div style="color: #888; font-size: 14px; text-align: center;">資料同步中...</div>';
+
+    try {
+        const url = type === '539' 
+            ? `https://guotang96-creator.github.io/lottery/latest.json?t=${new Date().getTime()}` 
+            : `https://guotang96-creator.github.io/lottery/daily.json?t=${new Date().getTime()}`;
+            
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        let latestDraw = null;
+        if (data.history && data.history.length > 0) latestDraw = data.history[0];
+        else if (data.recent50 && data.recent50.length > 0) latestDraw = data.recent50[0];
+        else if (Array.isArray(data) && data.length > 0) latestDraw = data[0];
+
+        if (latestDraw) {
+            issueSpan.textContent = latestDraw.issue || latestDraw.period || '最新一期';
+            dateSpan.textContent = latestDraw.date || '';
+            const nums = latestDraw.drawNumberSize || latestDraw.numbers || [];
+            ballsContainer.innerHTML = nums.map(n => `<div class="ball">${String(n).padStart(2, '0')}</div>`).join('');
+        } else {
+            ballsContainer.innerHTML = '<div style="color: #ff3b30;">找不到最新開獎資料</div>';
+        }
+    } catch (error) {
+        ballsContainer.innerHTML = `<div style="color: #ff3b30;">無法連線至開獎資料庫</div>`;
+    }
+}
+
+// ==========================================
+// 🎮 切換彩券模式
+// ==========================================
 function switchTab(type) {
     // 1. 重置所有按鈕樣式
     document.getElementById('btn-539').className = 'secondary-btn';
@@ -19,9 +68,11 @@ function switchTab(type) {
     // 3. 根據選擇啟動對應功能
     if (type === '539') {
         document.getElementById('btn-539').className = 'primary-btn active';
-        fetchRegularPrediction('539');
+        fetchLatestResult('539'); // 更新上方開獎
+        fetchRegularPrediction('539'); // 更新下方預測
     } else if (type === 'ttl') {
         document.getElementById('btn-ttl').className = 'primary-btn active';
+        fetchLatestResult('ttl');
         fetchRegularPrediction('ttl');
     } else if (type === 'bingo') {
         // 啟動高頻戰鬥模式
@@ -31,14 +82,17 @@ function switchTab(type) {
         
         timerContainer.classList.remove('hidden');
         startHFTTimer();
+        fetchLatestResult('bingo'); // 隱藏上方卡片
         fetchBingoPrediction();
     }
 }
 
+// ==========================================
 // 📡 抓取一般彩券預測 (539 / 天天樂)
+// ==========================================
 async function fetchRegularPrediction(type) {
     const resultBox = document.getElementById('result-box');
-    resultBox.innerHTML = `<div style="text-align:center; padding: 20px; color: #8a8db9;">AI 矩陣運算中...</div>`;
+    resultBox.innerHTML = `<div style="text-align:center; padding: 20px; color: #8a8db9;">V9 貝氏矩陣運算中...</div>`;
     
     try {
         const url = type === '539' ? 'https://lottery-k099.onrender.com/api/predict' : 'https://lottery-k099.onrender.com/api/predict_daily';
@@ -60,14 +114,16 @@ async function fetchRegularPrediction(type) {
 
             resultBox.innerHTML = ballsHtml + detailsHtml;
         } else {
-            resultBox.innerHTML = `<div style="color: #ff3b30; text-align:center;">API 尚未就緒</div>`;
+            resultBox.innerHTML = `<div style="color: #ff3b30; text-align:center;">API 尚未就緒 (${data.message || ''})</div>`;
         }
     } catch (error) {
         resultBox.innerHTML = `<div style="color: #ff3b30; text-align:center;">伺服器連線異常，請確認 Render 已啟動</div>`;
     }
 }
 
+// ==========================================
 // ⏱️ 啟動高頻倒數計時器
+// ==========================================
 function startHFTTimer() {
     const timerDisplay = document.getElementById('hft-timer');
     
@@ -76,7 +132,6 @@ function startHFTTimer() {
         const minutes = now.getMinutes();
         const seconds = now.getSeconds();
         
-        // 算出距離下一個 5 分鐘整點的時間
         const minutesLeft = 4 - (minutes % 5);
         const secondsLeft = 59 - seconds;
         
@@ -84,7 +139,6 @@ function startHFTTimer() {
         const displaySec = String(secondsLeft).padStart(2, '0');
         timerDisplay.textContent = `${displayMin}:${displaySec}`;
         
-        // 倒數歸零時，重新抓取資料！
         if (minutesLeft === 0 && secondsLeft === 0) {
             timerDisplay.textContent = "資料更新中";
             setTimeout(fetchBingoPrediction, 2000); 
@@ -92,7 +146,9 @@ function startHFTTimer() {
     }, 1000);
 }
 
+// ==========================================
 // 🔥 抓取 V10 高頻賓果預測
+// ==========================================
 async function fetchBingoPrediction() {
     const resultBox = document.getElementById('result-box');
     resultBox.innerHTML = `<div style="text-align:center; padding: 30px;"><span class="pulse-dot"></span> <span style="color:#ff3b30;">V10 引擎算力全開吞吐中...</span></div>`;
