@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>彩券 AI 數據分析中心 V5.3</title>
-    <link rel="stylesheet" href="style.css?v=100">
+    <link rel="stylesheet" href="style.css?v=102">
 </head>
 <body>
     <header>
@@ -14,8 +14,22 @@
     </header>
 
     <main id="page-home" class="page active">
+        
+        <section class="card" id="latest-result-card">
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #2a2d52; padding-bottom: 10px; margin-bottom: 15px;">
+                <h2 style="margin: 0; border: none; padding: 0;">🏆 開獎結果 <span id="latest-title-type" style="color: #2f65ff; font-size: 14px; margin-left: 5px;">今彩 539</span></h2>
+                <div style="text-align: right; font-size: 12px; color: #8a8db9;">
+                    期數: <span id="latest-issue">載入中...</span><br>
+                    <span id="latest-date"></span>
+                </div>
+            </div>
+            <div class="ball-container" id="latest-balls" style="margin-top: 10px;">
+                <div style="color: #888; font-size: 14px; text-align: center;">資料同步中...</div>
+            </div>
+        </section>
+
         <section class="card">
-            <h2>🏆 智能選號建議</h2>
+            <h2>🤖 智能選號建議</h2>
             
             <div class="tab-buttons">
                 <button class="primary-btn active" id="btn-539" onclick="switchTab('539')">今彩 539</button>
@@ -43,6 +57,6 @@
         <button class="nav-item">工具</button>
     </nav>
 
-    <script src="app2.js?v=100"></script>
+    <script src="app2.js?v=102"></script>
 </body>
 </html>
