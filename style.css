@@ -43,12 +43,16 @@ button { cursor: pointer; border: none; outline: none; border-radius: 8px; font-
 .secondary-btn { background: transparent; color: #8a8db9; border: 1px solid #2a2d52; flex: 1; min-width: 90px; }
 .hidden { display: none !important; }
 
-/* 🔴 關鍵修復：加上 flex-wrap: wrap 讓賓果 20 顆球自動換行 */
+/* ==========================================
+   UI 核心排版：支援 20 顆球自動換行 (flex-wrap)
+========================================== */
 .ball-container { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 15px 0; }
 
 .ball { width: 45px; height: 45px; background: #2f65ff; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; box-shadow: 0 4px 10px rgba(47, 101, 255, 0.4);}
 
-/* V10 賓果高頻專屬特效 */
+/* ==========================================
+   ⚡ V10 賓果高頻專屬特效
+========================================== */
 #hft-timer-container {
     text-align: center; margin-bottom: 20px; 
     background: rgba(255,59,48,0.1); border: 1px solid rgba(255,59,48,0.3); 
