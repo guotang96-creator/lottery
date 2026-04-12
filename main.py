@@ -12,7 +12,7 @@ app = Flask(__name__)
 CORS(app) 
 
 # =====================================================================
-# 🌟 【第一部分：539 / 天天樂 V9 貝氏動態引擎】
+# 🌟 【第一部分：539 / 天天樂 V9 貝氏動態引擎】 
 # =====================================================================
 def calc_ema(data_list, total_draws):
     scores = {i: 0.0 for i in range(1, 40)}
@@ -71,7 +71,9 @@ def calc_fourier(data_list, total_draws):
 
 def bayesian_ensemble_predict(data_list):
     total_draws = len(data_list)
-    if total_draws < 50: return [(i, 1.0) for i in range(1, 40)], total_draws
+    # 👇 修復 1：把原本的 50 降為 5，再也不會印出 1,2,3,4,5 智障號碼了！
+    if total_draws < 5: return [(i, 1.0) for i in range(1, 40)], total_draws
+    
     weights = {'ema': 1.0, 'markov': 1.0, 'reversion': 1.0, 'fourier': 1.0}
     train_data = data_list[:-1]
     actual_last_draw = [int(n) for n in data_list[-1] if str(n).isdigit()]
@@ -108,7 +110,7 @@ def extract_history(data_json):
     return []
 
 # =====================================================================
-# ⚡ 【第二部分：台灣賓果 V10 高頻量化引擎 (嚴格實彈)】
+# ⚡ 【第二部分：台灣賓果 V10 高頻引擎 (嚴格實彈)】 
 # =====================================================================
 BINGO_CACHE = {
     "history": [], 
@@ -191,16 +193,18 @@ def bayesian_ensemble_bingo():
     return sorted(final_scores.items(), key=lambda x: x[1], reverse=True), total_draws
 
 def bingo_heartbeat():
-    print("🎯 [系統] 進入嚴格實彈模式：多重跳板尋找真實期數...")
+    print("🎯 [系統] 進入嚴格實彈模式：啟用強化跳板...")
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
         "Accept": "application/json"
     }
     target_url = "https://api.taiwanlottery.com/TLCAPIWeB/Lottery/BingoResult?limit=50"
+    
+    # 👇 修復 2：更換最強跳板 CodeTabs 為主攻，並移除無效跳板
     routes = [
-        target_url,
-        f"https://api.allorigins.win/raw?url={target_url}",
-        f"https://corsproxy.io/?{target_url}"
+        f"https://api.codetabs.com/v1/proxy?quest={target_url}",
+        f"https://api.allorigins.win/get?url={target_url}",
+        target_url
     ]
 
     while True:
@@ -213,10 +217,15 @@ def bingo_heartbeat():
                 for route in routes:
                     if success: break
                     try:
-                        res = requests.get(route, headers=headers, timeout=10)
+                        # 👇 增加 Timeout 到 15 秒，避免跳板抓一半斷線
+                        res = requests.get(route, headers=headers, timeout=15)
                         if res.status_code == 200:
                             data = res.json()
-                            if "contents" in data: data = json.loads(data["contents"])
+                            if "contents" in data and isinstance(data["contents"], str): 
+                                try:
+                                    data = json.loads(data["contents"])
+                                except:
+                                    pass
                                 
                             real_draws = []
                             latest_period = ""
@@ -253,7 +262,7 @@ def bingo_heartbeat():
 # =====================================================================
 @app.route('/')
 def home():
-    return "✅ 系統運作正常 (嚴格實彈模式)"
+    return "✅ 系統運作正常 (嚴格實彈強化版)"
 
 @app.route('/api/predict')
 def predict_539():
@@ -302,6 +311,5 @@ heartbeat_thread = threading.Thread(target=bingo_heartbeat, daemon=True)
 heartbeat_thread.start()
 
 if __name__ == '__main__':
-    # 改回 Render 的預設 Port
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
