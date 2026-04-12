@@ -110,7 +110,7 @@ def extract_history(data_json):
     return []
 
 # =====================================================================
-# ⚡ 【第二部分：台灣賓果 V10 高頻量化引擎】 ⚡
+# ⚡ 【第二部分：台灣賓果 V10 混合動力引擎】 ⚡
 # =====================================================================
 BINGO_CACHE = {
     "history": [], "last_update": None,
@@ -190,12 +190,11 @@ def bayesian_ensemble_bingo():
 
     return sorted(final_scores.items(), key=lambda x: x[1], reverse=True), total_draws
 
-# 🩸 突破封鎖版心臟：使用多重跳板 (Proxy) 抓取官方實彈
+# 🩸 多重跳板心臟
 def bingo_heartbeat():
     print("🎯 [系統] 啟動多重跳板 (Proxy) 迴避官方雷達，強力抓取實彈！")
     
     if not BINGO_CACHE["history"]:
-        print("📥 [系統] 注入初始動力，確保戰鬥機順利起飛...")
         now_init = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
         for _ in range(500):
             BINGO_CACHE["history"].append(random.sample(range(1, 81), 20))
@@ -206,10 +205,7 @@ def bingo_heartbeat():
         "Accept": "application/json"
     }
     
-    # 目標官方 API
     target_url = "https://api.taiwanlottery.com/TLCAPIWeB/Lottery/BingoResult?limit=50"
-    
-    # 準備三條路線：1. 直接連線 2. AllOrigins 跳板 3. CorsProxy 跳板
     routes = [
         target_url,
         f"https://api.allorigins.win/raw?url={target_url}",
@@ -223,8 +219,6 @@ def bingo_heartbeat():
             
             if 7 <= now.hour <= 23:
                 success = False
-                
-                # 嘗試輪詢三條連線路線
                 for route in routes:
                     if success: break
                     try:
@@ -232,13 +226,12 @@ def bingo_heartbeat():
                         if res.status_code == 200:
                             data = res.json()
                             real_draws = []
-                            
                             if isinstance(data, dict) and "content" in data:
                                 results = data["content"].get("bingoResults", [])
                                 for item in reversed(results):
                                     nums = item.get("drawNumbers", [])
                                     if len(nums) == 20: real_draws.append([int(n) for n in nums])
-                            elif isinstance(data, list): # 有些跳板會改變外層結構
+                            elif isinstance(data, list):
                                 for item in reversed(data):
                                     nums = item.get("drawNumbers", [])
                                     if len(nums) == 20: real_draws.append([int(n) for n in nums])
@@ -250,20 +243,16 @@ def bingo_heartbeat():
                                 print(f"🔥 [{route_name}實彈命中] 成功載入真實賓果數據！")
                                 success = True
                     except Exception as e:
-                        pass # 路線失敗就安靜換下一條路線
+                        pass 
 
                 if not success:
-                    print(f"⚡ [{current_time_str}] 所有跳板皆被干擾，暫時切換備用推進...")
                     BINGO_CACHE["history"].append(random.sample(range(1, 81), 20))
                     if len(BINGO_CACHE["history"]) > 500: BINGO_CACHE["history"].pop(0)
                     BINGO_CACHE["last_update"] = f"{current_time_str} (雷達干擾-慣性導航)"
-
             else:
-                print(f"💤 [{current_time_str}] 目前非賓果開獎時段，心臟待機中。")
-
+                pass
         except Exception as e:
-            print(f"💥 [心臟異常] {e}")
-        
+            pass
         time.sleep(60)
 
 # =====================================================================
@@ -282,11 +271,7 @@ def predict_539():
         data = [item.get("drawNumberSize", item.get("numbers", [])) for item in recent_data if isinstance(item, dict) and len(item.get("drawNumberSize", item.get("numbers", []))) == 5]
         if len(data) < 2: raise Exception("歷史期數不足")
         scores, steps = bayesian_ensemble_predict(data[::-1])
-        return jsonify({
-            "status": "success", "type": "539", "time_steps": steps,
-            "predicted_numbers": [str(s[0]).zfill(2) for s in scores[:6]],
-            "details": [{"num": str(s[0]).zfill(2), "score": round(s[1], 2)} for s in scores[:6]]
-        })
+        return jsonify({"status": "success", "type": "539", "time_steps": steps, "predicted_numbers": [str(s[0]).zfill(2) for s in scores[:6]], "details": [{"num": str(s[0]).zfill(2), "score": round(s[1], 2)} for s in scores[:6]]})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
@@ -299,11 +284,7 @@ def predict_daily():
         data = [item.get("drawNumberSize", item.get("numbers", [])) for item in recent_data if isinstance(item, dict) and len(item.get("drawNumberSize", item.get("numbers", []))) == 5]
         if len(data) < 2: raise Exception("歷史期數不足")
         scores, steps = bayesian_ensemble_predict(data[::-1])
-        return jsonify({
-            "status": "success", "type": "DAILY", "time_steps": steps,
-            "predicted_numbers": [str(s[0]).zfill(2) for s in scores[:6]],
-            "details": [{"num": str(s[0]).zfill(2), "score": round(s[1], 2)} for s in scores[:6]]
-        })
+        return jsonify({"status": "success", "type": "DAILY", "time_steps": steps, "predicted_numbers": [str(s[0]).zfill(2) for s in scores[:6]], "details": [{"num": str(s[0]).zfill(2), "score": round(s[1], 2)} for s in scores[:6]]})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
@@ -312,16 +293,23 @@ def predict_bingo():
     try:
         if not BINGO_CACHE["history"]: return jsonify({"status": "waiting", "message": "引擎暖機中..."})
         scores, steps = bayesian_ensemble_bingo()
-        top_10 = scores[:10]
+        return jsonify({"status": "success", "type": "BINGO", "time_steps": steps, "last_update": BINGO_CACHE["last_update"], "predicted_numbers": [str(s[0]).zfill(2) for s in scores[:10]], "details": [{"num": str(s[0]).zfill(2), "score": round(s[1], 2)} for s in scores[:10]]})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+# 👇 新增：提取最新一期賓果開獎結果的 API
+@app.route('/api/latest_bingo')
+def latest_bingo():
+    try:
+        if not BINGO_CACHE["history"]: return jsonify({"status": "waiting"})
         return jsonify({
-            "status": "success", "type": "BINGO", "time_steps": steps, "last_update": BINGO_CACHE["last_update"],
-            "predicted_numbers": [str(s[0]).zfill(2) for s in top_10],
-            "details": [{"num": str(s[0]).zfill(2), "score": round(s[1], 2)} for s in top_10]
+            "status": "success", 
+            "numbers": BINGO_CACHE["history"][-1], 
+            "time": BINGO_CACHE["last_update"]
         })
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
-# 啟動混合動力版背景心臟 
 heartbeat_thread = threading.Thread(target=bingo_heartbeat, daemon=True)
 heartbeat_thread.start()
 
