@@ -20,11 +20,11 @@ async function fetchLatestResult(type) {
 
     try {
         if (type === 'bingo') {
-            const response = await fetch('https://lottery-k099.onrender.com/api/latest_bingo');
+            // 🎯 目標已切換為您的 Replit
+            const response = await fetch('https://lottery-predictor--guotang96.replit.app/api/latest_bingo');
             const data = await response.json();
             
             if (data.status === 'success') {
-                // 👇 正式顯示真實期數
                 issueSpan.textContent = data.period ? `第 ${data.period} 期` : '最新一期';
                 dateSpan.textContent = data.time || '';
                 
@@ -38,6 +38,7 @@ async function fetchLatestResult(type) {
                 ballsContainer.innerHTML = '<div style="color: #ff3b30; font-size: 14px;">等待官方發布最新一期資料...</div>';
             }
         } else {
+            // 539 / 天天樂 維持抓取您 GitHub 上的靜態 JSON
             const url = type === '539' 
                 ? `https://guotang96-creator.github.io/lottery/latest.json?t=${new Date().getTime()}` 
                 : `https://guotang96-creator.github.io/lottery/daily.json?t=${new Date().getTime()}`;
@@ -108,7 +109,8 @@ async function fetchRegularPrediction(type) {
     resultBox.innerHTML = `<div style="text-align:center; padding: 20px; color: #8a8db9;">V9 貝氏矩陣運算中...</div>`;
     
     try {
-        const url = type === '539' ? 'https://lottery-k099.onrender.com/api/predict' : 'https://lottery-k099.onrender.com/api/predict_daily';
+        // 🎯 目標已切換為您的 Replit
+        const url = type === '539' ? 'https://lottery-predictor--guotang96.replit.app/api/predict' : 'https://lottery-predictor--guotang96.replit.app/api/predict_daily';
         const response = await fetch(url);
         const data = await response.json();
         
@@ -157,7 +159,7 @@ async function fetchRegularPrediction(type) {
             resultBox.innerHTML = `<div style="color: #ff3b30; text-align:center;">API 尚未就緒 (${data.message || ''})</div>`;
         }
     } catch (error) {
-        resultBox.innerHTML = `<div style="color: #ff3b30; text-align:center;">伺服器連線異常，請確認 Render 已啟動</div>`;
+        resultBox.innerHTML = `<div style="color: #ff3b30; text-align:center;">伺服器連線異常，請確認 Replit 已啟動</div>`;
     }
 }
 
@@ -199,7 +201,8 @@ async function fetchBingoPrediction() {
     resultBox.innerHTML = `<div style="text-align:center; padding: 30px;"><span class="pulse-dot"></span> <span style="color:#ff3b30;">V10 引擎算力全開吞吐中...</span></div>`;
 
     try {
-        const response = await fetch('https://lottery-k099.onrender.com/api/predict_bingo');
+        // 🎯 目標已切換為您的 Replit
+        const response = await fetch('https://lottery-predictor--guotang96.replit.app/api/predict_bingo');
         const data = await response.json();
         
         if(data.status === 'success') {
@@ -233,7 +236,7 @@ async function fetchBingoPrediction() {
             resultBox.innerHTML = `<div style="color: #ff3b30; text-align:center;">伺服器高頻資料庫初始化中...請稍候。</div>`;
         }
     } catch (error) {
-        resultBox.innerHTML = `<div style="color: #ff3b30; text-align:center;">伺服器連線異常，請檢查 Render 狀態。</div>`;
+        resultBox.innerHTML = `<div style="color: #ff3b30; text-align:center;">伺服器連線異常，請檢查 Replit 狀態。</div>`;
     }
 }
 
