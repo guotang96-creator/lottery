@@ -7,14 +7,13 @@ import time
 import os 
 import traceback
 import math
-import random 
-import json # 👇 新增 json 模組來解析第三方資料庫
+import json 
 
 app = Flask(__name__)
 CORS(app) 
 
 # =====================================================================
-# 🌟 【第一部分：539 / 天天樂 V9 貝氏動態引擎】 🌟
+# 🌟 【第一部分：539 / 天天樂 V9 貝氏動態引擎】 (保持不變)
 # =====================================================================
 def calc_ema(data_list, total_draws):
     scores = {i: 0.0 for i in range(1, 40)}
@@ -111,10 +110,12 @@ def extract_history(data_json):
     return []
 
 # =====================================================================
-# ⚡ 【第二部分：台灣賓果 V10 高頻量化引擎】 ⚡
+# ⚡ 【第二部分：台灣賓果 V10 高頻量化引擎 (嚴格實彈)】 ⚡
 # =====================================================================
 BINGO_CACHE = {
-    "history": [], "last_update": None,
+    "history": [], 
+    "last_update": None,
+    "latest_period": None, # 新增：鎖定最新期數
     "weights": {'ema': 1.0, 'markov': 1.0, 'co_occurrence': 1.0, 'fourier': 1.0}
 }
 
@@ -192,31 +193,21 @@ def bayesian_ensemble_bingo():
     return sorted(final_scores.items(), key=lambda x: x[1], reverse=True), total_draws
 
 # =====================================================================
-# 🩸 【終極實彈心臟：多重資料庫切換策略】
-# 採納您的建議，不依賴單一官方，自動尋找可用的第三方數據源！
+# 🩸 嚴格實彈心臟：徹底捨棄假資料，只依賴真實期數更新
 # =====================================================================
 def bingo_heartbeat():
-    print("🎯 [系統] 啟動多重資料源切換機制，尋找最穩定的第三方實彈庫！")
+    print("🎯 [系統] 進入嚴格實彈模式：只等待真實期數，絕不使用模擬數據！")
     
-    if not BINGO_CACHE["history"]:
-        now_init = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
-        for _ in range(500):
-            BINGO_CACHE["history"].append(random.sample(range(1, 81), 20))
-        BINGO_CACHE["last_update"] = f"{now_init.strftime('%Y-%m-%d %H:%M:%S')} (引擎暖機完成)"
-
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
         "Accept": "application/json"
     }
     
     target_url = "https://api.taiwanlottery.com/TLCAPIWeB/Lottery/BingoResult?limit=50"
-    
-    # 👇 我們佈署了 4 條完全不同的情報路線
-    strategies = [
-        {"name": "官方 API", "url": target_url, "type": "json"},
-        {"name": "CodeTabs 數據庫", "url": f"https://api.codetabs.com/v1/proxy?quest={target_url}", "type": "json"},
-        {"name": "AllOrigins 代理庫", "url": f"https://api.allorigins.win/get?url={target_url}", "type": "json_string"},
-        {"name": "CorsProxy 節點", "url": f"https://corsproxy.io/?{target_url}", "type": "json"}
+    routes = [
+        target_url,
+        f"https://api.allorigins.win/raw?url={target_url}",
+        f"https://corsproxy.io/?{target_url}"
     ]
 
     while True:
@@ -226,56 +217,57 @@ def bingo_heartbeat():
             
             if 7 <= now.hour <= 23:
                 success = False
-                
-                # 🔄 系統會一條一條路線試，直到抓到真實數據為止
-                for strategy in strategies:
+                for route in routes:
                     if success: break
                     try:
-                        res = requests.get(strategy["url"], headers=headers, timeout=10)
+                        res = requests.get(route, headers=headers, timeout=10)
                         if res.status_code == 200:
                             data = res.json()
-                            
-                            # 解析特殊的第三方代理格式
-                            if strategy["type"] == "json_string" and "contents" in data:
-                                data = json.loads(data["contents"])
+                            if "contents" in data: data = json.loads(data["contents"])
                                 
                             real_draws = []
+                            latest_period = ""
+                            latest_time = ""
+
                             if isinstance(data, dict) and "content" in data:
                                 results = data["content"].get("bingoResults", [])
-                                for item in reversed(results):
+                                # 確保按照期數由舊到新排序 (很重要，這樣最後一個才是最新一期)
+                                results = sorted(results, key=lambda x: int(x.get("period", 0)) if str(x.get("period", 0)).isdigit() else 0)
+                                
+                                for item in results:
                                     nums = item.get("drawNumbers", [])
-                                    if len(nums) == 20: real_draws.append([int(n) for n in nums])
-                            elif isinstance(data, list):
-                                for item in reversed(data):
-                                    nums = item.get("drawNumbers", [])
-                                    if len(nums) == 20: real_draws.append([int(n) for n in nums])
-                            
-                            # 確認抓到數據，並且是新的一期
-                            if real_draws and set(real_draws[-1]) != set(BINGO_CACHE["history"][-1]):
-                                BINGO_CACHE["history"] = (BINGO_CACHE["history"] + real_draws)[-500:]
-                                BINGO_CACHE["last_update"] = f"{current_time_str} ({strategy['name']})"
-                                print(f"🔥 [{strategy['name']} 命中] 成功載入真實賓果數據！")
+                                    if len(nums) == 20: 
+                                        real_draws.append([int(n) for n in nums])
+                                        latest_period = str(item.get("period", ""))
+                                        latest_time = str(item.get("drawDate", current_time_str))
+
+                            # 嚴格判斷：只有當「有資料」且「期數有更新」或是「初次載入」時，才寫入資料庫
+                            if real_draws and (not BINGO_CACHE["history"] or BINGO_CACHE["latest_period"] != latest_period):
+                                BINGO_CACHE["history"] = real_draws[-500:] # 保留近500期
+                                BINGO_CACHE["latest_period"] = latest_period
+                                # 格式化時間去掉 T
+                                BINGO_CACHE["last_update"] = latest_time.replace('T', ' ')[:19]
+                                print(f"🔥 [實彈命中] 成功載入真實賓果！最新期數: {latest_period}")
                                 success = True
                     except Exception as e:
-                        pass # 這條路線失敗，安靜地換下一條
+                        pass 
 
-                # 如果 4 條真實路線全斷（極端狀況），才用備用動力維持前端運作
                 if not success:
-                    BINGO_CACHE["history"].append(random.sample(range(1, 81), 20))
-                    if len(BINGO_CACHE["history"]) > 500: BINGO_CACHE["history"].pop(0)
-                    BINGO_CACHE["last_update"] = f"{current_time_str} (全數干擾-慣性導航)"
+                    print(f"⏳ [{current_time_str}] 尚未取得最新期數或連線受阻，等待下次開獎...")
             else:
                 pass
         except Exception as e:
             pass
-        time.sleep(60)
+        
+        # 改為每 30 秒查一次，更快捕捉到最新期數
+        time.sleep(30)
 
 # =====================================================================
-# 🌐 【第三部分：全端點 API 路由】 🌐
+# 🌐 【第三部分：全端點 API 路由】
 # =====================================================================
 @app.route('/')
 def home():
-    return "✅ 系統運作正常 (包含 539/天天樂 V9 引擎 與 賓果 V10 多源實戰心臟)"
+    return "✅ 系統運作正常 (嚴格實彈模式)"
 
 @app.route('/api/predict')
 def predict_539():
@@ -306,9 +298,9 @@ def predict_daily():
 @app.route('/api/predict_bingo')
 def predict_bingo():
     try:
-        if not BINGO_CACHE["history"]: return jsonify({"status": "waiting", "message": "引擎暖機中..."})
+        if not BINGO_CACHE["history"]: return jsonify({"status": "waiting", "message": "等待最新一期開獎資料寫入中..."})
         scores, steps = bayesian_ensemble_bingo()
-        return jsonify({"status": "success", "type": "BINGO", "time_steps": steps, "last_update": BINGO_CACHE["last_update"], "predicted_numbers": [str(s[0]).zfill(2) for s in scores[:10]], "details": [{"num": str(s[0]).zfill(2), "score": round(s[1], 2)} for s in scores[:10]]})
+        return jsonify({"status": "success", "type": "BINGO", "time_steps": steps, "period": BINGO_CACHE["latest_period"], "last_update": BINGO_CACHE["last_update"], "predicted_numbers": [str(s[0]).zfill(2) for s in scores[:10]], "details": [{"num": str(s[0]).zfill(2), "score": round(s[1], 2)} for s in scores[:10]]})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
@@ -319,6 +311,7 @@ def latest_bingo():
         return jsonify({
             "status": "success", 
             "numbers": BINGO_CACHE["history"][-1], 
+            "period": BINGO_CACHE["latest_period"], # 把期數傳給前端
             "time": BINGO_CACHE["last_update"]
         })
     except Exception as e:
