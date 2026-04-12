@@ -1,7 +1,7 @@
 let hftTimerInterval = null;
 
 // ==========================================
-// 🏆 抓取並顯示當期開獎結果 (上方卡片 - 新增賓果 20 球支援)
+// 🏆 抓取並顯示當期開獎結果 (包含真實期數顯示)
 // ==========================================
 async function fetchLatestResult(type) {
     const card = document.getElementById('latest-result-card');
@@ -10,7 +10,6 @@ async function fetchLatestResult(type) {
     const dateSpan = document.getElementById('latest-date');
     const ballsContainer = document.getElementById('latest-balls');
 
-    // 🔴 取消隱藏，現在全部都要顯示！
     card.style.display = 'block';
 
     if (type === '539') titleType.textContent = '今彩 539';
@@ -21,26 +20,24 @@ async function fetchLatestResult(type) {
 
     try {
         if (type === 'bingo') {
-            // 抓取 V10 引擎的最新開獎結果
             const response = await fetch('https://lottery-k099.onrender.com/api/latest_bingo');
             const data = await response.json();
             
             if (data.status === 'success') {
-                issueSpan.textContent = '即時高頻連線';
+                // 👇 正式顯示真實期數
+                issueSpan.textContent = data.period ? `第 ${data.period} 期` : '最新一期';
                 dateSpan.textContent = data.time || '';
                 
-                // 把 20 顆球排序，視覺上比較好找
                 const sortedNums = data.numbers.sort((a, b) => a - b);
-                
-                // 為了放進 20 顆球，稍微縮小球的尺寸
                 ballsContainer.innerHTML = sortedNums.map(n => 
                     `<div class="ball" style="background: #ff3b30; box-shadow: 0 4px 10px rgba(255,59,48,0.4); width: 34px; height: 34px; font-size: 15px;">${String(n).padStart(2, '0')}</div>`
                 ).join('');
             } else {
-                ballsContainer.innerHTML = '<div style="color: #ff3b30; font-size: 14px;">等待最新賓果資料...</div>';
+                issueSpan.textContent = '連線中...';
+                dateSpan.textContent = '';
+                ballsContainer.innerHTML = '<div style="color: #ff3b30; font-size: 14px;">等待官方發布最新一期資料...</div>';
             }
         } else {
-            // 539 與 天天樂 原有邏輯
             const url = type === '539' 
                 ? `https://guotang96-creator.github.io/lottery/latest.json?t=${new Date().getTime()}` 
                 : `https://guotang96-creator.github.io/lottery/daily.json?t=${new Date().getTime()}`;
@@ -98,13 +95,13 @@ function switchTab(type) {
         
         timerContainer.classList.remove('hidden');
         startHFTTimer();
-        fetchLatestResult('bingo'); // 👈 這裡現在會去抓 20 顆球
+        fetchLatestResult('bingo'); 
         fetchBingoPrediction();
     }
 }
 
 // ==========================================
-// 📡 抓取一般預測 (539 / 天天樂) - 完美復原 5+1 質感版面！
+// 📡 抓取一般預測 (539 / 天天樂) - 完美復原 5+1 質感版面
 // ==========================================
 async function fetchRegularPrediction(type) {
     const resultBox = document.getElementById('result-box');
@@ -165,7 +162,7 @@ async function fetchRegularPrediction(type) {
 }
 
 // ==========================================
-// ⏱️ 啟動高頻倒數計時器 (連動更新上方的開獎球)
+// ⏱️ 啟動高頻倒數計時器
 // ==========================================
 function startHFTTimer() {
     const timerDisplay = document.getElementById('hft-timer');
@@ -185,7 +182,6 @@ function startHFTTimer() {
         if (minutesLeft === 0 && secondsLeft === 0) {
             timerDisplay.textContent = "資料更新中";
             setTimeout(() => {
-                // 🔴 當倒數歸零時，下方預測和上方結果「一起」更新！
                 fetchBingoPrediction();
                 if(document.getElementById('btn-bingo').classList.contains('active')) {
                     fetchLatestResult('bingo');
@@ -214,7 +210,8 @@ async function fetchBingoPrediction() {
             ballsHtml += '</div>';
             
             let detailsHtml = '<div style="margin-top: 15px; background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">';
-            detailsHtml += '<div style="color: #8a8db9; font-size: 12px; margin-bottom: 10px; border-bottom: 1px solid #2a2d52; padding-bottom: 5px;">V10 引擎極限權重解析 (資料期數: '+data.time_steps+')<br>最後更新: '+data.last_update+'</div>';
+            // 加上期數顯示
+            detailsHtml += '<div style="color: #8a8db9; font-size: 12px; margin-bottom: 10px; border-bottom: 1px solid #2a2d52; padding-bottom: 5px;">V10 引擎極限權重解析 (基於第 '+data.period+' 期)<br>最後更新: '+data.last_update+'</div>';
             
             data.details.forEach((item, index) => {
                 detailsHtml += `
@@ -240,6 +237,7 @@ async function fetchBingoPrediction() {
     }
 }
 
+// 預設先點擊 539
 window.onload = () => {
     switchTab('539');
 };
