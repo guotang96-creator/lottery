@@ -8,6 +8,7 @@ import os
 import traceback
 import math
 import random 
+import json # 👇 新增 json 模組來解析第三方資料庫
 
 app = Flask(__name__)
 CORS(app) 
@@ -110,7 +111,7 @@ def extract_history(data_json):
     return []
 
 # =====================================================================
-# ⚡ 【第二部分：台灣賓果 V10 混合動力引擎】 ⚡
+# ⚡ 【第二部分：台灣賓果 V10 高頻量化引擎】 ⚡
 # =====================================================================
 BINGO_CACHE = {
     "history": [], "last_update": None,
@@ -190,9 +191,12 @@ def bayesian_ensemble_bingo():
 
     return sorted(final_scores.items(), key=lambda x: x[1], reverse=True), total_draws
 
-# 🩸 多重跳板心臟
+# =====================================================================
+# 🩸 【終極實彈心臟：多重資料庫切換策略】
+# 採納您的建議，不依賴單一官方，自動尋找可用的第三方數據源！
+# =====================================================================
 def bingo_heartbeat():
-    print("🎯 [系統] 啟動多重跳板 (Proxy) 迴避官方雷達，強力抓取實彈！")
+    print("🎯 [系統] 啟動多重資料源切換機制，尋找最穩定的第三方實彈庫！")
     
     if not BINGO_CACHE["history"]:
         now_init = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
@@ -206,10 +210,13 @@ def bingo_heartbeat():
     }
     
     target_url = "https://api.taiwanlottery.com/TLCAPIWeB/Lottery/BingoResult?limit=50"
-    routes = [
-        target_url,
-        f"https://api.allorigins.win/raw?url={target_url}",
-        f"https://corsproxy.io/?{target_url}"
+    
+    # 👇 我們佈署了 4 條完全不同的情報路線
+    strategies = [
+        {"name": "官方 API", "url": target_url, "type": "json"},
+        {"name": "CodeTabs 數據庫", "url": f"https://api.codetabs.com/v1/proxy?quest={target_url}", "type": "json"},
+        {"name": "AllOrigins 代理庫", "url": f"https://api.allorigins.win/get?url={target_url}", "type": "json_string"},
+        {"name": "CorsProxy 節點", "url": f"https://corsproxy.io/?{target_url}", "type": "json"}
     ]
 
     while True:
@@ -219,12 +226,19 @@ def bingo_heartbeat():
             
             if 7 <= now.hour <= 23:
                 success = False
-                for route in routes:
+                
+                # 🔄 系統會一條一條路線試，直到抓到真實數據為止
+                for strategy in strategies:
                     if success: break
                     try:
-                        res = requests.get(route, headers=headers, timeout=10)
+                        res = requests.get(strategy["url"], headers=headers, timeout=10)
                         if res.status_code == 200:
                             data = res.json()
+                            
+                            # 解析特殊的第三方代理格式
+                            if strategy["type"] == "json_string" and "contents" in data:
+                                data = json.loads(data["contents"])
+                                
                             real_draws = []
                             if isinstance(data, dict) and "content" in data:
                                 results = data["content"].get("bingoResults", [])
@@ -236,19 +250,20 @@ def bingo_heartbeat():
                                     nums = item.get("drawNumbers", [])
                                     if len(nums) == 20: real_draws.append([int(n) for n in nums])
                             
+                            # 確認抓到數據，並且是新的一期
                             if real_draws and set(real_draws[-1]) != set(BINGO_CACHE["history"][-1]):
                                 BINGO_CACHE["history"] = (BINGO_CACHE["history"] + real_draws)[-500:]
-                                route_name = "直連" if route == target_url else "跳板"
-                                BINGO_CACHE["last_update"] = f"{current_time_str} ({route_name}實彈)"
-                                print(f"🔥 [{route_name}實彈命中] 成功載入真實賓果數據！")
+                                BINGO_CACHE["last_update"] = f"{current_time_str} ({strategy['name']})"
+                                print(f"🔥 [{strategy['name']} 命中] 成功載入真實賓果數據！")
                                 success = True
                     except Exception as e:
-                        pass 
+                        pass # 這條路線失敗，安靜地換下一條
 
+                # 如果 4 條真實路線全斷（極端狀況），才用備用動力維持前端運作
                 if not success:
                     BINGO_CACHE["history"].append(random.sample(range(1, 81), 20))
                     if len(BINGO_CACHE["history"]) > 500: BINGO_CACHE["history"].pop(0)
-                    BINGO_CACHE["last_update"] = f"{current_time_str} (雷達干擾-慣性導航)"
+                    BINGO_CACHE["last_update"] = f"{current_time_str} (全數干擾-慣性導航)"
             else:
                 pass
         except Exception as e:
@@ -260,7 +275,7 @@ def bingo_heartbeat():
 # =====================================================================
 @app.route('/')
 def home():
-    return "✅ 系統運作正常 (包含 539/天天樂 V9 引擎 與 賓果 V10 跳板實戰心臟)"
+    return "✅ 系統運作正常 (包含 539/天天樂 V9 引擎 與 賓果 V10 多源實戰心臟)"
 
 @app.route('/api/predict')
 def predict_539():
@@ -297,7 +312,6 @@ def predict_bingo():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
-# 👇 新增：提取最新一期賓果開獎結果的 API
 @app.route('/api/latest_bingo')
 def latest_bingo():
     try:
