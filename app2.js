@@ -1,5 +1,5 @@
 let hftTimerInterval = null;
-const API_BASE_URL = 'https://empty-python-project--guotang96.replit.app';
+const API_BASE_URL = 'https://257db491-314a-4fd5-ba45-c74f93bf286a-00-1h20jc48ar2vb.riker.replit.dev';
 
 // ==========================================
 // 🏆 抓取並顯示當期開獎結果 (包含真實期數顯示)
