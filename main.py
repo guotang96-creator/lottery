@@ -61,11 +61,10 @@ def calc_co_occurrence(data_list, total_draws):
     last_draw = data_list[-1]
     
     for draw in data_list[:-1]:
-        # 如果歷史上這一期，包含了我們上一期開出的多顆號碼
         intersection = set(last_draw).intersection(set(draw))
-        if len(intersection) >= 5: # 高度相似的歷史軌跡
+        if len(intersection) >= 5: 
             for n in draw:
-                if n not in last_draw: # 給那些"跟著開出"的號碼加分
+                if n not in last_draw: 
                     scores[n] += (len(intersection) * 2.0)
     return scores
 
@@ -74,7 +73,7 @@ def calc_co_occurrence(data_list, total_draws):
 # ==========================================
 def calc_fourier_bingo(data_list, total_draws):
     scores = {i: 0.0 for i in range(1, 81)}
-    signal_length = min(80, total_draws) # 高頻市場只看最近 80 期波浪
+    signal_length = min(80, total_draws) 
     recent_data = data_list[-signal_length:]
     
     for num in range(1, 81):
@@ -82,7 +81,6 @@ def calc_fourier_bingo(data_list, total_draws):
         max_power = 0
         best_period = 1
         
-        # 賓果節奏快，尋找 2 到 15 期的短波週期
         for period in range(2, 16):
             real, imag = 0.0, 0.0
             for t in range(signal_length):
@@ -120,16 +118,15 @@ def bayesian_ensemble_bingo():
         'fourier': calc_fourier_bingo(train_data, total_draws - 1)
     }
     
-    # 貝氏更新：根據昨天表現微調今天的信任度
+    # 貝氏更新
     for model_name, model_scores in scores_t_minus_1.items():
         max_s = max(model_scores.values()) if model_scores.values() else 1
         if max_s == 0: max_s = 1
         
         hit_score = sum((model_scores.get(n, 0) / max_s) for n in actual_last_draw)
-        # 高頻系統衰減記憶，每次只微調 20% 權重，避免神經質反應
         weights[model_name] = weights[model_name] * 0.8 + (1.0 + hit_score * 0.2)
         
-    BINGO_CACHE["weights"] = weights # 儲存更新後的權重
+    BINGO_CACHE["weights"] = weights 
 
     # 正式預測今天
     final_scores = {i: 0.0 for i in range(1, 81)}
@@ -154,7 +151,6 @@ def bayesian_ensemble_bingo():
 def bingo_heartbeat():
     print("💓 [系統] V10 賓果高頻心臟已啟動！")
     
-    # 初始化：先灌入 500 期模擬的高頻歷史資料，讓 V10 引擎有東西可以算
     if not BINGO_CACHE["history"]:
         print("📥 [系統] 正在灌入 500 期基礎高頻數據...")
         for _ in range(500):
@@ -166,11 +162,9 @@ def bingo_heartbeat():
             now = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
             current_time_str = now.strftime("%Y-%m-%d %H:%M:%S")
             
-            # 模擬每 5 分鐘官方開出一期新資料 (實戰中這裡會改成 requests.get 去抓台彩 API)
             print(f"🕒 [{current_time_str}] 接收最新一期高頻數據...")
             new_draw = random.sample(range(1, 81), 20)
             
-            # 將最新開獎推入快取，並保持最多 500 期的長度
             BINGO_CACHE["history"].append(new_draw)
             if len(BINGO_CACHE["history"]) > 500:
                 BINGO_CACHE["history"].pop(0)
@@ -181,7 +175,6 @@ def bingo_heartbeat():
         except Exception as e:
             print(f"💥 [心臟異常] {e}")
         
-        # 設定為 60 秒檢查一次 (為了讓您馬上看到效果，設定較短。實戰改為 300 秒)
         time.sleep(60)
 
 # ==========================================
@@ -198,8 +191,6 @@ def predict_bingo():
             return jsonify({"status": "waiting", "message": "高頻資料庫初始化中，請稍後..."})
             
         scores, steps = bayesian_ensemble_bingo()
-        
-        # 賓果通常看前 10 顆最具爆發力的星號
         top_10 = scores[:10]
         
         return jsonify({
@@ -214,10 +205,12 @@ def predict_bingo():
         print(traceback.format_exc())
         return jsonify({"status": "error", "message": str(e)})
 
+# ==========================================
+# 🚀 破解 Gunicorn 封印：將啟動心臟的指令移到全域環境
+# ==========================================
+heartbeat_thread = threading.Thread(target=bingo_heartbeat, daemon=True)
+heartbeat_thread.start()
+
 if __name__ == '__main__':
-    # 啟動高頻心臟 (Daemon 背景執行)
-    heartbeat_thread = threading.Thread(target=bingo_heartbeat, daemon=True)
-    heartbeat_thread.start()
-    
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
