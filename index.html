@@ -4,20 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>彩券 AI 數據分析中心 V11</title>
-    <link rel="stylesheet" href="style.css?v=1100">
+    <link rel="stylesheet" href="style.css?v=1102">
 </head>
 <body>
     <header>
         <div class="logo">AI</div>
         <h1>彩券 AI 數據分析中心</h1>
-        <div class="subtitle">V11 全能旗艦版 (自動爬蟲升級)</div>
+        <div class="subtitle">V11 全能旗艦版 (五合一升級)</div>
     </header>
 
     <main id="page-home" class="page active">
         
         <section class="card" id="latest-result-card">
             <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #2a2d52; padding-bottom: 10px; margin-bottom: 15px;">
-                <h2 style="margin: 0; border: none; padding: 0;">🏆 開獎結果 <span id="latest-title-type" style="color: #2f65ff; font-size: 14px; margin-left: 5px;">大樂透</span></h2>
+                <h2 style="margin: 0; border: none; padding: 0;">🏆 開獎結果 <span id="latest-title-type" style="color: #2f65ff; font-size: 14px; margin-left: 5px;">今彩 539</span></h2>
                 <div style="text-align: right; font-size: 12px; color: #8a8db9;">
                     <span id="latest-issue">連線中...</span><br>
                     <span id="latest-date"></span>
@@ -31,10 +31,12 @@
         <section class="card">
             <h2>🤖 智能選號建議 (V11 泛用型矩陣)</h2>
             
-            <div class="tab-buttons">
-                <button class="primary-btn active" id="btn-lotto" onclick="switchTab('lotto')">大樂透</button>
+            <div class="tab-buttons" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;">
+                <button class="primary-btn active" id="btn-539" onclick="switchTab('539')">今彩 539</button>
+                <button class="secondary-btn" id="btn-daily" onclick="switchTab('daily')">天天樂</button>
+                <button class="secondary-btn" id="btn-lotto" onclick="switchTab('lotto')">大樂透</button>
                 <button class="secondary-btn" id="btn-weili" onclick="switchTab('weili')">威力彩</button>
-                <button class="secondary-btn" id="btn-marksix" onclick="switchTab('marksix')">香港六合彩</button>
+                <button class="secondary-btn" id="btn-marksix" onclick="switchTab('marksix')">六合彩</button>
             </div>
 
             <div class="predict-result" id="result-box">
@@ -51,7 +53,6 @@
         <button class="nav-item">設定</button>
     </nav>
 
-    <script src="app2.js?v=1100"></script>
+    <script src="app2.js?v=1102"></script>
 </body>
 </html>
- 
