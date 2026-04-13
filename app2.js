@@ -10,13 +10,20 @@ const GAME_NAMES = {
 };
 
 function switchTab(gameType) {
-    // 重置所有按鈕樣式
-    ['539', 'daily', 'lotto', 'weili', 'marksix'].forEach(g => {
-        document.getElementById(`btn-${g}`).className = 'secondary-btn';
-    });
-    // 啟動當前點擊的按鈕
-    document.getElementById(`btn-${gameType}`).className = 'primary-btn active';
-    fetchPrediction(gameType);
+    try {
+        // 重置所有按鈕樣式
+        ['539', 'daily', 'lotto', 'weili', 'marksix'].forEach(g => {
+            const btn = document.getElementById(`btn-${g}`);
+            if (btn) btn.className = 'secondary-btn';
+        });
+        // 啟動當前點擊的按鈕
+        const activeBtn = document.getElementById(`btn-${gameType}`);
+        if (activeBtn) activeBtn.className = 'primary-btn active';
+        
+        fetchPrediction(gameType);
+    } catch (e) {
+        console.error("按鈕切換失敗:", e);
+    }
 }
 
 async function fetchPrediction(game) {
@@ -44,17 +51,21 @@ async function fetchPrediction(game) {
             issueSpan.textContent = data.latest_period ? `第 ${data.latest_period} 期` : '尋找開獎訊號中...';
             dateSpan.textContent = data.last_update ? `最後同步: ${data.last_update}` : '爬蟲暖機中，請稍後重整';
             
-            if (data.latest_period) {
-                ballsContainer.innerHTML = `<div style="color: #20c997; font-size: 14px; font-weight: bold; text-align: center;">✅ 已成功同步至最新歷史開獎庫，AI 準備就緒。</div>`;
+            // 👇 修復：渲染上方【開獎結果區】真實號碼球！
+            if (data.latest_numbers && data.latest_numbers.length > 0) {
+                const latestBallsHtml = data.latest_numbers.map(num => 
+                    `<div class="ball" style="background: #2a2d52; color: #fff; border: 1px solid #4dabf7; box-shadow: 0 0 8px rgba(77, 171, 247, 0.3);">${num}</div>`
+                ).join('');
+                ballsContainer.innerHTML = latestBallsHtml;
             } else {
                 ballsContainer.innerHTML = `<div style="color: #ff9800; font-size: 14px; text-align: center;">⏳ 伺服器剛開機，正在爬取歷史資料，請稍後重整網頁。</div>`;
             }
 
+            // --- 繪製下方【AI 預測區】的球號 ---
             let mainBallsHtml = '';
-            let specialHtml = '';
             let ballsHtml = '';
 
-            // 判斷是 5 顆球的遊戲 (539/天天樂) 還是 6+1 顆球的遊戲
+            // 判斷是 5 顆球的遊戲還是 6+1 顆球的遊戲
             if (game === '539' || game === 'daily') {
                 const mainBalls = data.predicted.slice(0, 5);
                 mainBallsHtml = mainBalls.map(num => 
