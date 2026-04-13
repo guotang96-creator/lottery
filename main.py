@@ -49,7 +49,6 @@ def bayesian_engine(data_list, max_num):
 
     return sorted(final_scores, key=lambda x: x['score'], reverse=True)
 
-# 👇 升級：精準抓取 GitHub JSON 的真實期數與號碼
 def fetch_github_json(url):
     try:
         res = requests.get(url, timeout=10)
@@ -69,7 +68,7 @@ def fetch_github_json(url):
         return [], ""
 
 # =====================================================================
-# 🕷️ 【第二部分：全自動定時爬蟲體系】
+# 🕷️ 【第二部分：全自動跳板爬蟲體系 (防禦 IP 封鎖)】
 # =====================================================================
 GLOBAL_DATA = {
     "lotto": {"history": [], "latest_period": "", "last_update": ""},    
@@ -77,53 +76,68 @@ GLOBAL_DATA = {
     "marksix": {"history": [], "latest_period": "", "last_update": ""}   
 }
 
-def scraper_logic(url, pattern_period, pattern_ball, ball_count):
+def scraper_logic(target_url, pattern_period, pattern_ball, ball_count):
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-    try:
-        res = requests.get(url, headers=headers, timeout=15)
-        res.encoding = 'utf-8'
-        content = re.sub(r'<[^>]+>', ' ', res.text) 
-        
-        periods = re.findall(pattern_period, content)
-        if not periods: return None
-        latest_period = sorted(list(set(periods)), reverse=True)[0]
-        
-        idx = content.find(latest_period)
-        block = content[idx:idx+500]
-        balls = re.findall(pattern_ball, block)
-        
-        unique_balls = []
-        for b in balls:
-            val = int(b)
-            if val not in unique_balls: unique_balls.append(val)
-            if len(unique_balls) == ball_count: break
+    # 🔥 加入多重跳板，避免 Render 的 IP 被久久樂透網封鎖
+    routes = [
+        f"https://api.allorigins.win/raw?url={target_url}",
+        f"https://api.codetabs.com/v1/proxy?quest={target_url}",
+        target_url
+    ]
+    
+    for route in routes:
+        try:
+            res = requests.get(route, headers=headers, timeout=15)
+            res.encoding = 'utf-8'
+            content = re.sub(r'<[^>]+>', ' ', res.text) 
             
-        if len(unique_balls) >= 6:
-            return {"period": latest_period, "numbers": sorted(unique_balls)}
-    except:
-        return None
+            periods = re.findall(pattern_period, content)
+            if not periods: continue
+            latest_period = sorted(list(set(periods)), reverse=True)[0]
+            
+            idx = content.find(latest_period)
+            block = content[idx:idx+800]
+            balls = re.findall(pattern_ball, block)
+            
+            unique_balls = []
+            for b in balls:
+                val = int(b)
+                if val not in unique_balls: unique_balls.append(val)
+                if len(unique_balls) == ball_count: break
+                
+            if len(unique_balls) >= 6:
+                return {"period": latest_period, "numbers": sorted(unique_balls)}
+        except:
+            continue
+    return None
 
 def auto_update_job():
-    print("🚀 [系統] 自動爬蟲引擎啟動，全網掃描中...")
+    print("🚀 [系統] 自動爬蟲引擎啟動，正在透過跳板掃描全網...")
     while True:
-        res = scraper_logic("https://www.pilio.idv.tw/lotto/lotto649/list.asp", r'(\d{9})', r'\b(0[1-9]|[1-4][0-9])\b', 7)
-        if res and res["period"] != GLOBAL_DATA["lotto"]["latest_period"]:
-            GLOBAL_DATA["lotto"]["history"].append(res["numbers"])
-            GLOBAL_DATA["lotto"]["latest_period"] = res["period"]
-            GLOBAL_DATA["lotto"]["last_update"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+        try:
+            res = scraper_logic("https://www.pilio.idv.tw/lotto/lotto649/list.asp", r'(\d{9})', r'\b(0[1-9]|[1-4][0-9])\b', 7)
+            if res and res["period"] != GLOBAL_DATA["lotto"]["latest_period"]:
+                GLOBAL_DATA["lotto"]["history"].append(res["numbers"])
+                GLOBAL_DATA["lotto"]["latest_period"] = res["period"]
+                GLOBAL_DATA["lotto"]["last_update"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+                print(f"✅ 大樂透爬取成功: {res['period']}")
 
-        res = scraper_logic("https://www.pilio.idv.tw/lotto/superlotto/list.asp", r'(\d{9})', r'\b(0[1-9]|[1-3][0-9])\b', 7)
-        if res and res["period"] != GLOBAL_DATA["weili"]["latest_period"]:
-            GLOBAL_DATA["weili"]["history"].append(res["numbers"])
-            GLOBAL_DATA["weili"]["latest_period"] = res["period"]
-            GLOBAL_DATA["weili"]["last_update"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+            res = scraper_logic("https://www.pilio.idv.tw/lotto/superlotto/list.asp", r'(\d{9})', r'\b(0[1-9]|[1-3][0-9])\b', 7)
+            if res and res["period"] != GLOBAL_DATA["weili"]["latest_period"]:
+                GLOBAL_DATA["weili"]["history"].append(res["numbers"])
+                GLOBAL_DATA["weili"]["latest_period"] = res["period"]
+                GLOBAL_DATA["weili"]["last_update"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+                print(f"✅ 威力彩爬取成功: {res['period']}")
 
-        res = scraper_logic("https://www.pilio.idv.tw/lotto/hk6/list.asp", r'(\d{5})', r'\b(0[1-9]|[1-4][0-9])\b', 7)
-        if res and res["period"] != GLOBAL_DATA["marksix"]["latest_period"]:
-            GLOBAL_DATA["marksix"]["history"].append(res["numbers"])
-            GLOBAL_DATA["marksix"]["latest_period"] = res["period"]
-            GLOBAL_DATA["marksix"]["last_update"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-
+            res = scraper_logic("https://www.pilio.idv.tw/lotto/hk6/list.asp", r'(\d{5})', r'\b(0[1-9]|[1-4][0-9])\b', 7)
+            if res and res["period"] != GLOBAL_DATA["marksix"]["latest_period"]:
+                GLOBAL_DATA["marksix"]["history"].append(res["numbers"])
+                GLOBAL_DATA["marksix"]["latest_period"] = res["period"]
+                GLOBAL_DATA["marksix"]["last_update"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+                print(f"✅ 六合彩爬取成功: {res['period']}")
+        except:
+            pass
+        
         time.sleep(1800)
 
 # =====================================================================
@@ -131,7 +145,7 @@ def auto_update_job():
 # =====================================================================
 @app.route('/')
 def home():
-    return "✅ V11 五合一泛用型引擎運行中 (含最新號碼修復)"
+    return "✅ V11 五合一泛用型引擎運行中 (防 Timeout 裝甲版)"
 
 @app.route('/api/predict/<game>')
 def get_prediction(game):
@@ -141,7 +155,6 @@ def get_prediction(game):
         if not history: return jsonify({"status": "error", "message": "讀取 GitHub JSON 失敗"})
         
         scores = bayesian_engine(history, 39)
-        # 👇 修復：將最新的歷史號碼送回前端！
         latest_nums = [str(n).zfill(2) for n in history[-1]]
         
         return jsonify({
@@ -155,7 +168,6 @@ def get_prediction(game):
         data = GLOBAL_DATA[game]
         max_n = 38 if game == 'weili' else 49
         scores = bayesian_engine(data["history"], max_n)
-        # 👇 修復：將爬蟲抓到的最新歷史號碼送回前端！
         latest_nums = [str(n).zfill(2) for n in data["history"][-1]] if data["history"] else []
         
         return jsonify({
@@ -167,8 +179,9 @@ def get_prediction(game):
 
     return jsonify({"status": "error", "message": "未知彩種"})
 
-threading.Thread(target=auto_update_job, daemon=True).start()
-
 if __name__ == '__main__':
+    # 🔥 修復：將爬蟲啟動移至主程式內，確保 Render 先開門 (Port) 再執行爬蟲！
+    threading.Thread(target=auto_update_job, daemon=True).start()
+    
     port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
