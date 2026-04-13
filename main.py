@@ -7,13 +7,13 @@ import time
 import os 
 import math
 import json 
-import re # 🔥 引入正則表達式，準備進行全網無差別掃描
+import re # 🔥 引入正則表達式，執行暴力文本掃描
 
 app = Flask(__name__)
 CORS(app) 
 
 # =====================================================================
-# 🌟 【第一部分：539 / 天天樂 V9 貝氏動態引擎】 (保持不變)
+# 🌟 【第一部分：539 / 天天樂 V9 貝氏動態引擎】
 # =====================================================================
 def calc_ema(data_list, total_draws):
     scores = {i: 0.0 for i in range(1, 40)}
@@ -110,18 +110,16 @@ def extract_history(data_json):
     return []
 
 # =====================================================================
-# ⚡ 【第二部分：台灣賓果 V10 高頻引擎 (導入第三方 Regex 無差別掃描)】 
+# ⚡ 【第二部分：台灣賓果 V10 高頻引擎 (雙引擎暴力雷達版)】 
 # =====================================================================
 BINGO_CACHE = {
     "history": [
         [2, 9, 20, 24, 25, 28, 29, 31, 35, 36, 44, 45, 46, 52, 53, 56, 58, 62, 65, 76],
         [1, 5, 8, 12, 17, 21, 22, 27, 30, 33, 40, 41, 48, 50, 55, 60, 61, 68, 72, 79],
-        [3, 7, 10, 14, 18, 19, 23, 26, 32, 34, 38, 42, 47, 49, 51, 57, 63, 67, 70, 75],
-        [4, 6, 11, 13, 15, 16, 20, 25, 29, 31, 37, 39, 43, 45, 54, 59, 64, 66, 71, 80],
-        [2, 8, 12, 17, 22, 24, 28, 30, 35, 36, 41, 46, 48, 52, 56, 60, 65, 68, 76, 79]
+        [3, 7, 10, 14, 18, 19, 23, 26, 32, 34, 38, 42, 47, 49, 51, 57, 63, 67, 70, 75]
     ], 
     "last_update": "", 
-    "latest_period": "引擎暖機中...", 
+    "latest_period": "尋找訊號中", 
     "weights": {'ema': 1.0, 'markov': 1.0, 'co_occurrence': 1.0, 'fourier': 1.0}
 }
 
@@ -201,93 +199,100 @@ def bayesian_ensemble_bingo():
 
     return sorted(final_scores.items(), key=lambda x: x[1], reverse=True), total_draws
 
-# 👇 這是採納您建議後開發的「無差別第三方文本雷達」
-def scrape_third_party_bingo():
-    # 鎖定兩大最穩定的第三方開獎網站 (久久 / 奧索)
-    urls = [
-        "https://www.pilio.idv.tw/bingo/bingo.asp",
-        "https://www.twbb.tw/bingo/",
-        "https://lotto.auzonet.com/bingo/"
-    ]
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"}
+# 🔥 核心武裝：無視防護網的雙引擎暴力抓取器
+def fetch_bingo_multi_source():
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
     
-    for url in urls:
+    # 策略 A：直接對 Pilio (久久) 網站進行暴力文本破解
+    targets_A = [
+        "https://www.pilio.idv.tw/bingo/bingo.asp",
+        "https://api.allorigins.win/raw?url=https://www.pilio.idv.tw/bingo/bingo.asp",
+        "https://api.codetabs.com/v1/proxy?quest=https://www.pilio.idv.tw/bingo/bingo.asp"
+    ]
+    for url in targets_A:
         try:
             res = requests.get(url, headers=headers, timeout=10)
-            res.encoding = 'utf-8'
-            
-            # 第一步：暴力扒掉所有 HTML 標籤，只留純文字
-            text = re.sub(r'<[^>]+>', ' ', res.text)
-            
-            # 第二步：尋找 115 開頭的 9 位數期數 (例如: 115020823)
-            periods = re.findall(r'(11[3-9]\d{6})', text)
+            text = res.text
+            # 尋找所有 115 開頭的 9 位數字期數
+            periods = sorted(list(set(re.findall(r'(11[3-9]\d{6})', text))), reverse=True)
             if not periods: continue
             
-            # 取出找到的最新期數
-            latest_period = sorted(list(set(periods)), reverse=True)[0]
-            
-            # 第三步：鎖定該期數後面的 600 個字元區塊
-            idx = text.find(latest_period)
-            block = text[idx:idx+600]
-            
-            # 第四步：把區塊內所有的 01~80 數字全部吸出來
-            balls = re.findall(r'\b(0[1-9]|[1-7][0-9]|80)\b', block)
-            
-            unique_balls = []
-            for b in balls:
-                if int(b) not in unique_balls:
-                    unique_balls.append(int(b))
+            draws = []
+            # 一次抓下網頁上最新的 20 期！
+            for p in periods[:20]:
+                idx = text.find(p)
+                block = re.sub(r'<[^>]+>', ' ', text[idx:idx+800])
+                # 抓取 01~80 的數字
+                balls = re.findall(r'\b([0-9]{1,2})\b', block)
+                unique_balls = []
+                for b in balls:
+                    val = int(b)
+                    if 1 <= val <= 80 and val not in unique_balls:
+                        unique_balls.append(val)
+                    if len(unique_balls) == 20: break
+                
                 if len(unique_balls) == 20:
-                    break
-                    
-            # 只要成功吸滿 20 顆球，就是我們要的結果！
-            if len(unique_balls) == 20:
-                now = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
-                return {
-                    "period": latest_period,
-                    "numbers": sorted(unique_balls),
-                    "time": now.strftime("%Y-%m-%d %H:%M:%S")
-                }
+                    draws.append({"period": p, "numbers": sorted(unique_balls)})
+            
+            if draws: return draws
         except:
-            pass
+            continue
+
+    # 策略 B：官方 API 備援跳板 (防守用)
+    try:
+        url_off = f"https://api.taiwanlottery.com/TLCAPIWeB/Lottery/BingoResult?limit=30&t={int(time.time())}"
+        targets_B = [f"https://corsproxy.io/?{url_off}", f"https://api.allorigins.win/raw?url={url_off}", url_off]
+        for route in targets_B:
+            try:
+                res = requests.get(route, headers=headers, timeout=10)
+                data = res.json()
+                if "contents" in data and isinstance(data["contents"], str):
+                    data = json.loads(data["contents"])
+                if isinstance(data, dict) and "content" in data:
+                    results = sorted(data["content"].get("bingoResults", []), key=lambda x: int(x.get("period", 0)), reverse=True)
+                    draws = []
+                    for item in results:
+                        nums = item.get("drawNumbers", [])
+                        if len(nums) == 20:
+                            draws.append({"period": str(item.get("period", "")), "numbers": sorted([int(n) for n in nums])})
+                    if draws: return draws
+            except:
+                continue
+    except:
+        pass
+
     return None
 
 def bingo_heartbeat():
-    print("🎯 [系統] 啟動第三方游擊戰模式！全面掃描各大彩券網...")
+    print("🎯 [系統] 啟動雙引擎暴力雷達，掃描中...")
     while True:
         try:
             now = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
             if 7 <= now.hour <= 23:
-                # 採用您的神建議：直接抓第三方網站！
-                data = scrape_third_party_bingo()
+                # 呼叫暴力抓取器
+                draws_data = fetch_bingo_multi_source()
                 
-                if data:
-                    latest_period = data["period"]
-                    latest_numbers = data["numbers"]
-                    latest_time = data["time"]
-                    
-                    # 如果抓到的期數比較新，就更新到資料庫中！
-                    if BINGO_CACHE["latest_period"] == "引擎暖機中..." or latest_period > BINGO_CACHE["latest_period"]:
-                        BINGO_CACHE["history"].append(latest_numbers)
-                        # 保持最多 500 期記憶
-                        if len(BINGO_CACHE["history"]) > 500:
-                            BINGO_CACHE["history"] = BINGO_CACHE["history"][-500:]
-                            
-                        BINGO_CACHE["latest_period"] = latest_period
-                        BINGO_CACHE["last_update"] = latest_time
-                        print(f"🔥 [游擊命中] 成功從第三方網站取得最新期數: {latest_period}")
-                else:
-                    print(f"⏳ [掃描中] 尚未發現新期數...")
+                if draws_data:
+                    latest_item = draws_data[0]
+                    # 如果抓到的期數比快取的新，直接整批替換！
+                    if BINGO_CACHE["latest_period"] == "尋找訊號中" or latest_item["period"] > BINGO_CACHE["latest_period"]:
+                        
+                        # 把抓到的真實歷史反轉 (從舊到新) 塞進記憶體
+                        BINGO_CACHE["history"] = [item["numbers"] for item in reversed(draws_data)]
+                        BINGO_CACHE["latest_period"] = latest_item["period"]
+                        BINGO_CACHE["last_update"] = now.strftime("%Y-%m-%d %H:%M:%S")
+                        
+                        print(f"🔥 [雷達命中] 成功取得最新期數: {latest_item['period']} (含 {len(draws_data)} 期真實歷史)")
         except Exception:
             pass
-        time.sleep(30)
+        time.sleep(25) # 掃描頻率加快
 
 # =====================================================================
 # 🌐 【第三部分：全端點 API 路由】
 # =====================================================================
 @app.route('/')
 def home():
-    return "✅ 系統運作正常 (第三方全網掃描版)"
+    return "✅ 系統運作正常 (雙引擎暴力雷達版)"
 
 @app.route('/api/predict')
 def predict_539():
@@ -318,7 +323,7 @@ def predict_daily():
 @app.route('/api/predict_bingo')
 def predict_bingo():
     try:
-        if not BINGO_CACHE["history"]: return jsonify({"status": "waiting", "message": "等待最新一期開獎資料寫入中..."})
+        if len(BINGO_CACHE["history"]) < 4: return jsonify({"status": "waiting", "message": "雷達掃描中..."})
         scores, steps = bayesian_ensemble_bingo()
         return jsonify({"status": "success", "type": "BINGO", "time_steps": steps, "period": BINGO_CACHE["latest_period"], "last_update": BINGO_CACHE["last_update"], "predicted_numbers": [str(s[0]).zfill(2) for s in scores[:10]], "details": [{"num": str(s[0]).zfill(2), "score": round(s[1], 2)} for s in scores[:10]]})
     except Exception as e:
@@ -327,7 +332,7 @@ def predict_bingo():
 @app.route('/api/latest_bingo')
 def latest_bingo():
     try:
-        if not BINGO_CACHE["history"]: return jsonify({"status": "waiting"})
+        if len(BINGO_CACHE["history"]) < 4: return jsonify({"status": "waiting"})
         return jsonify({"status": "success", "numbers": BINGO_CACHE["history"][-1], "period": BINGO_CACHE["latest_period"], "time": BINGO_CACHE["last_update"]})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
