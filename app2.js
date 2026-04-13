@@ -1,4 +1,4 @@
-// 👇 請將這裡換成您最新的 Render 網址 (不要有結尾的斜線)
+// 👇 請確認這裡是您最新的 Render 網址 (不要有結尾的斜線)
 const API_BASE_URL = 'https://lottery-k099.onrender.com';
 
 const GAME_NAMES = {
@@ -34,14 +34,14 @@ async function fetchPrediction(game) {
     const ballsContainer = document.getElementById('latest-balls');
 
     resultBox.innerHTML = `
-        <div style="text-align:center; padding: 30px;">
+        <div style="text-align:center; padding: 40px;">
             <span class="pulse-dot" style="background-color: #20c997; box-shadow: 0 0 10px #20c997;"></span> 
-            <span style="color:#20c997; font-weight: bold;">V11 矩陣運算中...</span>
+            <span style="color:#20c997; font-weight: bold; letter-spacing: 1px;">V11 矩陣運算中...</span>
         </div>`;
     
     titleType.textContent = GAME_NAMES[game];
     issueSpan.textContent = "連線中...";
-    ballsContainer.innerHTML = '<div style="color: #888; font-size: 14px; text-align: center;">與資料庫同步中...</div>';
+    ballsContainer.innerHTML = '<div style="color: #888; font-size: 14px; text-align: center;">與雲端資料庫同步中...</div>';
 
     try {
         const response = await fetch(`${API_BASE_URL}/api/predict/${game}`);
@@ -51,7 +51,7 @@ async function fetchPrediction(game) {
             issueSpan.textContent = data.latest_period ? `第 ${data.latest_period} 期` : '尋找開獎訊號中...';
             dateSpan.textContent = data.last_update ? `最後同步: ${data.last_update}` : '爬蟲暖機中，請稍後重整';
             
-            // 👇 修復：渲染上方【開獎結果區】真實號碼球！
+            // 渲染真實歷史號碼
             if (data.latest_numbers && data.latest_numbers.length > 0) {
                 const latestBallsHtml = data.latest_numbers.map(num => 
                     `<div class="ball" style="background: #2a2d52; color: #fff; border: 1px solid #4dabf7; box-shadow: 0 0 8px rgba(77, 171, 247, 0.3);">${num}</div>`
@@ -61,7 +61,6 @@ async function fetchPrediction(game) {
                 ballsContainer.innerHTML = `<div style="color: #ff9800; font-size: 14px; text-align: center;">⏳ 伺服器剛開機，正在爬取歷史資料，請稍後重整網頁。</div>`;
             }
 
-            // --- 繪製下方【AI 預測區】的球號 ---
             let mainBallsHtml = '';
             let ballsHtml = '';
 
@@ -125,6 +124,20 @@ async function fetchPrediction(game) {
         resultBox.innerHTML = `<div style="color: #ff3b30; text-align:center;">伺服器連線異常，請確認 Render 已啟動</div>`;
     }
 }
+
+// 👇 讓底部導航列不再「沒反應」，加入專業的開發中提示
+document.addEventListener("DOMContentLoaded", () => {
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            const text = e.target.textContent.trim();
+            // 如果點的不是首頁，就跳出提示
+            if (text !== '首頁') {
+                alert(`🚧 系統公告：【${text}】分析模組正在加緊建置中，敬請期待下一階段更新！`);
+            }
+        });
+    });
+});
 
 // 預設先點擊 539
 window.onload = () => {
