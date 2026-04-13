@@ -10,18 +10,16 @@ const GAME_NAMES = {
 };
 
 // ==========================================
-// 🎨 高級懸浮彈窗系統 (取代醜陋的 Alert)
+// 🎨 高級懸浮彈窗系統 (Toast)
 // ==========================================
 function showToast(message) {
-    // 移除舊的彈窗(如果有的話)
     const existingToast = document.getElementById('custom-toast');
     if (existingToast) existingToast.remove();
 
-    // 建立新的彈窗元素
     const toast = document.createElement('div');
     toast.id = 'custom-toast';
     toast.style.position = 'fixed';
-    toast.style.bottom = '80px'; // 顯示在底部導航列上方
+    toast.style.bottom = '80px'; 
     toast.style.left = '50%';
     toast.style.transform = 'translateX(-50%)';
     toast.style.backgroundColor = 'rgba(26, 28, 56, 0.95)';
@@ -39,13 +37,11 @@ function showToast(message) {
     toast.innerHTML = message;
     document.body.appendChild(toast);
 
-    // 觸發漸顯動畫
     setTimeout(() => { 
         toast.style.opacity = '1'; 
-        toast.style.bottom = '90px'; // 微微往上浮的動效
+        toast.style.bottom = '90px'; 
     }, 10);
 
-    // 2.5 秒後自動漸隱並移除
     setTimeout(() => {
         toast.style.opacity = '0';
         toast.style.bottom = '80px';
@@ -57,13 +53,12 @@ function showToast(message) {
 // 🎮 切換彩券模式
 // ==========================================
 function switchTab(gameType) {
+    window.currentGame = gameType; // 讓系統記住當前彩種，給手動刷新按鈕使用
     try {
-        // 重置所有按鈕樣式
         ['539', 'daily', 'lotto', 'weili', 'marksix'].forEach(g => {
             const btn = document.getElementById(`btn-${g}`);
             if (btn) btn.className = 'secondary-btn';
         });
-        // 啟動當前點擊的按鈕
         const activeBtn = document.getElementById(`btn-${gameType}`);
         if (activeBtn) activeBtn.className = 'primary-btn active';
         
@@ -175,14 +170,13 @@ async function fetchPrediction(game) {
     }
 }
 
-// 👇 升級絲滑的導航列點擊體驗
+// 底部導航列點擊事件
 document.addEventListener("DOMContentLoaded", () => {
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
         item.addEventListener('click', (e) => {
             const text = e.target.textContent.trim();
             if (text !== '首頁') {
-                // 呼叫我們自己寫的高級懸浮彈窗，取代原本的 alert()
                 showToast(`🚀 系統公告：【${text}】分析模組即將開放，敬請期待！`);
             }
         });
