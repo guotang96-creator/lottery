@@ -2,30 +2,23 @@
 const API_BASE_URL = 'https://lottery-k099.onrender.com';
 
 const GAME_NAMES = {
+    '539': '今彩 539',
+    'daily': '加州天天樂',
     'lotto': '大樂透',
     'weili': '威力彩',
     'marksix': '香港六合彩'
 };
 
-// ==========================================
-// 🎮 切換彩券模式
-// ==========================================
 function switchTab(gameType) {
     // 重置所有按鈕樣式
-    document.getElementById('btn-lotto').className = 'secondary-btn';
-    document.getElementById('btn-weili').className = 'secondary-btn';
-    document.getElementById('btn-marksix').className = 'secondary-btn';
-
+    ['539', 'daily', 'lotto', 'weili', 'marksix'].forEach(g => {
+        document.getElementById(`btn-${g}`).className = 'secondary-btn';
+    });
     // 啟動當前點擊的按鈕
     document.getElementById(`btn-${gameType}`).className = 'primary-btn active';
-
-    // 呼叫預測引擎
     fetchPrediction(gameType);
 }
 
-// ==========================================
-// 📡 呼叫 V11 泛用型 AI 引擎
-// ==========================================
 async function fetchPrediction(game) {
     const resultBox = document.getElementById('result-box');
     const issueSpan = document.getElementById('latest-issue');
@@ -33,11 +26,10 @@ async function fetchPrediction(game) {
     const titleType = document.getElementById('latest-title-type');
     const ballsContainer = document.getElementById('latest-balls');
 
-    // 載入中動畫
     resultBox.innerHTML = `
         <div style="text-align:center; padding: 30px;">
             <span class="pulse-dot" style="background-color: #20c997; box-shadow: 0 0 10px #20c997;"></span> 
-            <span style="color:#20c997; font-weight: bold;">V11 自動爬蟲與貝氏矩陣運算中...</span>
+            <span style="color:#20c997; font-weight: bold;">V11 矩陣運算中...</span>
         </div>`;
     
     titleType.textContent = GAME_NAMES[game];
@@ -49,9 +41,8 @@ async function fetchPrediction(game) {
         const data = await response.json();
         
         if(data.status === 'success') {
-            // --- 更新上方【開獎結果區】的期數狀態 ---
             issueSpan.textContent = data.latest_period ? `第 ${data.latest_period} 期` : '尋找開獎訊號中...';
-            dateSpan.textContent = data.last_update ? `最後同步: ${data.last_update}` : '剛啟動，請稍候幾分鐘讓爬蟲抓取資料';
+            dateSpan.textContent = data.last_update ? `最後同步: ${data.last_update}` : '爬蟲暖機中，請稍後重整';
             
             if (data.latest_period) {
                 ballsContainer.innerHTML = `<div style="color: #20c997; font-size: 14px; font-weight: bold; text-align: center;">✅ 已成功同步至最新歷史開獎庫，AI 準備就緒。</div>`;
@@ -59,48 +50,58 @@ async function fetchPrediction(game) {
                 ballsContainer.innerHTML = `<div style="color: #ff9800; font-size: 14px; text-align: center;">⏳ 伺服器剛開機，正在爬取歷史資料，請稍後重整網頁。</div>`;
             }
 
-            // --- 繪製下方【AI 預測區】的球號 ---
-            // 取前 6 碼為主支，第 7 碼為特別號/第二區
-            const mainBalls = data.predicted.slice(0, 6);
-            const specialBall = data.predicted[6] || '00';
-            
-            // 判斷顏色：威力彩特別號用紅色，其餘用綠色
-            const specialColor = game === 'weili' ? '#ff3b30' : '#20c997';
-            const specialShadow = game === 'weili' ? 'rgba(255, 59, 48, 0.4)' : 'rgba(32, 201, 151, 0.4)';
-            const specialLabel = game === 'weili' ? '第二區 (1碼)' : '特別號保險 (1碼)';
-            
-            let mainBallsHtml = mainBalls.map(num => 
-                `<div class="ball" style="background: #2f65ff; box-shadow: 0 4px 10px rgba(47, 101, 255, 0.4);">${num}</div>`
-            ).join('');
+            let mainBallsHtml = '';
+            let specialHtml = '';
+            let ballsHtml = '';
 
-            let ballsHtml = `
-                <div style="text-align: left; font-size: 15px; font-weight: bold; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #2a2d52;">
-                    [${GAME_NAMES[game]}] AI 精選包牌池：
-                </div>
+            // 判斷是 5 顆球的遊戲 (539/天天樂) 還是 6+1 顆球的遊戲
+            if (game === '539' || game === 'daily') {
+                const mainBalls = data.predicted.slice(0, 5);
+                mainBallsHtml = mainBalls.map(num => 
+                    `<div class="ball" style="background: #2f65ff; box-shadow: 0 4px 10px rgba(47, 101, 255, 0.4);">${num}</div>`
+                ).join('');
                 
-                <div style="text-align: left; font-size: 13px; color: #4dabf7; margin-bottom: 8px;">
-                    🔥 主力推薦區 (6碼)
-                </div>
-                <div class="ball-container" style="justify-content: center; gap: 10px; margin-bottom: 15px;">
-                    ${mainBallsHtml}
-                </div>
+                ballsHtml = `
+                    <div style="text-align: left; font-size: 15px; font-weight: bold; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #2a2d52;">
+                        [${GAME_NAMES[game]}] AI 精選包牌池：
+                    </div>
+                    <div style="text-align: left; font-size: 13px; color: #4dabf7; margin-bottom: 8px;">🔥 主力推薦區 (5碼)</div>
+                    <div class="ball-container" style="justify-content: center; gap: 10px; margin-bottom: 20px;">
+                        ${mainBallsHtml}
+                    </div>
+                `;
+            } else {
+                const mainBalls = data.predicted.slice(0, 6);
+                const specialBall = data.predicted[6] || '00';
+                const specialColor = game === 'weili' ? '#ff3b30' : '#20c997';
+                const specialShadow = game === 'weili' ? 'rgba(255, 59, 48, 0.4)' : 'rgba(32, 201, 151, 0.4)';
+                const specialLabel = game === 'weili' ? '第二區 (1碼)' : '特別號保險 (1碼)';
 
-                <div style="text-align: left; font-size: 13px; color: ${specialColor}; margin-bottom: 8px;">
-                    🛡️ ${specialLabel}
-                </div>
-                <div class="ball-container" style="justify-content: center; margin-bottom: 20px;">
-                    <div class="ball" style="background: ${specialColor}; border: none; box-shadow: 0 4px 10px ${specialShadow};">${specialBall}</div>
-                </div>
-            `;
+                mainBallsHtml = mainBalls.map(num => 
+                    `<div class="ball" style="background: #2f65ff; box-shadow: 0 4px 10px rgba(47, 101, 255, 0.4);">${num}</div>`
+                ).join('');
+
+                ballsHtml = `
+                    <div style="text-align: left; font-size: 15px; font-weight: bold; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #2a2d52;">
+                        [${GAME_NAMES[game]}] AI 精選包牌池：
+                    </div>
+                    <div style="text-align: left; font-size: 13px; color: #4dabf7; margin-bottom: 8px;">🔥 主力推薦區 (6碼)</div>
+                    <div class="ball-container" style="justify-content: center; gap: 10px; margin-bottom: 15px;">
+                        ${mainBallsHtml}
+                    </div>
+                    <div style="text-align: left; font-size: 13px; color: ${specialColor}; margin-bottom: 8px;">🛡️ ${specialLabel}</div>
+                    <div class="ball-container" style="justify-content: center; margin-bottom: 20px;">
+                        <div class="ball" style="background: ${specialColor}; border: none; box-shadow: 0 4px 10px ${specialShadow};">${specialBall}</div>
+                    </div>
+                `;
+            }
             
-            // --- 繪製權重解析明細 ---
             let detailsHtml = '<div style="margin-top: 15px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px;">';
             data.details.forEach((item, index) => {
-                let color = index < 6 ? '#ddd' : specialColor; 
                 detailsHtml += `
-                    <div style="display: flex; justify-content: space-between; font-size: 13px; color: ${color}; margin-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 13px; color: #ddd; margin-bottom: 8px;">
                         <span>${index+1}. 號碼 <strong>${item.num}</strong></span>
-                        <span>綜合權重積分: ${item.score}</span>
+                        <span>權重積分: ${item.score}</span>
                     </div>`;
             });
             detailsHtml += '</div>';
@@ -114,7 +115,7 @@ async function fetchPrediction(game) {
     }
 }
 
-// 預設先點擊 大樂透
+// 預設先點擊 539
 window.onload = () => {
-    switchTab('lotto');
+    switchTab('539');
 };
