@@ -9,6 +9,53 @@ const GAME_NAMES = {
     'marksix': '香港六合彩'
 };
 
+// ==========================================
+// 🎨 高級懸浮彈窗系統 (取代醜陋的 Alert)
+// ==========================================
+function showToast(message) {
+    // 移除舊的彈窗(如果有的話)
+    const existingToast = document.getElementById('custom-toast');
+    if (existingToast) existingToast.remove();
+
+    // 建立新的彈窗元素
+    const toast = document.createElement('div');
+    toast.id = 'custom-toast';
+    toast.style.position = 'fixed';
+    toast.style.bottom = '80px'; // 顯示在底部導航列上方
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.backgroundColor = 'rgba(26, 28, 56, 0.95)';
+    toast.style.color = '#fff';
+    toast.style.padding = '12px 24px';
+    toast.style.borderRadius = '30px';
+    toast.style.boxShadow = '0 4px 15px rgba(0,0,0,0.5)';
+    toast.style.border = '1px solid #4dabf7';
+    toast.style.fontSize = '14px';
+    toast.style.zIndex = '9999';
+    toast.style.opacity = '0';
+    toast.style.whiteSpace = 'nowrap';
+    toast.style.transition = 'opacity 0.3s ease-in-out, bottom 0.3s ease-in-out';
+    
+    toast.innerHTML = message;
+    document.body.appendChild(toast);
+
+    // 觸發漸顯動畫
+    setTimeout(() => { 
+        toast.style.opacity = '1'; 
+        toast.style.bottom = '90px'; // 微微往上浮的動效
+    }, 10);
+
+    // 2.5 秒後自動漸隱並移除
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.bottom = '80px';
+        setTimeout(() => toast.remove(), 300);
+    }, 2500);
+}
+
+// ==========================================
+// 🎮 切換彩券模式
+// ==========================================
 function switchTab(gameType) {
     try {
         // 重置所有按鈕樣式
@@ -26,6 +73,9 @@ function switchTab(gameType) {
     }
 }
 
+// ==========================================
+// 📡 呼叫 V11 泛用型 AI 引擎
+// ==========================================
 async function fetchPrediction(game) {
     const resultBox = document.getElementById('result-box');
     const issueSpan = document.getElementById('latest-issue');
@@ -125,15 +175,15 @@ async function fetchPrediction(game) {
     }
 }
 
-// 👇 讓底部導航列不再「沒反應」，加入專業的開發中提示
+// 👇 升級絲滑的導航列點擊體驗
 document.addEventListener("DOMContentLoaded", () => {
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
         item.addEventListener('click', (e) => {
             const text = e.target.textContent.trim();
-            // 如果點的不是首頁，就跳出提示
             if (text !== '首頁') {
-                alert(`🚧 系統公告：【${text}】分析模組正在加緊建置中，敬請期待下一階段更新！`);
+                // 呼叫我們自己寫的高級懸浮彈窗，取代原本的 alert()
+                showToast(`🚀 系統公告：【${text}】分析模組即將開放，敬請期待！`);
             }
         });
     });
