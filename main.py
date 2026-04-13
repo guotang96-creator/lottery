@@ -71,6 +71,7 @@ def calc_fourier(data_list, total_draws):
 
 def bayesian_ensemble_predict(data_list):
     total_draws = len(data_list)
+    # 🔥 保護機制下修，防止印出 1~5 智障號碼
     if total_draws < 5: return [(i, 1.0) for i in range(1, 40)], total_draws
     
     weights = {'ema': 1.0, 'markov': 1.0, 'reversion': 1.0, 'fourier': 1.0}
@@ -109,9 +110,9 @@ def extract_history(data_json):
     return []
 
 # =====================================================================
-# ⚡ 【第二部分：台灣賓果 V10 高頻引擎 (防彈實彈 + 歷史底火版)】 
+# ⚡ 【第二部分：台灣賓果 V10 高頻引擎 (防彈實彈版 + 極簡 UI 保護)】 
 # =====================================================================
-# 👇 注入 5 組真實歷史底火，確保引擎一秒開機，再也不會卡初始化！
+# 👇 注入底火，並將文字極簡化，保護手機版面！
 BINGO_CACHE = {
     "history": [
         [2, 9, 20, 24, 25, 28, 29, 31, 35, 36, 44, 45, 46, 52, 53, 56, 58, 62, 65, 76],
@@ -120,8 +121,8 @@ BINGO_CACHE = {
         [4, 6, 11, 13, 15, 16, 20, 25, 29, 31, 37, 39, 43, 45, 54, 59, 64, 66, 71, 80],
         [2, 8, 12, 17, 22, 24, 28, 30, 35, 36, 41, 46, 48, 52, 56, 60, 65, 68, 76, 79]
     ], 
-    "last_update": "系統剛啟動",
-    "latest_period": "歷史暫存 (突破防火牆中...)",
+    "last_update": "", # 留空，避免手機版面被擠壓換行
+    "latest_period": "運算中", # 極簡文字，UI 會顯示「第 運算中 期」
     "weights": {'ema': 1.0, 'markov': 1.0, 'co_occurrence': 1.0, 'fourier': 1.0}
 }
 
@@ -204,41 +205,37 @@ def bayesian_ensemble_bingo():
 def bingo_heartbeat():
     print("🎯 [系統] 啟動防彈裝甲版實彈模式，展開跳板路線...")
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-        "Accept": "application/json"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json",
+        "Cache-Control": "no-cache"
     }
-    target_url = "https://api.taiwanlottery.com/TLCAPIWeB/Lottery/BingoResult?limit=50"
-    
-    routes = [
-        f"https://api.allorigins.win/get?url={target_url}",
-        f"https://api.allorigins.win/raw?url={target_url}",
-        f"https://api.codetabs.com/v1/proxy?quest={target_url}",
-        f"https://corsproxy.io/?{target_url}",
-        target_url
-    ]
 
     while True:
         try:
             now = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
             current_time_str = now.strftime("%Y-%m-%d %H:%M:%S")
             
+            # 👇 加上動態時間戳 (t=...)，強迫打破防火牆的網頁快取
+            target_url = f"https://api.taiwanlottery.com/TLCAPIWeB/Lottery/BingoResult?limit=50&t={int(time.time())}"
+            
+            routes = [
+                f"https://api.allorigins.win/raw?url={target_url}",
+                f"https://corsproxy.io/?{target_url}",
+                f"https://thingproxy.freeboard.io/fetch/{target_url}",
+                target_url
+            ]
+
             if 7 <= now.hour <= 23:
                 success = False
                 for route in routes:
                     if success: break
                     try:
-                        res = requests.get(route, headers=headers, timeout=12)
+                        res = requests.get(route, headers=headers, timeout=10)
                         if res.status_code == 200:
-                            try:
-                                data = res.json()
-                            except ValueError:
-                                continue 
-
+                            data = res.json()
                             if "contents" in data and isinstance(data["contents"], str): 
-                                try:
-                                    data = json.loads(data["contents"])
-                                except ValueError:
-                                    continue
+                                try: data = json.loads(data["contents"])
+                                except: continue
                                 
                             real_draws = []
                             latest_period = ""
@@ -259,11 +256,11 @@ def bingo_heartbeat():
                                 BINGO_CACHE["history"] = real_draws[-500:] 
                                 BINGO_CACHE["latest_period"] = latest_period
                                 BINGO_CACHE["last_update"] = latest_time.replace('T', ' ')[:19]
-                                print(f"🔥 [實彈命中] 成功載入真實賓果！最新期數: {latest_period}")
+                                print(f"🔥 [實彈命中] 成功載入！最新期數: {latest_period}")
                                 success = True
                     except Exception:
                         pass
-
+                
                 if not success:
                     print(f"⏳ [{current_time_str}] 等待官方發布最新期數...")
         except Exception:
@@ -275,7 +272,7 @@ def bingo_heartbeat():
 # =====================================================================
 @app.route('/')
 def home():
-    return "✅ 系統運作正常 (防彈實彈 + Bug修復版)"
+    return "✅ 系統運作正常 (極簡 UI 防彈版)"
 
 @app.route('/api/predict')
 def predict_539():
