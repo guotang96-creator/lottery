@@ -120,7 +120,7 @@ def scraper_logic(target_url, pattern_period, pattern_ball, ball_count):
     return None
 
 def auto_update_job():
-    # 🔥 終極破壁關鍵：讓爬蟲睡 10 秒，讓 Flask 優先啟動，保證 Render 絕對不會 Timeout！
+    # 延遲 10 秒啟動，保證 Render 不會 Timeout！
     time.sleep(10) 
     print("🚀 [系統] 自動爬蟲引擎啟動，正在掃描全網...")
     while True:
