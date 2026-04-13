@@ -15,9 +15,6 @@ CORS(app)
 # 📊 【第一部分：V11 泛用型量化 AI 引擎 (五合一版)】
 # =====================================================================
 def bayesian_engine(data_list, max_num):
-    """
-    泛用型貝氏動態矩陣：自動適應球數 (支援 38, 39, 49)
-    """
     total_draws = len(data_list)
     if total_draws < 3:
         return [{"num": str(i).zfill(2), "score": 1.0} for i in range(1, max_num + 1)]
@@ -52,24 +49,27 @@ def bayesian_engine(data_list, max_num):
 
     return sorted(final_scores, key=lambda x: x['score'], reverse=True)
 
-# 抓取 GitHub JSON 專用函數 (539 & 天天樂)
+# 👇 升級：精準抓取 GitHub JSON 的真實期數與號碼
 def fetch_github_json(url):
     try:
         res = requests.get(url, timeout=10)
         data = res.json()
         recent = data.get("history") or data.get("recent50") or data.get("data") or []
         history = []
+        latest_period = ""
         for item in recent:
             if isinstance(item, dict):
                 nums = item.get("drawNumberSize", item.get("numbers", []))
                 if len(nums) >= 5:
                     history.append([int(n) for n in nums if str(n).isdigit()])
-        return history[::-1] # 反轉為由舊到新
+        if recent and isinstance(recent[0], dict):
+            latest_period = str(recent[0].get("period", recent[0].get("issue", "")))
+        return history[::-1], latest_period
     except:
-        return []
+        return [], ""
 
 # =====================================================================
-# 🕷️ 【第二部分：全自動定時爬蟲體系 (大樂透/威力彩/六合彩)】
+# 🕷️ 【第二部分：全自動定時爬蟲體系】
 # =====================================================================
 GLOBAL_DATA = {
     "lotto": {"history": [], "latest_period": "", "last_update": ""},    
@@ -124,50 +124,48 @@ def auto_update_job():
             GLOBAL_DATA["marksix"]["latest_period"] = res["period"]
             GLOBAL_DATA["marksix"]["last_update"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 
-        time.sleep(1800) # 每半小時檢查一次
+        time.sleep(1800)
 
 # =====================================================================
 # 🌐 【第三部分：五合一 API 路由】
 # =====================================================================
 @app.route('/')
 def home():
-    return "✅ V11 五合一泛用型引擎運行中 (含 539, 天天樂, 大樂透, 威力彩, 六合彩)"
+    return "✅ V11 五合一泛用型引擎運行中 (含最新號碼修復)"
 
 @app.route('/api/predict/<game>')
 def get_prediction(game):
-    # 🌟 處理 539 與 天天樂 (從 GitHub 抓取)
     if game in ['539', 'daily']:
         json_url = f"https://guotang96-creator.github.io/lottery/latest.json?t={int(time.time())}" if game == '539' else f"https://guotang96-creator.github.io/lottery/daily.json?t={int(time.time())}"
-        history = fetch_github_json(json_url)
+        history, latest_period = fetch_github_json(json_url)
         if not history: return jsonify({"status": "error", "message": "讀取 GitHub JSON 失敗"})
         
         scores = bayesian_engine(history, 39)
+        # 👇 修復：將最新的歷史號碼送回前端！
+        latest_nums = [str(n).zfill(2) for n in history[-1]]
+        
         return jsonify({
             "status": "success", "game": game,
-            "latest_period": "與 JSON 同步", "last_update": "即時",
+            "latest_period": latest_period or "最新", "last_update": "即時",
+            "latest_numbers": latest_nums,
             "predicted": [s["num"] for s in scores[:10]], "details": scores[:10]
         })
 
-    # 🌟 處理大樂透、威力彩、六合彩 (從爬蟲緩存抓取)
-    if game == 'lotto':
-        data = GLOBAL_DATA["lotto"]
-        max_n = 49
-    elif game == 'weili':
-        data = GLOBAL_DATA["weili"]
-        max_n = 38
-    elif game == 'marksix':
-        data = GLOBAL_DATA["marksix"]
-        max_n = 49
-    else:
-        return jsonify({"status": "error", "message": "未知彩種"})
+    if game in ['lotto', 'weili', 'marksix']:
+        data = GLOBAL_DATA[game]
+        max_n = 38 if game == 'weili' else 49
+        scores = bayesian_engine(data["history"], max_n)
+        # 👇 修復：將爬蟲抓到的最新歷史號碼送回前端！
+        latest_nums = [str(n).zfill(2) for n in data["history"][-1]] if data["history"] else []
+        
+        return jsonify({
+            "status": "success", "game": game,
+            "latest_period": data["latest_period"], "last_update": data["last_update"],
+            "latest_numbers": latest_nums,
+            "predicted": [s["num"] for s in scores[:10]], "details": scores[:10]
+        })
 
-    scores = bayesian_engine(data["history"], max_n)
-    
-    return jsonify({
-        "status": "success", "game": game,
-        "latest_period": data["latest_period"], "last_update": data["last_update"],
-        "predicted": [s["num"] for s in scores[:10]], "details": scores[:10]
-    })
+    return jsonify({"status": "error", "message": "未知彩種"})
 
 threading.Thread(target=auto_update_job, daemon=True).start()
 
