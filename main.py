@@ -71,42 +71,35 @@ def fetch_github_json(url):
 # =====================================================================
 # 🕷️ 【第二部分：全自動跳板爬蟲體系 (含真實歷史底火)】
 # =====================================================================
-# 🔥 注入底火：即使爬蟲被擋，引擎開機也有真實資料可用，絕不出 123456
 GLOBAL_DATA = {
     "lotto": {
         "history": [[4,10,15,22,30,41,11], [1,8,12,25,33,40,5], [7,14,19,28,35,45,2], [11,15,24,31,44,48,6], [3,18,21,27,34,42,8]],
-        "latest_period": "歷史底火運算中", "last_update": "剛啟動"
+        "latest_period": "歷史底火運作中", "last_update": "系統剛啟動"
     },    
     "weili": {
         "history": [[6,7,12,15,23,31,4], [3,11,13,17,24,30,8], [2,10,18,22,28,35,5], [8,14,21,25,33,38,2], [5,12,19,27,32,36,7]],
-        "latest_period": "歷史底火運算中", "last_update": "剛啟動"
+        "latest_period": "歷史底火運作中", "last_update": "系統剛啟動"
     },    
     "marksix": {
         "history": [[5,12,18,24,33,41,7], [2,9,15,22,30,45,8], [1,11,17,25,38,48,10], [6,14,21,28,35,42,3], [8,16,23,31,40,49,5]],
-        "latest_period": "歷史底火運算中", "last_update": "剛啟動"
+        "latest_period": "歷史底火運作中", "last_update": "系統剛啟動"
     }   
 }
 
 def scraper_logic(target_url, pattern_period, pattern_ball, ball_count):
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
     routes = [
         f"https://api.allorigins.win/get?url={target_url}",
         f"https://api.codetabs.com/v1/proxy?quest={target_url}",
         target_url
     ]
-    
     for route in routes:
         try:
             res = requests.get(route, headers=headers, timeout=12)
             text = res.text
-            
-            # 如果是 allorigins 的 JSON 格式，解開它
             if "allorigins.win/get" in route:
-                try:
-                    data = res.json()
-                    text = data.get("contents", "")
+                try: text = res.json().get("contents", "")
                 except: pass
-
             content = re.sub(r'<[^>]+>', ' ', text) 
             periods = re.findall(pattern_period, content)
             if not periods: continue
@@ -115,7 +108,6 @@ def scraper_logic(target_url, pattern_period, pattern_ball, ball_count):
             idx = content.find(latest_period)
             block = content[idx:idx+800]
             balls = re.findall(pattern_ball, block)
-            
             unique_balls = []
             for b in balls:
                 val = int(b)
@@ -124,12 +116,13 @@ def scraper_logic(target_url, pattern_period, pattern_ball, ball_count):
                 
             if len(unique_balls) >= 6:
                 return {"period": latest_period, "numbers": sorted(unique_balls)}
-        except:
-            continue
+        except: continue
     return None
 
 def auto_update_job():
-    print("🚀 [系統] 自動爬蟲引擎啟動，正在透過跳板掃描全網...")
+    # 🔥 終極破壁關鍵：讓爬蟲睡 10 秒，讓 Flask 優先啟動，保證 Render 絕對不會 Timeout！
+    time.sleep(10) 
+    print("🚀 [系統] 自動爬蟲引擎啟動，正在掃描全網...")
     while True:
         try:
             res = scraper_logic("https://www.pilio.idv.tw/lotto/lotto649/list.asp", r'(\d{9})', r'\b(0[1-9]|[1-4][0-9])\b', 7)
@@ -151,7 +144,6 @@ def auto_update_job():
                 GLOBAL_DATA["marksix"]["last_update"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
         except:
             pass
-        
         time.sleep(1800)
 
 # =====================================================================
@@ -159,7 +151,7 @@ def auto_update_job():
 # =====================================================================
 @app.route('/')
 def home():
-    return "✅ V11 五合一泛用型引擎運行中 (含真實底火防護版)"
+    return "✅ V11 終極防 Timeout 裝甲版運行中"
 
 @app.route('/api/predict/<game>')
 def get_prediction(game):
