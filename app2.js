@@ -1,4 +1,4 @@
-// 👇 請將這裡換成您最新的 Render 網址
+// 👇 請將這裡換成您最新的 Render 網址 (不要有結尾的斜線)
 const API_BASE_URL = 'https://lottery-k099.onrender.com';
 
 const GAME_NAMES = {
@@ -50,9 +50,14 @@ async function fetchPrediction(game) {
         
         if(data.status === 'success') {
             // --- 更新上方【開獎結果區】的期數狀態 ---
-            issueSpan.textContent = data.latest_period ? `第 ${data.latest_period} 期` : '等待新期數';
-            dateSpan.textContent = data.last_update ? `最後同步: ${data.last_update}` : '';
-            ballsContainer.innerHTML = `<div style="color: #20c997; font-size: 14px; font-weight: bold; text-align: center;">✅ 已成功同步至最新歷史開獎庫，AI 準備就緒。</div>`;
+            issueSpan.textContent = data.latest_period ? `第 ${data.latest_period} 期` : '尋找開獎訊號中...';
+            dateSpan.textContent = data.last_update ? `最後同步: ${data.last_update}` : '剛啟動，請稍候幾分鐘讓爬蟲抓取資料';
+            
+            if (data.latest_period) {
+                ballsContainer.innerHTML = `<div style="color: #20c997; font-size: 14px; font-weight: bold; text-align: center;">✅ 已成功同步至最新歷史開獎庫，AI 準備就緒。</div>`;
+            } else {
+                ballsContainer.innerHTML = `<div style="color: #ff9800; font-size: 14px; text-align: center;">⏳ 伺服器剛開機，正在爬取歷史資料，請稍後重整網頁。</div>`;
+            }
 
             // --- 繪製下方【AI 預測區】的球號 ---
             // 取前 6 碼為主支，第 7 碼為特別號/第二區
