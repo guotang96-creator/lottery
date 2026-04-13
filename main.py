@@ -71,7 +71,6 @@ def calc_fourier(data_list, total_draws):
 
 def bayesian_ensemble_predict(data_list):
     total_draws = len(data_list)
-    # 👇 修復 1：把原本的 50 降為 5，再也不會印出 1,2,3,4,5 智障號碼了！
     if total_draws < 5: return [(i, 1.0) for i in range(1, 40)], total_draws
     
     weights = {'ema': 1.0, 'markov': 1.0, 'reversion': 1.0, 'fourier': 1.0}
@@ -110,7 +109,7 @@ def extract_history(data_json):
     return []
 
 # =====================================================================
-# ⚡ 【第二部分：台灣賓果 V10 高頻引擎 (嚴格實彈)】 
+# ⚡ 【第二部分：台灣賓果 V10 高頻引擎 (防彈實彈版)】 
 # =====================================================================
 BINGO_CACHE = {
     "history": [], 
@@ -192,18 +191,22 @@ def bayesian_ensemble_bingo():
 
     return sorted(final_scores.items(), key=lambda x: x[1], reverse=True), total_draws
 
+# 👇 防彈實彈心臟：完美解析，絕不崩潰
 def bingo_heartbeat():
-    print("🎯 [系統] 進入嚴格實彈模式：啟用強化跳板...")
+    print("🎯 [系統] 啟動防彈裝甲版實彈模式，展開 5 條跳板路線...")
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-        "Accept": "application/json"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json",
+        "Accept-Language": "zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7",
     }
     target_url = "https://api.taiwanlottery.com/TLCAPIWeB/Lottery/BingoResult?limit=50"
     
-    # 👇 修復 2：更換最強跳板 CodeTabs 為主攻，並移除無效跳板
+    # 5 條路線交叉掩護
     routes = [
-        f"https://api.codetabs.com/v1/proxy?quest={target_url}",
         f"https://api.allorigins.win/get?url={target_url}",
+        f"https://api.allorigins.win/raw?url={target_url}",
+        f"https://api.codetabs.com/v1/proxy?quest={target_url}",
+        f"https://corsproxy.io/?{target_url}",
         target_url
     ]
 
@@ -217,15 +220,19 @@ def bingo_heartbeat():
                 for route in routes:
                     if success: break
                     try:
-                        # 👇 增加 Timeout 到 15 秒，避免跳板抓一半斷線
-                        res = requests.get(route, headers=headers, timeout=15)
+                        res = requests.get(route, headers=headers, timeout=12)
                         if res.status_code == 200:
-                            data = res.json()
+                            # 防彈解析機制：確保拿到的不是 HTML 陷阱網頁
+                            try:
+                                data = res.json()
+                            except ValueError:
+                                continue # 解析失敗直接換下一條路線
+
                             if "contents" in data and isinstance(data["contents"], str): 
                                 try:
                                     data = json.loads(data["contents"])
-                                except:
-                                    pass
+                                except ValueError:
+                                    continue
                                 
                             real_draws = []
                             latest_period = ""
@@ -248,12 +255,12 @@ def bingo_heartbeat():
                                 BINGO_CACHE["last_update"] = latest_time.replace('T', ' ')[:19]
                                 print(f"🔥 [實彈命中] 成功載入真實賓果！最新期數: {latest_period}")
                                 success = True
-                    except Exception as e:
-                        pass 
+                    except Exception:
+                        pass # 超時或連線失敗，安靜換下一條
 
                 if not success:
                     print(f"⏳ [{current_time_str}] 等待官方發布最新期數...")
-        except Exception as e:
+        except Exception:
             pass
         time.sleep(30)
 
@@ -262,7 +269,7 @@ def bingo_heartbeat():
 # =====================================================================
 @app.route('/')
 def home():
-    return "✅ 系統運作正常 (嚴格實彈強化版)"
+    return "✅ 系統運作正常 (防彈實彈強化版)"
 
 @app.route('/api/predict')
 def predict_539():
