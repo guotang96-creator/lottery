@@ -7,7 +7,6 @@ import time
 import os 
 import math
 import re
-import json
 
 app = Flask(__name__)
 CORS(app) 
@@ -69,89 +68,132 @@ def fetch_github_json(url):
         return [], ""
 
 # =====================================================================
-# 🕷️ 【第二部分：全自動跳板爬蟲體系 (含真實歷史底火)】
+# 🕷️ 【第二部分：直連台彩官方 API + 多重備援雷達】
 # =====================================================================
 GLOBAL_DATA = {
-    "lotto": {
-        "history": [[4,10,15,22,30,41,11], [1,8,12,25,33,40,5], [7,14,19,28,35,45,2], [11,15,24,31,44,48,6], [3,18,21,27,34,42,8]],
-        "latest_period": "歷史底火運作中", "last_update": "系統剛啟動"
-    },    
-    "weili": {
-        "history": [[6,7,12,15,23,31,4], [3,11,13,17,24,30,8], [2,10,18,22,28,35,5], [8,14,21,25,33,38,2], [5,12,19,27,32,36,7]],
-        "latest_period": "歷史底火運作中", "last_update": "系統剛啟動"
-    },    
-    "marksix": {
-        "history": [[5,12,18,24,33,41,7], [2,9,15,22,30,45,8], [1,11,17,25,38,48,10], [6,14,21,28,35,42,3], [8,16,23,31,40,49,5]],
-        "latest_period": "歷史底火運作中", "last_update": "系統剛啟動"
-    }   
+    "lotto": {"history": [[4,10,15,22,30,41], [1,8,12,25,33,40], [7,14,19,28,35,45]], "latest_period": "歷史底火運作中", "last_update": "系統剛啟動"},    
+    "weili": {"history": [[6,7,12,15,23,31], [3,11,13,17,24,30], [2,10,18,22,28,35]], "latest_period": "歷史底火運作中", "last_update": "系統剛啟動"},    
+    "marksix": {"history": [[5,12,18,24,33,41], [2,9,15,22,30,45], [1,11,17,25,38,48]], "latest_period": "歷史底火運作中", "last_update": "系統剛啟動"}   
 }
 
-def scraper_logic(target_url, pattern_period, pattern_ball, ball_count):
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-    routes = [
-        f"https://api.allorigins.win/get?url={target_url}",
-        f"https://api.codetabs.com/v1/proxy?quest={target_url}",
-        target_url
-    ]
+# 🔥 新技術：捨棄暴力破解 HTML，直接攔截台灣彩券官方 JSON 封包！
+def get_tw_official_data(game_code):
+    url = f"https://api.taiwanlottery.com/TLCAPIWeB/Lottery/{game_code}Result?limit=15"
+    routes = [url, f"https://corsproxy.io/?{url}", f"https://api.allorigins.win/raw?url={url}"]
+    
     for route in routes:
         try:
-            res = requests.get(route, headers=headers, timeout=12)
-            text = res.text
-            if "allorigins.win/get" in route:
-                try: text = res.json().get("contents", "")
-                except: pass
-            content = re.sub(r'<[^>]+>', ' ', text) 
-            periods = re.findall(pattern_period, content)
-            if not periods: continue
+            res = requests.get(route, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}, timeout=12)
+            data = res.json()
             
-            latest_period = sorted(list(set(periods)), reverse=True)[0]
-            idx = content.find(latest_period)
-            block = content[idx:idx+800]
-            balls = re.findall(pattern_ball, block)
-            unique_balls = []
-            for b in balls:
-                val = int(b)
-                if val not in unique_balls: unique_balls.append(val)
-                if len(unique_balls) == ball_count: break
+            # 智能遞迴：無視台彩資料庫結構變更，強行抓出期數與號碼
+            def find_draws(obj):
+                draws = []
+                if isinstance(obj, list):
+                    for item in obj:
+                        if isinstance(item, dict) and 'period' in item and ('drawNumberSize' in item or 'drawNumbers' in item):
+                            draws.append(item)
+                        else: draws.extend(find_draws(item))
+                elif isinstance(obj, dict):
+                    if 'period' in obj and ('drawNumberSize' in obj or 'drawNumbers' in obj):
+                        draws.append(obj)
+                    else:
+                        for k, v in obj.items(): draws.extend(find_draws(v))
+                return draws
+            
+            results = find_draws(data)
+            if not results: continue
+            
+            results.sort(key=lambda x: int(x['period'])) # 排序：舊到新
+            history = []
+            latest_period = ""
+            for r in results:
+                nums_source = r.get('drawNumberSize') or r.get('drawNumbers') or []
+                nums = [int(n) for n in nums_source if str(n).isdigit()]
+                if len(nums) >= 6:
+                    history.append(sorted(nums[:6])) # 只取前6主支
+                    latest_period = str(r['period'])
+            
+            if history:
+                return {"period": latest_period, "history": history[-10:]} # 回傳最新 10 期歷史
+        except:
+            pass
+    return None
+
+def scraper_marksix():
+    # 六合彩專用多目標雷達 (狡兔三窟)
+    targets = [
+        "https://www.pilio.idv.tw/lotto/hk6/list.asp",
+        "https://lotto.auzonet.com/marksix/list_10.html",
+        "https://www.twbb.tw/marksix/"
+    ]
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+    for t in targets:
+        routes = [t, f"https://api.allorigins.win/raw?url={t}", f"https://api.codetabs.com/v1/proxy?quest={t}"]
+        for route in routes:
+            try:
+                res = requests.get(route, headers=headers, timeout=10)
+                res.encoding = 'utf-8'
+                content = re.sub(r'<[^>]+>', ' ', res.text)
+                periods = re.findall(r'(\d{5,7})', content)
+                if not periods: continue
                 
-            if len(unique_balls) >= 6:
-                return {"period": latest_period, "numbers": sorted(unique_balls)}
-        except: continue
+                periods = [p for p in periods if len(p) >= 5]
+                latest_period = sorted(list(set(periods)), reverse=True)[0]
+                
+                idx = content.find(latest_period)
+                block = content[idx:idx+800]
+                balls = re.findall(r'\b(0[1-9]|[1-4][0-9])\b', block)
+                unique_balls = []
+                for b in balls:
+                    val = int(b)
+                    if val not in unique_balls: unique_balls.append(val)
+                    if len(unique_balls) == 7: break # 抓滿7顆球(含特別號)就停
+                    
+                if len(unique_balls) >= 6:
+                    return {"period": latest_period, "numbers": sorted(unique_balls[:6])}
+            except:
+                continue
     return None
 
 def auto_update_job():
-    # 延遲 10 秒啟動，保證 Render 不會 Timeout！
-    time.sleep(10) 
-    print("🚀 [系統] 自動爬蟲引擎啟動，正在掃描全網...")
+    time.sleep(5) # 延遲點火保護機制
+    print("🚀 [系統] 官方直連雷達啟動，無視防護網...")
     while True:
         try:
-            res = scraper_logic("https://www.pilio.idv.tw/lotto/lotto649/list.asp", r'(\d{9})', r'\b(0[1-9]|[1-4][0-9])\b', 7)
-            if res and res["period"] != GLOBAL_DATA["lotto"]["latest_period"]:
-                GLOBAL_DATA["lotto"]["history"].append(res["numbers"])
-                GLOBAL_DATA["lotto"]["latest_period"] = res["period"]
+            # 1. 大樂透直連官方
+            lotto_data = get_tw_official_data("Lotto649")
+            if lotto_data and lotto_data["period"] != GLOBAL_DATA["lotto"]["latest_period"]:
+                GLOBAL_DATA["lotto"]["history"] = lotto_data["history"]
+                GLOBAL_DATA["lotto"]["latest_period"] = lotto_data["period"]
                 GLOBAL_DATA["lotto"]["last_update"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 
-            res = scraper_logic("https://www.pilio.idv.tw/lotto/superlotto/list.asp", r'(\d{9})', r'\b(0[1-9]|[1-3][0-9])\b', 7)
-            if res and res["period"] != GLOBAL_DATA["weili"]["latest_period"]:
-                GLOBAL_DATA["weili"]["history"].append(res["numbers"])
-                GLOBAL_DATA["weili"]["latest_period"] = res["period"]
+            # 2. 威力彩直連官方
+            weili_data = get_tw_official_data("SuperLotto638")
+            if weili_data and weili_data["period"] != GLOBAL_DATA["weili"]["latest_period"]:
+                GLOBAL_DATA["weili"]["history"] = weili_data["history"]
+                GLOBAL_DATA["weili"]["latest_period"] = weili_data["period"]
                 GLOBAL_DATA["weili"]["last_update"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
 
-            res = scraper_logic("https://www.pilio.idv.tw/lotto/hk6/list.asp", r'(\d{5})', r'\b(0[1-9]|[1-4][0-9])\b', 7)
-            if res and res["period"] != GLOBAL_DATA["marksix"]["latest_period"]:
-                GLOBAL_DATA["marksix"]["history"].append(res["numbers"])
-                GLOBAL_DATA["marksix"]["latest_period"] = res["period"]
+            # 3. 六合彩多點突破
+            hk_data = scraper_marksix()
+            if hk_data and hk_data["period"] != GLOBAL_DATA["marksix"]["latest_period"]:
+                GLOBAL_DATA["marksix"]["history"].append(hk_data["numbers"])
+                if len(GLOBAL_DATA["marksix"]["history"]) > 30:
+                    GLOBAL_DATA["marksix"]["history"] = GLOBAL_DATA["marksix"]["history"][-30:]
+                GLOBAL_DATA["marksix"]["latest_period"] = hk_data["period"]
                 GLOBAL_DATA["marksix"]["last_update"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-        except:
-            pass
-        time.sleep(1800)
+        except Exception as e:
+            print(f"⚠️ 爬蟲錯誤: {e}")
+        
+        time.sleep(900) # 每 15 分鐘同步一次
 
 # =====================================================================
 # 🌐 【第三部分：五合一 API 路由】
 # =====================================================================
 @app.route('/')
 def home():
-    return "✅ V11 終極防 Timeout 裝甲版運行中"
+    return "✅ V11 官方直連版運行中 (突破防火牆封鎖)"
 
 @app.route('/api/predict/<game>')
 def get_prediction(game):
