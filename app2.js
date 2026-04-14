@@ -1,108 +1,133 @@
-// ==========================================
-// 📱 底部導覽列「多頁面切換」邏輯
-// ==========================================
+let currentGame = '';
+let currentHistoryData = []; // 用來存放抓回來的歷史資料
+const API_BASE_URL = 'https://lottery-k099.onrender.com/api/predict'; 
+
+const gameNames = {
+    '539': '今彩 539', 'daily': '天天樂', 'lotto': '大樂透', 'weili': '威力彩', 'marksix': '六合彩'
+};
+const fileMap = { '539': 'latest.json', 'daily': 'daily.json', 'lotto': 'lotto.json', 'weili': 'weili.json', 'marksix': 'marksix.json' };
+
 function switchPage(targetPageId) {
-    // 1. 把所有頁面隱藏
-    const allPages = document.querySelectorAll('.page');
-    allPages.forEach(page => {
-        page.classList.remove('active');
-    });
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.bottom-nav .nav-item').forEach(b => b.classList.remove('active'));
+    document.getElementById(`page-${targetPageId}`)?.classList.add('active');
+    document.getElementById(`nav-${targetPageId}`)?.classList.add('active');
 
-    // 2. 把底部導覽列的按鈕熄滅
-    const allNavBtns = document.querySelectorAll('.bottom-nav .nav-item');
-    allNavBtns.forEach(btn => {
-        btn.classList.remove('active');
-    });
-
-    // 3. 讓點擊的頁面現身
-    const targetPage = document.getElementById(`page-${targetPageId}`);
-    if (targetPage) {
-        targetPage.classList.add('active');
-    }
-
-    // 4. 讓點擊的按鈕亮起
-    const targetNavBtn = document.getElementById(`nav-${targetPageId}`);
-    if (targetNavBtn) {
-        targetNavBtn.classList.add('active');
+    // 💡 當切換到歷史頁面時，立刻畫出歷史表格
+    if (targetPageId === 'history') {
+        renderHistoryPage();
     }
 }
 
-// ==========================================
-// 🧠 AI 預測核心 API 串接邏輯
-// ==========================================
-let currentGame = '';
-const API_BASE_URL = 'https://lottery-k099.onrender.com/api/predict'; // 您的 Render 後端網址
-
-// 彩種名稱對照表
-const gameNames = {
-    '539': '今彩 539',
-    'daily': '天天樂',
-    'lotto': '大樂透',
-    'weili': '威力彩',
-    'marksix': '六合彩'
-};
-
-// 點擊上方彩種按鈕時觸發
 function setGame(gameCode) {
     currentGame = gameCode;
-    
-    // 更新上方 UI 顯示名稱
     document.getElementById('current-game-title').innerText = gameNames[gameCode];
+    document.getElementById('history-game-title').innerText = `(${gameNames[gameCode]})`;
     
-    // 切換按鈕亮起狀態
-    const btns = document.querySelectorAll('.game-btn');
-    btns.forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.game-btn').forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
-
-    // 立刻去雲端抓資料
     fetchPrediction(gameCode);
 }
 
-// 實際去 Render 後端抓資料
 async function fetchPrediction(gameCode) {
-    if (!gameCode) {
-        alert("請先選擇一個彩種！");
-        return;
-    }
+    if (!gameCode) return;
 
     const statusEl = document.getElementById('sync-status');
     const latestBallsEl = document.getElementById('latest-balls');
     const predictionContentEl = document.getElementById('prediction-content');
 
-    // 顯示載入中
-    statusEl.innerText = "🔄 雲端矩陣運算中...";
-    latestBallsEl.innerHTML = '<div class="loading-text">連線至資料庫...</div>';
-    predictionContentEl.innerHTML = '<div class="loading-text">AI 模型推演中...</div>';
+    statusEl.innerText = "🔄 雙向資料庫同步中...";
+    latestBallsEl.innerHTML = '<div class="loading-text">連線至 GitHub 數據庫...</div>';
+    predictionContentEl.innerHTML = '<div class="loading-text">AI 矩陣運算中...</div>';
 
     try {
-        const response = await fetch(`${API_BASE_URL}/${gameCode}`);
-        const data = await response.json();
+        // 💡 神級並行處理：同時去 Render 算 AI，也去 GitHub 拿包含 7 顆球的真實開獎資料
+        const jsonUrl = `https://guotang96-creator.github.io/lottery/${fileMap[gameCode]}?t=${Date.now()}`;
+        const [renderRes, githubRes] = await Promise.all([
+            fetch(`${API_BASE_URL}/${gameCode}`),
+            fetch(jsonUrl)
+        ]);
 
-        if (data.status === "success") {
-            statusEl.innerText = `✅ 第 ${data.latest_period} 期`;
+        const aiData = await renderRes.json();
+        const ghData = await githubRes.json();
+
+        // 1. 處理 GitHub 抓回來的真實歷史資料
+        const historyArray = ghData.history || ghData.recent50 || ghData.data || [];
+        currentHistoryData = historyArray; // 存到全域變數給歷史頁面用
+        
+        if (historyArray.length > 0) {
+            const latestDraw = historyArray[0];
+            const latestNums = latestDraw.numbers || latestDraw.drawNumberSize || [];
+            statusEl.innerText = `✅ 第 ${latestDraw.issue || latestDraw.period} 期`;
             
-            // 繪製最新開獎號碼球
-            latestBallsEl.innerHTML = data.latest_numbers.map(num => 
-                `<div class="ball">${num}</div>`
-            ).join('');
+            // 💡 繪製最新開獎球，並判斷是不是威力彩/大樂透的「第二區/特別號」
+            let html = '';
+            latestNums.forEach((num, index) => {
+                // 如果是最後一顆球，且總球數大於 5 (代表不是 539/天天樂)，就給它紅色的 special 樣式
+                if (index === latestNums.length - 1 && latestNums.length > 5) {
+                    html += `<div class="ball special">${num}</div>`;
+                } else {
+                    html += `<div class="ball">${num}</div>`;
+                }
+            });
+            latestBallsEl.innerHTML = html;
+        }
 
-            // 繪製 AI 預測號碼球 (主推 6 碼)
-            const mainPredict = data.predicted.slice(0, 6);
-            let predictHtml = `
+        // 2. 處理 Render 算出來的 AI 預測資料 (維持不變)
+        if (aiData.status === "success") {
+            const mainPredict = aiData.predicted.slice(0, 6);
+            predictionContentEl.innerHTML = `
                 <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 10px;">🔥 主力推薦區：</p>
                 <div class="balls-container" style="margin-top:0;">
                     ${mainPredict.map(num => `<div class="ball">${num}</div>`).join('')}
                 </div>
             `;
-            predictionContentEl.innerHTML = predictHtml;
-
-        } else {
-            throw new Error(data.message || "資料格式異常");
         }
+        
+        // 如果此時人剛好停在歷史頁面，順便更新歷史畫面
+        renderHistoryPage();
+
     } catch (error) {
-        console.error("API 錯誤:", error);
         statusEl.innerText = "❌ 連線失敗";
-        latestBallsEl.innerHTML = `<div class="error-text">API 尚未就緒 (${error.message})</div>`;
-        predictionContentEl.innerHTML = `<div class="error-text">請等待伺服器甦醒後重試</div>`;
+        latestBallsEl.innerHTML = `<div class="error-text">同步異常</div>`;
+        predictionContentEl.innerHTML = `<div class="error-text">請重新整理</div>`;
     }
+}
+
+// 💡 專門用來繪製「歷史頁面」的函數
+function renderHistoryPage() {
+    const container = document.getElementById('history-list-container');
+    if (!container) return;
+
+    if (!currentGame || currentHistoryData.length === 0) {
+        container.innerHTML = '<div class="loading-text">請先在首頁選擇彩種，並等待資料載入</div>';
+        return;
+    }
+
+    let html = '';
+    currentHistoryData.forEach(item => {
+        const issue = item.issue || item.period;
+        const date = item.lotteryDate || item.date || "最新";
+        const nums = item.numbers || item.drawNumberSize || [];
+
+        let ballsHtml = '';
+        nums.forEach((num, index) => {
+            if (index === nums.length - 1 && nums.length > 5) {
+                ballsHtml += `<div class="ball special">${num}</div>`;
+            } else {
+                ballsHtml += `<div class="ball">${num}</div>`;
+            }
+        });
+
+        html += `
+            <div class="history-item">
+                <div class="history-info">第 <strong>${issue}</strong> 期 (${date})</div>
+                <div class="balls-container history-balls" style="justify-content: flex-start; margin: 5px 0;">
+                    ${ballsHtml}
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
 }
