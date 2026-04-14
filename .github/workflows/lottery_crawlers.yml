@@ -1,0 +1,40 @@
+name: Lottery Master Crawlers
+
+on:
+  schedule:
+    # 每天台灣時間 10:30 (UTC 02:30) 與 22:30 (UTC 14:30) 各執行一次
+    - cron: '30 2,14 * * *'
+  workflow_dispatch: # 允許手動點擊執行
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python_version: '3.9'
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+
+      - name: Run all crawlers
+        run: |
+          python daily_crawler.py
+          python lotto_crawler.py
+          python weili_crawler.py
+          python marksix_crawler.py
+
+      - name: Commit and Push
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add daily.json lotto.json weili.json marksix.json
+          git commit -m "🤖 自動更新五大彩種歷史數據" || exit 0
+          git push
