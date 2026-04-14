@@ -1,199 +1,45 @@
-/* ================= CSS 變數與全局設定 ================= */
 :root {
-    --bg-dark: #0f131f;
-    --card-bg: #1a1f35;
-    --primary-blue: #2a64f6;
-    --primary-blue-hover: #3b71ff;
-    --text-main: #ffffff;
-    --text-muted: #8b95a5;
-    --border-color: #2a314d;
-    --ball-bg: #14204a;
-    --ball-border: #3b71ff;
+    --bg-dark: #0f131f; --card-bg: #1a1f35; --primary-blue: #2a64f6;
+    --text-main: #ffffff; --text-muted: #8b95a5; --border-color: #2a314d;
+    --ball-bg: #14204a; --ball-border: #3b71ff;
+    --special-bg: #b71c1c; --special-border: #ff5252; /* 特別號專用紅色 */
 }
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+body { background: var(--bg-dark); color: var(--text-main); padding-bottom: 80px; }
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-}
-
-body {
-    background-color: var(--bg-dark);
-    color: var(--text-main);
-    padding-bottom: 80px; /* 預留底部導覽列空間 */
-    -webkit-tap-highlight-color: transparent;
-}
-
-/* ================= 頂部標題區 ================= */
-.main-header {
-    text-align: center;
-    padding: 20px 15px;
-    background: linear-gradient(180deg, #111526 0%, var(--bg-dark) 100%);
-}
-
-.logo-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    background: var(--primary-blue);
-    border-radius: 10px;
-    font-weight: bold;
-    font-size: 1.2rem;
-    margin-bottom: 10px;
-    box-shadow: 0 4px 15px rgba(42, 100, 246, 0.4);
-}
-
-h1 { font-size: 1.4rem; font-weight: 600; letter-spacing: 1px; }
-.subtitle { font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; }
+.main-header { text-align: center; padding: 20px 15px; background: linear-gradient(180deg, #111526, var(--bg-dark)); }
+.logo-icon { display: inline-flex; width: 40px; height: 40px; align-items: center; justify-content: center; background: var(--primary-blue); border-radius: 10px; font-weight: bold; font-size: 1.2rem; margin-bottom: 10px; }
+h1 { font-size: 1.4rem; } .subtitle { font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; }
 .highlight-text { color: var(--primary-blue); }
 
-/* ================= 多頁面切換邏輯 (隱身斗篷) ================= */
-.page {
-    display: none; /* 預設隱藏 */
-    animation: fadeIn 0.3s ease-out;
-    padding: 0 15px;
-    max-width: 800px;
-    margin: 0 auto;
-}
+.page { display: none; animation: fadeIn 0.3s; padding: 0 15px; max-width: 800px; margin: 0 auto; }
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-.page.active {
-    display: block; /* 標記為 active 才會顯示 */
-}
+.card { background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border-color); }
+.card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px; }
+.status-text { font-size: 0.75rem; color: var(--text-muted); }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+.balls-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 20px 0; }
+.ball { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 1.2rem; font-weight: bold; background: var(--ball-bg); border: 2px solid var(--ball-border); box-shadow: 0 0 10px rgba(59,113,255,0.3); }
 
-/* ================= 卡片共通樣式 ================= */
-.card {
-    background: var(--card-bg);
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 20px;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-}
+/* 💡 特別號的專屬紅色樣式 */
+.ball.special { background: var(--special-bg); border-color: var(--special-border); box-shadow: 0 0 10px rgba(255,82,82,0.4); }
 
-.card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border-color);
-}
+.action-btn { width: 100%; padding: 12px; border-radius: 10px; background: transparent; color: var(--primary-blue); border: 1px solid var(--primary-blue); font-size: 0.9rem; cursor: pointer; }
+.game-selector { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 15px; }
+.game-btn { flex: 0 0 auto; padding: 8px 16px; border-radius: 8px; background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); }
+.game-btn.active { background: var(--primary-blue); color: white; border-color: var(--primary-blue); }
 
-.card-header h2 { font-size: 1.1rem; }
-.status-text { font-size: 0.75rem; color: var(--text-muted); text-align: right; }
+.loading-text, .coming-soon { text-align: center; color: var(--text-muted); padding: 30px 0; }
+.error-text { text-align: center; color: #ff4d4f; padding: 20px 0; }
 
-/* ================= 彩球樣式 ================= */
-.balls-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-    margin: 20px 0;
-}
+/* 💡 歷史紀錄專用樣式 */
+.history-item { display: flex; flex-direction: column; padding: 15px 0; border-bottom: 1px solid var(--border-color); }
+.history-item:last-child { border-bottom: none; }
+.history-info { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 8px; }
+.history-balls .ball { width: 35px; height: 35px; font-size: 0.9rem; border-width: 1px; }
 
-.ball {
-    width: 45px;
-    height: 45px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    font-size: 1.2rem;
-    font-weight: bold;
-    background: var(--ball-bg);
-    border: 2px solid var(--ball-border);
-    box-shadow: 0 0 15px rgba(59, 113, 255, 0.3);
-}
-
-.loading-text { text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 20px 0;}
-.error-text { text-align: center; color: #ff4d4f; font-size: 0.9rem; padding: 20px 0; }
-
-/* ================= 按鈕樣式 ================= */
-.action-btn {
-    width: 100%;
-    padding: 12px;
-    border-radius: 10px;
-    background: transparent;
-    color: var(--primary-blue);
-    border: 1px solid var(--primary-blue);
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.action-btn:active { background: rgba(42, 100, 246, 0.1); }
-
-.game-selector {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    padding-bottom: 15px;
-    scrollbar-width: none; /* Firefox */
-}
-.game-selector::-webkit-scrollbar { display: none; }
-
-.game-btn {
-    flex: 0 0 auto;
-    padding: 8px 16px;
-    border-radius: 8px;
-    background: transparent;
-    color: var(--text-muted);
-    border: 1px solid var(--border-color);
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-.game-btn.active {
-    background: var(--primary-blue);
-    color: white;
-    border-color: var(--primary-blue);
-    box-shadow: 0 4px 12px rgba(42, 100, 246, 0.3);
-}
-
-/* ================= 敬請期待畫面 (其他頁面用) ================= */
-.coming-soon {
-    text-align: center;
-    padding: 40px 0;
-    color: var(--text-muted);
-}
-.coming-soon i { margin-bottom: 15px; color: var(--border-color); }
-.coming-soon p { font-size: 0.9rem; line-height: 1.6; }
-
-/* ================= 底部導覽列 ================= */
-.bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: rgba(26, 31, 53, 0.95);
-    backdrop-filter: blur(10px);
-    display: flex;
-    justify-content: space-around;
-    padding: 10px 0 20px 0; /* 底部預留 iPhone 橫條空間 */
-    border-top: 1px solid var(--border-color);
-    z-index: 1000;
-}
-
-.nav-item {
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    font-weight: 500;
-    padding: 10px;
-    cursor: pointer;
-    transition: color 0.3s;
-}
-
-.nav-item.active {
-    color: var(--primary-blue);
-    font-weight: bold;
-}
+.bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(26,31,53,0.95); display: flex; justify-content: space-around; padding: 10px 0 20px 0; border-top: 1px solid var(--border-color); z-index: 1000; }
+.nav-item { background: none; border: none; color: var(--text-muted); font-size: 0.85rem; padding: 10px; }
+.nav-item.active { color: var(--primary-blue); font-weight: bold; }
