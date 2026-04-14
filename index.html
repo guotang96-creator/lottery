@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>彩券 AI 數據分析中心 V11</title>
-    <link rel="stylesheet" href="style.css?v=1115">
+    <title>彩券 AI 數據分析中心</title>
+    <link rel="stylesheet" href="style.css?v=1116">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -15,25 +15,19 @@
     </header>
 
     <main id="page-home" class="page active">
-        
         <section class="card draw-result-card">
             <div class="card-header">
                 <h2>🏆 開獎結果 <span id="current-game-title" class="highlight-text">請選擇彩種</span></h2>
                 <div class="status-text" id="sync-status">等待連線中...</div>
             </div>
             <div class="balls-container" id="latest-balls">
-                <div class="loading-text">請在下方選擇彩種進行運算</div>
+                <div class="loading-text">請在下方選擇彩種</div>
             </div>
-            <button class="action-btn" onclick="fetchPrediction(currentGame)">
-                <i class="fas fa-sync-alt"></i> 從雲端抓取最新資料
-            </button>
+            <button class="action-btn" onclick="fetchPrediction(currentGame)"><i class="fas fa-sync-alt"></i> 從雲端抓取最新資料</button>
         </section>
 
         <section class="card ai-prediction-card">
-            <div class="card-header">
-                <h2>🤖 智能選號建議 (V11 泛用型矩陣)</h2>
-            </div>
-            
+            <div class="card-header"><h2>🤖 智能選號建議 (V11 泛用型矩陣)</h2></div>
             <div class="game-selector">
                 <button class="game-btn" onclick="setGame('539')">今彩 539</button>
                 <button class="game-btn" onclick="setGame('daily')">天天樂</button>
@@ -41,7 +35,6 @@
                 <button class="game-btn" onclick="setGame('weili')">威力彩</button>
                 <button class="game-btn" onclick="setGame('marksix')">六合彩</button>
             </div>
-
             <div class="prediction-content" id="prediction-content">
                 <div class="error-text">請先選擇上方彩種</div>
             </div>
@@ -50,43 +43,20 @@
 
     <main id="page-history" class="page">
         <section class="card">
-            <div class="card-header"><h2>📜 歷史開獎查詢</h2></div>
-            <div class="coming-soon">
-                <i class="fas fa-database fa-3x"></i>
-                <p>歷史數據庫模組建置中<br>敬請期待後續更新</p>
+            <div class="card-header">
+                <h2>📜 歷史開獎查詢 <span id="history-game-title" class="highlight-text"></span></h2>
+            </div>
+            <div class="history-list-container" id="history-list-container">
+                <div class="loading-text">請先在首頁選擇彩種</div>
             </div>
         </section>
     </main>
 
-    <main id="page-backtest" class="page">
-        <section class="card">
-            <div class="card-header"><h2>📈 AI 模型回測</h2></div>
-            <div class="coming-soon">
-                <i class="fas fa-chart-line fa-3x"></i>
-                <p>勝率回測模組建置中<br>敬請期待後續更新</p>
-            </div>
-        </section>
-    </main>
+    <main id="page-backtest" class="page"><section class="card"><div class="coming-soon"><i class="fas fa-chart-line fa-3x"></i><p>勝率回測模組建置中</p></div></section></main>
 
-    <main id="page-favorite" class="page">
-        <section class="card">
-            <div class="card-header"><h2>⭐ 我的收藏號碼</h2></div>
-            <div class="coming-soon">
-                <i class="fas fa-star fa-3x"></i>
-                <p>專屬包牌庫建置中<br>敬請期待後續更新</p>
-            </div>
-        </section>
-    </main>
+    <main id="page-favorite" class="page"><section class="card"><div class="coming-soon"><i class="fas fa-star fa-3x"></i><p>專屬包牌庫建置中</p></div></section></main>
 
-    <main id="page-setting" class="page">
-        <section class="card">
-            <div class="card-header"><h2>⚙️ 系統設定</h2></div>
-            <div class="coming-soon">
-                <i class="fas fa-cog fa-3x"></i>
-                <p>權重參數設定面板建置中<br>敬請期待後續更新</p>
-            </div>
-        </section>
-    </main>
+    <main id="page-setting" class="page"><section class="card"><div class="coming-soon"><i class="fas fa-cog fa-3x"></i><p>權重參數設定面板建置中</p></div></section></main>
 
     <nav class="bottom-nav">
         <button class="nav-item active" id="nav-home" onclick="switchPage('home')">首頁</button>
@@ -96,6 +66,6 @@
         <button class="nav-item" id="nav-setting" onclick="switchPage('setting')">設定</button>
     </nav>
 
-    <script src="app2.js?v=1115"></script>
+    <script src="app2.js?v=1116"></script>
 </body>
 </html>
