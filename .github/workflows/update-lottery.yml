@@ -1,15 +1,15 @@
-name: Update 539 Latest Data
+name: Update Lottery Latest Data
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # 允許在 GitHub 網頁上手動點擊執行
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "*/30 * * * *" # 每 30 分鐘自動執行一次 (可依需求自行調整)
 
 permissions:
   contents: write
 
 jobs:
-  update-539:
+  update-lottery:
     runs-on: ubuntu-latest
 
     steps:
@@ -26,33 +26,33 @@ jobs:
           mkdir -p docs
           mkdir -p .github/workflows
 
-      - name: Show repository files
+      - name: Run all JS fetchers (四大彩種全速啟動)
         run: |
-          echo "===== repo root ====="
-          ls -la
-          echo "===== workflows ====="
-          ls -la .github/workflows || true
-
-      - name: Run fetch_latest_539.js
-        run: node fetch_latest_539.js
+          node fetch_latest_539.js
+          node fetch_lotto.js
+          node fetch_weili.js
+          node fetch_marksix.js
 
       - name: Show generated files
         run: |
-          echo "===== latest.json ====="
-          cat latest.json || true
-          echo "===== docs/latest.json ====="
-          cat docs/latest.json || true
+          echo "===== 產出的 JSON 檔案 ====="
+          ls -la *.json
+          ls -la docs/*.json || true
 
       - name: Commit and push if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git add latest.json docs/latest.json
-
+          
+          # 將所有剛產出的最新 JSON 檔案加入 Git
+          git add latest.json lotto.json weili.json marksix.json
+          git add docs/latest.json || true
+          
+          # 檢查是否有資料更新，有的話才推送到倉庫
           if git diff --cached --quiet; then
-            echo "No changes to commit"
+            echo "✅ 資料沒有變動，無須更新"
           else
-            git commit -m "chore: update latest 539 data"
+            git commit -m "🤖 自動同步四大彩種最新數據"
             git push
+            echo "🚀 資料更新成功並已推送到 GitHub！"
           fi
