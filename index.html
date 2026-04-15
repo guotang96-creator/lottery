@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>彩券 AI 數據分析中心</title>
-    <link rel="stylesheet" href="style.css?v=1116">
+    <link rel="stylesheet" href="style.css?v=1117">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -38,6 +38,9 @@
             <div class="prediction-content" id="prediction-content">
                 <div class="error-text">請先選擇上方彩種</div>
             </div>
+            <button id="save-fav-btn" class="action-btn" style="display:none; margin-top:15px; border-color:#ff9800; color:#ff9800;" onclick="saveFavorite()">
+                <i class="fas fa-star"></i> 將這組預測加入收藏
+            </button>
         </section>
     </main>
 
@@ -52,11 +55,46 @@
         </section>
     </main>
 
-    <main id="page-backtest" class="page"><section class="card"><div class="coming-soon"><i class="fas fa-chart-line fa-3x"></i><p>勝率回測模組建置中</p></div></section></main>
+    <main id="page-backtest" class="page">
+        <section class="card">
+            <div class="card-header">
+                <h2>📈 數據統計分析 <span id="backtest-title" class="highlight-text"></span></h2>
+            </div>
+            <div id="backtest-content">
+                <button class="action-btn" onclick="runAnalysis()"><i class="fas fa-chart-pie"></i> 執行近 50 期冷熱門分析</button>
+                <div id="analysis-result" style="margin-top: 15px;">
+                    <div class="loading-text" style="font-size:0.8rem;">請先在首頁選擇彩種，再執行分析</div>
+                </div>
+            </div>
+        </section>
+    </main>
 
-    <main id="page-favorite" class="page"><section class="card"><div class="coming-soon"><i class="fas fa-star fa-3x"></i><p>專屬包牌庫建置中</p></div></section></main>
+    <main id="page-favorite" class="page">
+        <section class="card">
+            <div class="card-header"><h2>⭐ 我的收藏號碼</h2></div>
+            <div id="favorite-list">
+                <div class="loading-text">尚無收藏紀錄</div>
+            </div>
+        </section>
+    </main>
 
-    <main id="page-setting" class="page"><section class="card"><div class="coming-soon"><i class="fas fa-cog fa-3x"></i><p>權重參數設定面板建置中</p></div></section></main>
+    <main id="page-setting" class="page">
+        <section class="card">
+            <div class="card-header"><h2>⚙️ 系統設定</h2></div>
+            <div class="setting-item">
+                <span><i class="fas fa-trash-alt" style="color:var(--text-muted); margin-right:8px;"></i> 清除系統快取與收藏</span>
+                <button class="game-btn" onclick="clearCache()" style="color:#ff4d4f; border-color:#ff4d4f;">執行清除</button>
+            </div>
+            <div class="setting-item">
+                <span><i class="fas fa-bell" style="color:var(--text-muted); margin-right:8px;"></i> 開獎推播通知</span>
+                <button class="game-btn" disabled>敬請期待</button>
+            </div>
+            <div class="setting-item" style="border-bottom:none;">
+                <span><i class="fas fa-info-circle" style="color:var(--text-muted); margin-right:8px;"></i> 核心引擎版本</span>
+                <span style="color:var(--text-muted); font-size:0.85rem;">V11 量化貝氏矩陣</span>
+            </div>
+        </section>
+    </main>
 
     <nav class="bottom-nav">
         <button class="nav-item active" id="nav-home" onclick="switchPage('home')">首頁</button>
@@ -66,6 +104,6 @@
         <button class="nav-item" id="nav-setting" onclick="switchPage('setting')">設定</button>
     </nav>
 
-    <script src="app2.js?v=1116"></script>
+    <script src="app2.js?v=1117"></script>
 </body>
 </html>
