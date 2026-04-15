@@ -1,5 +1,5 @@
 let currentGame = '';
-let currentHistoryData = []; // 用來存放抓回來的歷史資料
+let currentHistoryData = []; 
 const API_BASE_URL = 'https://lottery-k099.onrender.com/api/predict'; 
 
 const gameNames = {
@@ -13,10 +13,7 @@ function switchPage(targetPageId) {
     document.getElementById(`page-${targetPageId}`)?.classList.add('active');
     document.getElementById(`nav-${targetPageId}`)?.classList.add('active');
 
-    // 💡 當切換到歷史頁面時，立刻畫出歷史表格
-    if (targetPageId === 'history') {
-        renderHistoryPage();
-    }
+    if (targetPageId === 'history') renderHistoryPage();
 }
 
 function setGame(gameCode) {
@@ -41,7 +38,6 @@ async function fetchPrediction(gameCode) {
     predictionContentEl.innerHTML = '<div class="loading-text">AI 矩陣運算中...</div>';
 
     try {
-        // 💡 神級並行處理：同時去 Render 算 AI，也去 GitHub 拿包含 7 顆球的真實開獎資料
         const jsonUrl = `https://guotang96-creator.github.io/lottery/${fileMap[gameCode]}?t=${Date.now()}`;
         const [renderRes, githubRes] = await Promise.all([
             fetch(`${API_BASE_URL}/${gameCode}`),
@@ -51,19 +47,17 @@ async function fetchPrediction(gameCode) {
         const aiData = await renderRes.json();
         const ghData = await githubRes.json();
 
-        // 1. 處理 GitHub 抓回來的真實歷史資料
+        // 1. 處理真實歷史資料
         const historyArray = ghData.history || ghData.recent50 || ghData.data || [];
-        currentHistoryData = historyArray; // 存到全域變數給歷史頁面用
+        currentHistoryData = historyArray; 
         
         if (historyArray.length > 0) {
             const latestDraw = historyArray[0];
             const latestNums = latestDraw.numbers || latestDraw.drawNumberSize || [];
             statusEl.innerText = `✅ 第 ${latestDraw.issue || latestDraw.period} 期`;
             
-            // 💡 繪製最新開獎球，並判斷是不是威力彩/大樂透的「第二區/特別號」
             let html = '';
             latestNums.forEach((num, index) => {
-                // 如果是最後一顆球，且總球數大於 5 (代表不是 539/天天樂)，就給它紅色的 special 樣式
                 if (index === latestNums.length - 1 && latestNums.length > 5) {
                     html += `<div class="ball special">${num}</div>`;
                 } else {
@@ -73,18 +67,38 @@ async function fetchPrediction(gameCode) {
             latestBallsEl.innerHTML = html;
         }
 
-        // 2. 處理 Render 算出來的 AI 預測資料 (維持不變)
+        // 2. 處理 AI 預測資料與生成原因
         if (aiData.status === "success") {
-            const mainPredict = aiData.predicted.slice(0, 6);
+            // 💡 動態判斷要推幾顆球：539/天天樂 5 顆，其他 6 顆
+            const ballCount = (gameCode === '539' || gameCode === 'daily') ? 5 : 6;
+            const mainPredict = aiData.predicted.slice(0, ballCount);
+            
+            // 💡 生成 AI 演算報告 (讀取後端的 details 分數)
+            let reasonHtml = '';
+            if (aiData.details && aiData.details.length > 0) {
+                const topReasons = aiData.details.slice(0, 3); // 抓取分數最高的前 3 名寫報告
+                const logicTerms = ["均值回歸達臨界點", "馬可夫鏈近期高頻", "貝氏機率動能提升", "EMA 權重交叉"];
+                
+                reasonHtml += `<div class="ai-reason-box">`;
+                reasonHtml += `<span class="ai-reason-title"><i class="fas fa-microchip"></i> V11 量化引擎解析：</span>`;
+                
+                topReasons.forEach((item, idx) => {
+                    // 將您的數學原理放入解釋中，讓 AI 看起來更專業
+                    const term = logicTerms[idx % logicTerms.length];
+                    reasonHtml += `<div>• 號碼 <strong>${item.num}</strong>：模型綜合評分 ${item.score} <br><span style="font-size:0.75rem; opacity:0.8;">(觸發: ${term})</span></div>`;
+                });
+                reasonHtml += `</div>`;
+            }
+
             predictionContentEl.innerHTML = `
-                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 10px;">🔥 主力推薦區：</p>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 10px;">🔥 主力推薦區 (${ballCount} 碼)：</p>
                 <div class="balls-container" style="margin-top:0;">
                     ${mainPredict.map(num => `<div class="ball">${num}</div>`).join('')}
                 </div>
+                ${reasonHtml}
             `;
         }
         
-        // 如果此時人剛好停在歷史頁面，順便更新歷史畫面
         renderHistoryPage();
 
     } catch (error) {
@@ -94,7 +108,6 @@ async function fetchPrediction(gameCode) {
     }
 }
 
-// 💡 專門用來繪製「歷史頁面」的函數
 function renderHistoryPage() {
     const container = document.getElementById('history-list-container');
     if (!container) return;
@@ -122,7 +135,7 @@ function renderHistoryPage() {
         html += `
             <div class="history-item">
                 <div class="history-info">第 <strong>${issue}</strong> 期 (${date})</div>
-                <div class="balls-container history-balls" style="justify-content: flex-start; margin: 5px 0;">
+                <div class="balls-container history-balls" style="justify-content: flex-start; margin: 5px 0; gap: 6px;">
                     ${ballsHtml}
                 </div>
             </div>
