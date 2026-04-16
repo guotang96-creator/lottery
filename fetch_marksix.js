@@ -10,15 +10,21 @@ async function fetchMarksixData() {
             if (block.includes('202') && (block.toLowerCase().includes('balls') || block.includes('號碼'))) {
                 const periodMatch = block.match(/(202\d{4})/);
                 if (!periodMatch) continue;
+                
+                // 💡 新增：用正則表達式找出網頁中的日期 (例如 2024/04/16)
+                const dateMatch = block.match(/202\d[-/]\d{1,2}[-/]\d{1,2}/);
+                const dateStr = dateMatch ? dateMatch[0].replace(/\//g, '-') : "";
+
                 const ballsRegex = /(?<!\d)(0[1-9]|[1-4][0-9])(?!\d)/g;
                 const balls = []; let bMatch;
                 while ((bMatch = ballsRegex.exec(block)) !== null) {
                     if (!balls.includes(bMatch[1])) {
                         balls.push(bMatch[1]);
-                        if (balls.length === 7) break; // 💡 改成 7 顆 (包含特別號)
+                        if (balls.length === 7) break;
                     }
                 }
-                if (balls.length === 7) history.push({ issue: periodMatch[1], numbers: balls });
+                // 把 date 存進 JSON 裡
+                if (balls.length === 7) history.push({ issue: periodMatch[1], date: dateStr, numbers: balls });
             }
         }
         fs.writeFileSync('marksix.json', JSON.stringify({ history: history.slice(0, 50) }, null, 2), 'utf8');
