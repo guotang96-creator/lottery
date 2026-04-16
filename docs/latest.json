@@ -1,16 +1,27 @@
 {
   "daily_latest": {
-    "period": 115000093,
-    "lotteryDate": "2026-04-15",
+    "period": 115000094,
+    "lotteryDate": "2026-04-16",
     "drawNumberSize": [
-      2,
-      9,
-      11,
-      29,
+      6,
+      8,
+      12,
+      21,
       30
     ]
   },
   "history": [
+    {
+      "period": 115000094,
+      "lotteryDate": "2026-04-16",
+      "drawNumberSize": [
+        6,
+        8,
+        12,
+        21,
+        30
+      ]
+    },
     {
       "period": 115000093,
       "lotteryDate": "2026-04-15",
@@ -1035,5 +1046,5 @@
       ]
     }
   ],
-  "updatedAt": "2026-04-16T21:02:07.954Z"
+  "updatedAt": "2026-04-16T23:09:56.313Z"
 }
