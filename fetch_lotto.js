@@ -6,9 +6,10 @@ async function fetchLottoData() {
         const data = await (await fetch(url)).json();
         
         const history = data.content.lotto649Res.map(item => {
-            // 💡 改成 slice(0, 7) 抓取特別號！
             const nums = item.drawNumberSize.slice(0, 7).map(n => String(n).padStart(2, '0'));
-            return { issue: String(item.period), numbers: nums };
+            // 💡 新增：擷取日期
+            const d = item.lotteryDate ? item.lotteryDate.split('T')[0] : "";
+            return { issue: String(item.period), date: d, numbers: nums };
         }).sort((a, b) => parseInt(b.issue) - parseInt(a.issue));
         
         fs.writeFileSync('lotto.json', JSON.stringify({ history: history.slice(0, 50) }, null, 2), 'utf8');
