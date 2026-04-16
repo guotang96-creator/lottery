@@ -1,6 +1,6 @@
 let currentGame = '';
 let currentHistoryData = []; 
-let currentPrediction = []; // 暫存 AI 算出來的號碼給收藏用
+let currentPrediction = []; 
 const API_BASE_URL = 'https://lottery-k099.onrender.com/api/predict'; 
 
 const gameNames = {
@@ -17,7 +17,6 @@ function switchPage(targetPageId) {
     document.getElementById(`page-${targetPageId}`)?.classList.add('active');
     document.getElementById(`nav-${targetPageId}`)?.classList.add('active');
 
-    // 根據不同頁面觸發對應的渲染動作
     if (targetPageId === 'history') renderHistoryPage();
     if (targetPageId === 'favorite') renderFavorites();
     if (targetPageId === 'backtest') {
@@ -36,7 +35,7 @@ function setGame(gameCode) {
 }
 
 // ==========================================
-// 🧠 AI 雙向同步抓取邏輯
+// 🧠 AI 雙向同步抓取邏輯 (加入日期顯示)
 // ==========================================
 async function fetchPrediction(gameCode) {
     if (!gameCode) return;
@@ -49,7 +48,7 @@ async function fetchPrediction(gameCode) {
     statusEl.innerText = "🔄 雙向資料庫同步中...";
     latestBallsEl.innerHTML = '<div class="loading-text">連線至 GitHub 數據庫...</div>';
     predictionContentEl.innerHTML = '<div class="loading-text">AI 矩陣運算中...</div>';
-    favBtn.style.display = 'none'; // 運算時先隱藏收藏按鈕
+    favBtn.style.display = 'none'; 
 
     try {
         const jsonUrl = `https://guotang96-creator.github.io/lottery/${fileMap[gameCode]}?t=${Date.now()}`;
@@ -61,15 +60,25 @@ async function fetchPrediction(gameCode) {
         const aiData = await renderRes.json();
         const ghData = await githubRes.json();
 
-        // 1. 處理真實歷史資料
         const historyArray = ghData.history || ghData.recent50 || ghData.data || [];
         currentHistoryData = historyArray; 
         
         if (historyArray.length > 0) {
             const latestDraw = historyArray[0];
-            const latestNums = latestDraw.numbers || latestDraw.drawNumberSize || [];
-            statusEl.innerText = `✅ 第 ${latestDraw.issue || latestDraw.period} 期`;
+            const issue = latestDraw.issue || latestDraw.period;
             
+            // 💡 抓取並格式化日期
+            let dateStr = latestDraw.lotteryDate || latestDraw.date || "";
+            if (dateStr.includes('T')) dateStr = dateStr.split('T')[0]; // 確保沒有時間贅字
+            
+            // 💡 顯示期數 ＋ 日期
+            if (dateStr) {
+                statusEl.innerText = `✅ 第 ${issue} 期 (${dateStr})`;
+            } else {
+                statusEl.innerText = `✅ 第 ${issue} 期`;
+            }
+            
+            const latestNums = latestDraw.numbers || latestDraw.drawNumberSize || [];
             let html = '';
             latestNums.forEach((num, index) => {
                 if (index === latestNums.length - 1 && latestNums.length > 5) {
@@ -81,12 +90,11 @@ async function fetchPrediction(gameCode) {
             latestBallsEl.innerHTML = html;
         }
 
-        // 2. 處理 AI 預測資料與生成原因
         if (aiData.status === "success") {
             const ballCount = (gameCode === '539' || gameCode === 'daily') ? 5 : 6;
             const mainPredict = aiData.predicted.slice(0, ballCount);
             
-            currentPrediction = mainPredict; // 暫存起來給收藏功能用
+            currentPrediction = mainPredict; 
             
             let reasonHtml = '';
             if (aiData.details && aiData.details.length > 0) {
@@ -109,7 +117,7 @@ async function fetchPrediction(gameCode) {
                 </div>
                 ${reasonHtml}
             `;
-            favBtn.style.display = 'block'; // 成功後顯示收藏按鈕
+            favBtn.style.display = 'block'; 
         }
         
         renderHistoryPage();
@@ -122,7 +130,7 @@ async function fetchPrediction(gameCode) {
 }
 
 // ==========================================
-// 📜 歷史列表渲染
+// 📜 歷史列表渲染 (歷史列表也會顯示日期)
 // ==========================================
 function renderHistoryPage() {
     const container = document.getElementById('history-list-container');
@@ -136,7 +144,9 @@ function renderHistoryPage() {
     let html = '';
     currentHistoryData.forEach(item => {
         const issue = item.issue || item.period;
-        const date = item.lotteryDate || item.date || "最新";
+        let dateStr = item.lotteryDate || item.date || "最新";
+        if (dateStr.includes('T')) dateStr = dateStr.split('T')[0];
+
         const nums = item.numbers || item.drawNumberSize || [];
 
         let ballsHtml = '';
@@ -150,7 +160,7 @@ function renderHistoryPage() {
 
         html += `
             <div class="history-item">
-                <div class="history-info">第 <strong>${issue}</strong> 期 (${date})</div>
+                <div class="history-info">第 <strong>${issue}</strong> 期 <span style="font-size:0.8rem; color:#888;">(${dateStr})</span></div>
                 <div class="balls-container history-balls" style="justify-content: flex-start; margin: 5px 0; gap: 6px;">
                     ${ballsHtml}
                 </div>
