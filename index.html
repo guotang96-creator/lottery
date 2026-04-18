@@ -74,6 +74,20 @@
         </section>
     </main>
 
+    <main id="page-setting" class="page">
+        <section class="card">
+            <div class="card-header"><h2>⚙️ 系統設定</h2></div>
+            <div class="setting-item">
+                <span><i class="fas fa-trash-alt" style="color:var(--text-muted); margin-right:8px;"></i> 清除系統快取與收藏</span>
+                <button class="game-btn" onclick="clearCache()" style="color:#ff4d4f; border-color:#ff4d4f; background:transparent;">執行清除</button>
+            </div>
+            <div class="setting-item" style="border-bottom:none;">
+                <span><i class="fas fa-info-circle" style="color:var(--text-muted); margin-right:8px;"></i> 核心引擎版本</span>
+                <span style="color:var(--text-muted); font-size:0.85rem;">V13.5 終極旗艦版</span>
+            </div>
+        </section>
+    </main>
+
     <nav class="bottom-nav">
         <button class="nav-item active" id="nav-home" onclick="switchPage('home')">首頁</button>
         <button class="nav-item" id="nav-history" onclick="switchPage('history')">歷史</button>
