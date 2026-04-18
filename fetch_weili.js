@@ -15,6 +15,7 @@ async function fetchWeiliData() {
             
             if (data && data.content && data.content.superLotto638Res) {
                 const yearlyData = data.content.superLotto638Res.map(item => {
+                    // 威力彩有 6 個第一區 + 1 個第二區，共 7 碼
                     const nums = item.drawNumberSize.slice(0, 7).map(n => String(n).padStart(2, '0'));
                     const d = item.lotteryDate ? item.lotteryDate.split('T')[0] : "";
                     return { issue: String(item.period), date: d, numbers: nums };
