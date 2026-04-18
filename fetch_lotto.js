@@ -15,6 +15,7 @@ async function fetchLottoData() {
             
             if (data && data.content && data.content.lotto649Res) {
                 const yearlyData = data.content.lotto649Res.map(item => {
+                    // 大樂透有 6 個正碼 + 1 個特別號，共 7 碼
                     const nums = item.drawNumberSize.slice(0, 7).map(n => String(n).padStart(2, '0'));
                     const d = item.lotteryDate ? item.lotteryDate.split('T')[0] : "";
                     return { issue: String(item.period), date: d, numbers: nums };
