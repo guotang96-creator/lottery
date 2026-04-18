@@ -45,12 +45,13 @@ async function fetchPrediction(gameCode) {
             fetch(`${API_BASE_URL}/${gameCode}`),
             fetch(jsonUrl)
         ]);
+        
         const aiData = await renderRes.json();
         const ghData = await githubRes.json();
 
-        // 1. 最新開獎顯示 (包含日期與特別號)
         const historyArray = ghData.history || ghData.recent50 || ghData.data || [];
         currentHistoryData = historyArray; 
+
         if (historyArray.length > 0) {
             const latestDraw = historyArray[0];
             const issue = latestDraw.issue || latestDraw.period;
@@ -58,8 +59,8 @@ async function fetchPrediction(gameCode) {
             if (dateStr.includes('T')) dateStr = dateStr.split('T')[0];
             statusEl.innerText = dateStr ? `✅ 第 ${issue} 期 (${dateStr})` : `✅ 第 ${issue} 期`;
             
-            const latestNums = latestDraw.numbers || latestDraw.drawNumberSize || [];
             let html = '';
+            const latestNums = latestDraw.numbers || latestDraw.drawNumberSize || [];
             latestNums.forEach((num, index) => {
                 if (index === latestNums.length - 1 && latestNums.length > 5) html += `<div class="ball special">${num}</div>`;
                 else html += `<div class="ball">${num}</div>`;
@@ -67,39 +68,49 @@ async function fetchPrediction(gameCode) {
             latestBallsEl.innerHTML = html;
         }
 
-        // 2. AI 預測與自動對獎
-        if (aiData.status === "success") {
-            // 自動對獎渲染
-            const verifyBallsEl = document.getElementById('verify-balls');
-            const hitCountEl = document.getElementById('verify-hit-count');
-            if (aiData.prev_predicted && aiData.prev_predicted.length > 0) {
-                verifyBox.style.display = 'block';
-                const hits = aiData.hit_nums || [];
-                hitCountEl.innerText = `命中 ${hits.length} 顆`;
-                let vHtml = '';
-                aiData.prev_predicted.forEach(num => {
-                    vHtml += hits.includes(num) ? `<div class="ball hit" style="width:38px; height:38px; font-size:1rem;">${num}</div>` : `<div class="ball miss" style="width:38px; height:38px; font-size:1rem;">${num}</div>`;
-                });
-                verifyBallsEl.innerHTML = vHtml;
-            }
-
-            // 最新推薦號碼與原因
-            const ballCount = (gameCode === '539' || gameCode === 'daily') ? 5 : 6;
-            const mainPredict = aiData.predicted.slice(0, ballCount);
-            currentPrediction = mainPredict; 
-            let reasonHtml = `<div class="ai-reason-box"><span class="ai-reason-title"><i class="fas fa-microchip"></i> V12 引擎解析：</span>`;
-            if (aiData.details) {
-                aiData.details.slice(0, 3).forEach((item, idx) => {
-                    const terms = ["均值回歸達臨界點", "馬可夫鏈近期高頻", "貝氏機率動能提升", "EMA 權重交叉"];
-                    reasonHtml += `<div>• 號碼 <strong>${item.num}</strong>：評分 ${item.score} (${terms[idx % 4]})</div>`;
-                });
-            }
-            predictionContentEl.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:10px;">🔥 主力推薦 (${ballCount} 碼)：</p><div class="balls-container" style="margin-top:0;">${mainPredict.map(n => `<div class="ball">${n}</div>`).join('')}</div>${reasonHtml}</div>`;
-            favBtn.style.display = 'block'; 
+        // 💡 修正點：如果後端回報 error，直接拋出例外，進入 catch 處理
+        if (aiData.status !== "success") {
+            throw new Error(aiData.message || "歷史資料不足或格式異常");
         }
+
+        // --- 成功解析 AI 資料 ---
+        const verifyBallsEl = document.getElementById('verify-balls');
+        const hitCountEl = document.getElementById('verify-hit-count');
+        if (aiData.prev_predicted && aiData.prev_predicted.length > 0) {
+            verifyBox.style.display = 'block';
+            const hits = aiData.hit_nums || [];
+            hitCountEl.innerText = `命中 ${hits.length} 顆`;
+            hitCountEl.style.color = hits.length > 0 ? '#ff9800' : 'var(--text-muted)';
+            hitCountEl.style.background = hits.length > 0 ? 'rgba(255, 152, 0, 0.2)' : 'rgba(255, 255, 255, 0.05)';
+
+            let vHtml = '';
+            aiData.prev_predicted.forEach(num => {
+                vHtml += hits.includes(num) ? `<div class="ball hit" style="width:38px; height:38px; font-size:1rem;">${num}</div>` : `<div class="ball miss" style="width:38px; height:38px; font-size:1rem;">${num}</div>`;
+            });
+            verifyBallsEl.innerHTML = vHtml;
+        }
+
+        const ballCount = (gameCode === '539' || gameCode === 'daily') ? 5 : 6;
+        const mainPredict = aiData.predicted.slice(0, ballCount);
+        currentPrediction = mainPredict; 
+        
+        let reasonHtml = `<div class="ai-reason-box"><span class="ai-reason-title"><i class="fas fa-microchip"></i> V12 引擎解析：</span>`;
+        if (aiData.details) {
+            aiData.details.slice(0, 3).forEach((item, idx) => {
+                const terms = ["均值回歸達臨界點", "馬可夫鏈近期高頻", "貝氏機率動能提升", "EMA 權重交叉"];
+                reasonHtml += `<div>• 號碼 <strong>${item.num}</strong>：評分 ${item.score} (${terms[idx % 4]})</div>`;
+            });
+        }
+        predictionContentEl.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:10px;">🔥 主力推薦 (${ballCount} 碼)：</p><div class="balls-container" style="margin-top:0;">${mainPredict.map(n => `<div class="ball">${n}</div>`).join('')}</div>${reasonHtml}</div>`;
+        favBtn.style.display = 'block'; 
+        
         renderHistoryPage();
+
     } catch (e) {
-        statusEl.innerText = "❌ 連線失敗";
+        // 💡 修正點：錯誤捕捉後，確實更新畫面，不再無限轉圈
+        statusEl.innerText = "❌ 資料庫異常";
+        latestBallsEl.innerHTML = `<div class="error-text">暫無開獎資料</div>`;
+        predictionContentEl.innerHTML = `<div class="error-text">${e.message || "請稍後重試或重新觸發 GitHub 更新"}</div>`;
     }
 }
 
@@ -130,7 +141,7 @@ function runAnalysis() {
         nums.slice(0, limit).forEach(n => counts[n] = (counts[n] || 0) + 1);
     });
     const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
-    container.innerHTML = `<div class="ai-reason-box" style="border-left-color:#ff9800; background:rgba(255,152,0,0.08);"><span class="ai-reason-title" style="color:#ff9800;">🔥 近 ${currentHistoryData.length} 期統計</span><div>最熱：${sorted.slice(0,5).map(x=>x[0]).join(', ')}</div><div>最冷：${sorted.slice(-5).map(x=>x[0]).join(', ')}</div></div>`;
+    container.innerHTML = `<div class="ai-reason-box" style="border-left-color:#ff9800; background:rgba(255,152,0,0.08);"><span class="ai-reason-title" style="color:#ff9800;">🔥 近 ${currentHistoryData.length} 期統計</span><div style="margin-top:8px;">最熱：${sorted.slice(0,5).map(x=>x[0]).join(', ')}</div><div style="margin-top:5px;">最冷：${sorted.slice(-5).map(x=>x[0]).join(', ')}</div></div>`;
 }
 
 function saveFavorite() {
