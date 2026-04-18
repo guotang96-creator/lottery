@@ -1,9 +1,10 @@
-name: Update Lottery Latest Data
+name: Update Lottery 10-Year Database
 
 on:
-  workflow_dispatch: # 允許在 GitHub 網頁上手動點擊執行
+  workflow_dispatch: 
   schedule:
-    - cron: "*/30 * * * *" # 每 30 分鐘自動執行一次 (可依需求自行調整)
+    # 狙擊模式：精準鎖定台灣時間每天晚上 22:15, 22:30, 22:45 執行
+    - cron: "15,30,45 14 * * *" 
 
 permissions:
   contents: write
@@ -11,48 +12,22 @@ permissions:
 jobs:
   update-lottery:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Create required folders
+      - name: Run 10-Year Crawlers
         run: |
-          mkdir -p docs
-          mkdir -p .github/workflows
-
-      - name: Run all JS fetchers (四大彩種全速啟動)
-        run: |
-          node fetch_latest_539.js
-          node fetch_lotto.js
-          node fetch_weili.js
-          node fetch_marksix.js
-
-      - name: Show generated files
-        run: |
-          echo "===== 產出的 JSON 檔案 ====="
-          ls -la *.json
-          ls -la docs/*.json || true
-
-      - name: Commit and push if changed
+          node fetch_latest_539.js || true
+          node fetch_lotto.js || true
+          node fetch_weili.js || true
+          node fetch_marksix.js || true
+      - name: Commit and push
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          
-          # 將所有剛產出的最新 JSON 檔案加入 Git
-          git add latest.json lotto.json weili.json marksix.json
-          git add docs/latest.json || true
-          
-          # 檢查是否有資料更新，有的話才推送到倉庫
-          if git diff --cached --quiet; then
-            echo "✅ 資料沒有變動，無須更新"
-          else
-            git commit -m "🤖 自動同步四大彩種最新數據"
-            git push
-            echo "🚀 資料更新成功並已推送到 GitHub！"
-          fi
+          git config user.email "actions@github.com"
+          git add *.json
+          git diff --cached --quiet || (git commit -m "🤖 V13.5 終極同步" && git push)
