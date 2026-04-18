@@ -3,37 +3,23 @@ const fs = require('fs');
 async function fetch539Data() {
     let allHistory = [];
     const currentYear = new Date().getFullYear();
-    
     console.log("🌐 開始抓取 539 十年大數據...");
-    
-    // 🛡️ 迴圈戰術：從今年開始，一年一年往前抓 (抓過去 10 年)
     for (let year = currentYear; year >= currentYear - 10; year--) {
         try {
-            // 每年大約 312 期，pageSize 設 350 剛好涵蓋一整年
             const url = `https://api.taiwanlottery.com/TLCAPIWEB/Lottery/Daily539Result?period&month=${year}-01&endMonth=${year}-12&pageNum=1&pageSize=350`;
-            const res = await fetch(url);
-            const data = await res.json();
-            
+            const data = await (await fetch(url)).json();
             if (data && data.content && data.content.daily539Res) {
-                const yearlyData = data.content.daily539Res.map(item => {
-                    const nums = item.drawNumberSize.slice(0, 5).map(n => String(n).padStart(2, '0'));
-                    const d = item.lotteryDate ? item.lotteryDate.split('T')[0] : "";
-                    return { issue: String(item.period), date: d, numbers: nums };
-                });
-                allHistory = allHistory.concat(yearlyData);
-                console.log(`✅ ${year} 年資料抓取成功 (${yearlyData.length} 筆)`);
+                const yearly = data.content.daily539Res.map(item => ({
+                    issue: String(item.period),
+                    date: item.lotteryDate.split('T')[0],
+                    numbers: item.drawNumberSize.slice(0, 5).map(n => String(n).padStart(2, '0'))
+                }));
+                allHistory = allHistory.concat(yearly);
+                console.log(`✅ ${year} 年資料成功 (${yearly.length} 筆)`);
             }
-        } catch (e) {
-            console.log(`❌ ${year} 年資料抓取失敗: ${e.message}`);
-        }
+        } catch (e) {}
     }
-
-    // 將 10 年的資料依照期數從大到小排好
     allHistory.sort((a, b) => parseInt(b.issue) - parseInt(a.issue));
-    
-    // 寫入 latest.json (您的 539 資料庫檔案)
     fs.writeFileSync('latest.json', JSON.stringify({ history: allHistory }, null, 2), 'utf8');
-    console.log(`🎉 539 十年終極資料庫建置完成！總共集結了 ${allHistory.length} 筆大數據！`);
 }
-
 fetch539Data();
