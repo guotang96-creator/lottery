@@ -1,19 +1,14 @@
 {
-  "name": "今彩539 AI 預測系統",
-  "short_name": "539 AI",
-  "start_url": "./",
+  "name": "彩券 AI 數據分析中心",
+  "short_name": "彩券AI",
+  "description": "V13.5 終極量化數據終端",
+  "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#0b1f5c",
-  "theme_color": "#0b1f5c",
-  "description": "今彩539 AI 預測系統",
+  "background_color": "#0f131f",
+  "theme_color": "#2a64f6",
   "icons": [
     {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icon-512.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/3067/3067260.png",
       "sizes": "512x512",
       "type": "image/png"
     }
