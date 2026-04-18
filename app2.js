@@ -3,52 +3,41 @@ let currentHistoryData = [];
 let currentPrediction = []; 
 const API_BASE_URL = 'https://lottery-k099.onrender.com/api/predict'; 
 
-const gameNames = {
-    '539': '今彩 539', 'daily': '天天樂', 'lotto': '大樂透', 'weili': '威力彩', 'marksix': '六合彩'
-};
+const gameNames = { '539': '今彩 539', 'daily': '天天樂', 'lotto': '大樂透', 'weili': '威力彩', 'marksix': '六合彩' };
 const fileMap = { '539': 'latest.json', 'daily': 'daily.json', 'lotto': 'lotto.json', 'weili': 'weili.json', 'marksix': 'marksix.json' };
 
-// ==========================================
-// 📱 多頁面切換核心邏輯
-// ==========================================
 function switchPage(targetPageId) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.bottom-nav .nav-item').forEach(b => b.classList.remove('active'));
     document.getElementById(`page-${targetPageId}`)?.classList.add('active');
     document.getElementById(`nav-${targetPageId}`)?.classList.add('active');
-
     if (targetPageId === 'history') renderHistoryPage();
     if (targetPageId === 'favorite') renderFavorites();
-    if (targetPageId === 'backtest') {
-        document.getElementById('backtest-title').innerText = currentGame ? `(${gameNames[currentGame]})` : '';
-    }
+    if (targetPageId === 'backtest') document.getElementById('backtest-title').innerText = currentGame ? `(${gameNames[currentGame]})` : '';
 }
 
 function setGame(gameCode) {
     currentGame = gameCode;
     document.getElementById('current-game-title').innerText = gameNames[gameCode];
     document.getElementById('history-game-title').innerText = `(${gameNames[gameCode]})`;
-    
     document.querySelectorAll('.game-btn').forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
     fetchPrediction(gameCode);
 }
 
-// ==========================================
-// 🧠 AI 雙向同步抓取邏輯 (加入日期顯示)
-// ==========================================
 async function fetchPrediction(gameCode) {
     if (!gameCode) return;
-
     const statusEl = document.getElementById('sync-status');
     const latestBallsEl = document.getElementById('latest-balls');
     const predictionContentEl = document.getElementById('prediction-content');
     const favBtn = document.getElementById('save-fav-btn');
+    const verifyBox = document.getElementById('ai-verify-box');
 
     statusEl.innerText = "🔄 雙向資料庫同步中...";
-    latestBallsEl.innerHTML = '<div class="loading-text">連線至 GitHub 數據庫...</div>';
-    predictionContentEl.innerHTML = '<div class="loading-text">AI 矩陣運算中...</div>';
-    favBtn.style.display = 'none'; 
+    latestBallsEl.innerHTML = '<div class="loading-text">連線中...</div>';
+    predictionContentEl.innerHTML = '<div class="loading-text">運算中...</div>';
+    favBtn.style.display = 'none';
+    verifyBox.style.display = 'none';
 
     try {
         const jsonUrl = `https://guotang96-creator.github.io/lottery/${fileMap[gameCode]}?t=${Date.now()}`;
@@ -56,218 +45,117 @@ async function fetchPrediction(gameCode) {
             fetch(`${API_BASE_URL}/${gameCode}`),
             fetch(jsonUrl)
         ]);
-
         const aiData = await renderRes.json();
         const ghData = await githubRes.json();
 
+        // 1. 最新開獎顯示 (包含日期與特別號)
         const historyArray = ghData.history || ghData.recent50 || ghData.data || [];
         currentHistoryData = historyArray; 
-        
         if (historyArray.length > 0) {
             const latestDraw = historyArray[0];
             const issue = latestDraw.issue || latestDraw.period;
-            
-            // 💡 抓取並格式化日期
             let dateStr = latestDraw.lotteryDate || latestDraw.date || "";
-            if (dateStr.includes('T')) dateStr = dateStr.split('T')[0]; // 確保沒有時間贅字
-            
-            // 💡 顯示期數 ＋ 日期
-            if (dateStr) {
-                statusEl.innerText = `✅ 第 ${issue} 期 (${dateStr})`;
-            } else {
-                statusEl.innerText = `✅ 第 ${issue} 期`;
-            }
+            if (dateStr.includes('T')) dateStr = dateStr.split('T')[0];
+            statusEl.innerText = dateStr ? `✅ 第 ${issue} 期 (${dateStr})` : `✅ 第 ${issue} 期`;
             
             const latestNums = latestDraw.numbers || latestDraw.drawNumberSize || [];
             let html = '';
             latestNums.forEach((num, index) => {
-                if (index === latestNums.length - 1 && latestNums.length > 5) {
-                    html += `<div class="ball special">${num}</div>`;
-                } else {
-                    html += `<div class="ball">${num}</div>`;
-                }
+                if (index === latestNums.length - 1 && latestNums.length > 5) html += `<div class="ball special">${num}</div>`;
+                else html += `<div class="ball">${num}</div>`;
             });
             latestBallsEl.innerHTML = html;
         }
 
+        // 2. AI 預測與自動對獎
         if (aiData.status === "success") {
-            const ballCount = (gameCode === '539' || gameCode === 'daily') ? 5 : 6;
-            const mainPredict = aiData.predicted.slice(0, ballCount);
-            
-            currentPrediction = mainPredict; 
-            
-            let reasonHtml = '';
-            if (aiData.details && aiData.details.length > 0) {
-                const topReasons = aiData.details.slice(0, 3);
-                const logicTerms = ["均值回歸達臨界點", "馬可夫鏈近期高頻", "貝氏機率動能提升", "EMA 權重交叉"];
-                
-                reasonHtml += `<div class="ai-reason-box">`;
-                reasonHtml += `<span class="ai-reason-title"><i class="fas fa-microchip"></i> V11 量化引擎解析：</span>`;
-                topReasons.forEach((item, idx) => {
-                    const term = logicTerms[idx % logicTerms.length];
-                    reasonHtml += `<div>• 號碼 <strong>${item.num}</strong>：模型綜合評分 ${item.score} <br><span style="font-size:0.75rem; opacity:0.8;">(觸發: ${term})</span></div>`;
+            // 自動對獎渲染
+            const verifyBallsEl = document.getElementById('verify-balls');
+            const hitCountEl = document.getElementById('verify-hit-count');
+            if (aiData.prev_predicted && aiData.prev_predicted.length > 0) {
+                verifyBox.style.display = 'block';
+                const hits = aiData.hit_nums || [];
+                hitCountEl.innerText = `命中 ${hits.length} 顆`;
+                let vHtml = '';
+                aiData.prev_predicted.forEach(num => {
+                    vHtml += hits.includes(num) ? `<div class="ball hit" style="width:38px; height:38px; font-size:1rem;">${num}</div>` : `<div class="ball miss" style="width:38px; height:38px; font-size:1rem;">${num}</div>`;
                 });
-                reasonHtml += `</div>`;
+                verifyBallsEl.innerHTML = vHtml;
             }
 
-            predictionContentEl.innerHTML = `
-                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 10px;">🔥 主力推薦區 (${ballCount} 碼)：</p>
-                <div class="balls-container" style="margin-top:0;">
-                    ${mainPredict.map(num => `<div class="ball">${num}</div>`).join('')}
-                </div>
-                ${reasonHtml}
-            `;
+            // 最新推薦號碼與原因
+            const ballCount = (gameCode === '539' || gameCode === 'daily') ? 5 : 6;
+            const mainPredict = aiData.predicted.slice(0, ballCount);
+            currentPrediction = mainPredict; 
+            let reasonHtml = `<div class="ai-reason-box"><span class="ai-reason-title"><i class="fas fa-microchip"></i> V12 引擎解析：</span>`;
+            if (aiData.details) {
+                aiData.details.slice(0, 3).forEach((item, idx) => {
+                    const terms = ["均值回歸達臨界點", "馬可夫鏈近期高頻", "貝氏機率動能提升", "EMA 權重交叉"];
+                    reasonHtml += `<div>• 號碼 <strong>${item.num}</strong>：評分 ${item.score} (${terms[idx % 4]})</div>`;
+                });
+            }
+            predictionContentEl.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:10px;">🔥 主力推薦 (${ballCount} 碼)：</p><div class="balls-container" style="margin-top:0;">${mainPredict.map(n => `<div class="ball">${n}</div>`).join('')}</div>${reasonHtml}</div>`;
             favBtn.style.display = 'block'; 
         }
-        
         renderHistoryPage();
-
-    } catch (error) {
+    } catch (e) {
         statusEl.innerText = "❌ 連線失敗";
-        latestBallsEl.innerHTML = `<div class="error-text">同步異常</div>`;
-        predictionContentEl.innerHTML = `<div class="error-text">請重新整理</div>`;
     }
 }
 
-// ==========================================
-// 📜 歷史列表渲染 (歷史列表也會顯示日期)
-// ==========================================
+// 歷史、回測、收藏、設定邏輯
 function renderHistoryPage() {
     const container = document.getElementById('history-list-container');
-    if (!container) return;
-
-    if (!currentGame || currentHistoryData.length === 0) {
-        container.innerHTML = '<div class="loading-text">請先在首頁選擇彩種，並等待資料載入</div>';
-        return;
-    }
-
+    if (!container || !currentGame) return;
     let html = '';
     currentHistoryData.forEach(item => {
         const issue = item.issue || item.period;
-        let dateStr = item.lotteryDate || item.date || "最新";
-        if (dateStr.includes('T')) dateStr = dateStr.split('T')[0];
-
+        let d = item.lotteryDate || item.date || "最新";
+        if (d.includes('T')) d = d.split('T')[0];
         const nums = item.numbers || item.drawNumberSize || [];
-
-        let ballsHtml = '';
-        nums.forEach((num, index) => {
-            if (index === nums.length - 1 && nums.length > 5) {
-                ballsHtml += `<div class="ball special">${num}</div>`;
-            } else {
-                ballsHtml += `<div class="ball">${num}</div>`;
-            }
-        });
-
-        html += `
-            <div class="history-item">
-                <div class="history-info">第 <strong>${issue}</strong> 期 <span style="font-size:0.8rem; color:#888;">(${dateStr})</span></div>
-                <div class="balls-container history-balls" style="justify-content: flex-start; margin: 5px 0; gap: 6px;">
-                    ${ballsHtml}
-                </div>
-            </div>
-        `;
+        let bHtml = '';
+        nums.forEach((n, i) => bHtml += (i === nums.length - 1 && nums.length > 5) ? `<div class="ball special">${n}</div>` : `<div class="ball">${n}</div>`);
+        html += `<div class="history-item"><div class="history-info">第 <strong>${issue}</strong> 期 <span style="font-size:0.8rem; color:#888;">(${d})</span></div><div class="balls-container history-balls" style="justify-content:flex-start; margin:5px 0; gap:6px;">${bHtml}</div></div>`;
     });
-    
-    container.innerHTML = html;
+    container.innerHTML = html || '<div class="loading-text">無資料</div>';
 }
 
-// ==========================================
-// 📈 回測與冷熱門分析功能
-// ==========================================
 function runAnalysis() {
-    if (!currentHistoryData || currentHistoryData.length === 0) {
-        alert("⚠️ 請先在首頁選擇一個彩種！");
-        return;
-    }
+    if (!currentHistoryData.length) return alert("請先選擇彩種");
     const container = document.getElementById('analysis-result');
-    let numCounts = {};
-    
+    let counts = {};
     currentHistoryData.forEach(draw => {
-        let nums = draw.numbers || draw.drawNumberSize || [];
-        let countLimit = (currentGame === 'weili' || currentGame === 'lotto' || currentGame === 'marksix') ? 6 : nums.length;
-        for(let i=0; i<countLimit; i++) {
-            let n = nums[i];
-            numCounts[n] = (numCounts[n] || 0) + 1;
-        }
+        const nums = draw.numbers || draw.drawNumberSize || [];
+        const limit = (currentGame === '539' || currentGame === 'daily') ? 5 : 6;
+        nums.slice(0, limit).forEach(n => counts[n] = (counts[n] || 0) + 1);
     });
-
-    let sorted = Object.entries(numCounts).sort((a,b) => b[1] - a[1]);
-    let hot = sorted.slice(0, 5).map(x => x[0]).join(', ');
-    let cold = sorted.slice(-5).map(x => x[0]).join(', ');
-
-    container.innerHTML = `
-        <div class="ai-reason-box" style="border-left-color: #ff9800; background: rgba(255, 152, 0, 0.08);">
-            <span class="ai-reason-title" style="color: #ff9800;"><i class="fas fa-fire"></i> 近 ${currentHistoryData.length} 期冷熱門精算</span>
-            <div style="margin-top:10px;">🔥 <strong>最熱門號碼：</strong> <span style="color:#fff;">${hot}</span></div>
-            <div style="margin-top:8px;">❄️ <strong>最冷門號碼：</strong> <span style="color:#fff;">${cold}</span></div>
-            <div style="margin-top:12px; font-size:0.75rem; opacity:0.6;">* 此數據由 GitHub 歷史數據庫即時統計</div>
-        </div>
-    `;
+    const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+    container.innerHTML = `<div class="ai-reason-box" style="border-left-color:#ff9800; background:rgba(255,152,0,0.08);"><span class="ai-reason-title" style="color:#ff9800;">🔥 近 ${currentHistoryData.length} 期統計</span><div>最熱：${sorted.slice(0,5).map(x=>x[0]).join(', ')}</div><div>最冷：${sorted.slice(-5).map(x=>x[0]).join(', ')}</div></div>`;
 }
 
-// ==========================================
-// ⭐ 收藏功能 (LocalStorage 本機儲存)
-// ==========================================
 function saveFavorite() {
-    if(!currentPrediction || currentPrediction.length === 0) {
-        alert("請先等待 AI 產生號碼！"); return;
-    }
     let favs = JSON.parse(localStorage.getItem('lottery_favs') || '[]');
-    favs.push({
-        game: gameNames[currentGame],
-        date: new Date().toLocaleString('zh-TW', {hour12: false}),
-        numbers: currentPrediction
-    });
+    favs.push({ game: gameNames[currentGame], date: new Date().toLocaleString(), numbers: currentPrediction });
     localStorage.setItem('lottery_favs', JSON.stringify(favs));
-    
     const btn = document.getElementById('save-fav-btn');
-    btn.innerHTML = '<i class="fas fa-check"></i> 已成功收藏';
-    btn.style.borderColor = '#4caf50'; btn.style.color = '#4caf50';
-    setTimeout(() => {
-        btn.innerHTML = '<i class="fas fa-star"></i> 將這組預測加入收藏';
-        btn.style.borderColor = '#ff9800'; btn.style.color = '#ff9800';
-    }, 2000);
+    btn.innerHTML = '<i class="fas fa-check"></i> 已收藏';
+    setTimeout(() => btn.innerHTML = '<i class="fas fa-star"></i> 將這組預測加入收藏', 2000);
 }
 
 function renderFavorites() {
     const container = document.getElementById('favorite-list');
     let favs = JSON.parse(localStorage.getItem('lottery_favs') || '[]');
-    if(favs.length === 0) {
-        container.innerHTML = '<div class="loading-text">尚無收藏紀錄</div>';
-        return;
-    }
-    
-    let html = '';
-    [...favs].reverse().forEach((fav, idx) => {
-        let ballsHtml = fav.numbers.map(n => `<div class="ball" style="width:32px; height:32px; font-size:0.9rem;">${n}</div>`).join('');
-        let realIdx = favs.length - 1 - idx; 
-        
-        html += `
-        <div class="history-item">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <span class="history-info" style="margin-bottom:0; color:#fff;">${fav.game} <span style="font-size:0.75rem; color:var(--text-muted); margin-left:8px;">${fav.date}</span></span>
-                <button onclick="deleteFav(${realIdx})" style="background:none; border:none; color:#ff4d4f; cursor:pointer; font-size:1.1rem; padding:5px;"><i class="fas fa-trash-alt"></i></button>
-            </div>
-            <div class="balls-container" style="justify-content:flex-start; gap:6px; margin-top:5px;">${ballsHtml}</div>
-        </div>`;
-    });
-    container.innerHTML = html;
+    if (!favs.length) return container.innerHTML = '<div class="loading-text">尚無收藏</div>';
+    container.innerHTML = [...favs].reverse().map((f, i) => `<div class="history-item"><div style="display:flex; justify-content:space-between;"><span>${f.game} <small>${f.date}</small></span><button onclick="deleteFav(${favs.length-1-i})" style="background:none; border:none; color:#ff4d4f;"><i class="fas fa-trash"></i></button></div><div class="balls-container" style="justify-content:flex-start; gap:6px;">${f.numbers.map(n=>`<div class="ball" style="width:32px; height:32px; font-size:0.9rem;">${n}</div>`).join('')}</div></div>`).join('');
 }
 
-function deleteFav(idx) {
+function deleteFav(i) {
     let favs = JSON.parse(localStorage.getItem('lottery_favs') || '[]');
-    favs.splice(idx, 1);
+    favs.splice(i, 1);
     localStorage.setItem('lottery_favs', JSON.stringify(favs));
-    renderFavorites(); 
+    renderFavorites();
 }
 
-// ==========================================
-// ⚙️ 設定功能
-// ==========================================
 function clearCache() {
-    if(confirm("⚠️ 確定要清除系統快取嗎？\n這將會刪除您所有『收藏的號碼』並重新載入網頁。")) {
-        localStorage.clear();
-        alert("✅ 快取已清除！系統即將重新啟動。");
-        location.reload();
-    }
+    if (confirm("確定清除收藏與快取？")) { localStorage.clear(); location.reload(); }
 }
