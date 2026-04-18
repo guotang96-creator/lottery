@@ -1,21 +1,35 @@
 const fs = require('fs');
 
 async function fetchWeiliData() {
-    try {
-        const now = new Date(); now.setHours(now.getHours() + 8);
-        // 💡 pageSize=200 讓台彩 API 吐出一整年的資料
-        const url = `https://api.taiwanlottery.com/TLCAPIWEB/Lottery/SuperLotto638Result?period&month=${now.getFullYear()}-01&endMonth=${now.getFullYear()}-12&pageNum=1&pageSize=200`;
-        const data = await (await fetch(url)).json();
-        
-        const history = data.content.superLotto638Res.map(item => {
-            const nums = item.drawNumberSize.slice(0, 7).map(n => String(n).padStart(2, '0'));
-            const d = item.lotteryDate ? item.lotteryDate.split('T')[0] : "";
-            return { issue: String(item.period), date: d, numbers: nums };
-        }).sort((a, b) => parseInt(b.issue) - parseInt(a.issue));
-        
-        // 💡 擴充至 150 期
-        fs.writeFileSync('weili.json', JSON.stringify({ history: history.slice(0, 150) }, null, 2), 'utf8');
-        console.log(`✅ 威力彩抓取成功！(已擴充至 150 期)`);
-    } catch (error) { process.exit(1); }
+    let allHistory = [];
+    const currentYear = new Date().getFullYear();
+    
+    console.log("🌐 開始抓取威力彩十年大數據...");
+    
+    for (let year = currentYear; year >= currentYear - 10; year--) {
+        try {
+            // 威力彩一年約 104 期，pageSize 設 150 綽綽有餘
+            const url = `https://api.taiwanlottery.com/TLCAPIWEB/Lottery/SuperLotto638Result?period&month=${year}-01&endMonth=${year}-12&pageNum=1&pageSize=150`;
+            const res = await fetch(url);
+            const data = await res.json();
+            
+            if (data && data.content && data.content.superLotto638Res) {
+                const yearlyData = data.content.superLotto638Res.map(item => {
+                    const nums = item.drawNumberSize.slice(0, 7).map(n => String(n).padStart(2, '0'));
+                    const d = item.lotteryDate ? item.lotteryDate.split('T')[0] : "";
+                    return { issue: String(item.period), date: d, numbers: nums };
+                });
+                allHistory = allHistory.concat(yearlyData);
+                console.log(`✅ ${year} 年資料抓取成功 (${yearlyData.length} 筆)`);
+            }
+        } catch (e) {
+            console.log(`❌ ${year} 年資料抓取失敗: ${e.message}`);
+        }
+    }
+
+    allHistory.sort((a, b) => parseInt(b.issue) - parseInt(a.issue));
+    fs.writeFileSync('weili.json', JSON.stringify({ history: allHistory }, null, 2), 'utf8');
+    console.log(`🎉 威力彩十年終極資料庫建置完成！總共集結了 ${allHistory.length} 筆大數據！`);
 }
+
 fetchWeiliData();
