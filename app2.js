@@ -1,10 +1,3 @@
-// PWA Service Worker 註冊
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(()=>{});
-    });
-}
-
 let currentGame = '';
 let currentHistoryData = []; 
 let currentPrediction = []; 
@@ -64,7 +57,7 @@ async function fetchPrediction(g) {
             }
             const ballCount = (g === '539' || g === 'daily') ? 5 : 6;
             currentPrediction = ai.predicted.slice(0, ballCount);
-            pContent.innerHTML = `<div class="ai-reason-box"><p>🔥 推薦號碼：</p><div class="balls-container">${currentPrediction.map(n=>`<div class="ball">${n}</div>`).join('')}</div></div>`;
+            pContent.innerHTML = `<div class="ai-reason-box"><p>🔥 最新主力推薦 (${ballCount} 碼)：</p><div class="balls-container">${currentPrediction.map(n=>`<div class="ball">${n}</div>`).join('')}</div></div>`;
             document.getElementById('save-fav-btn').style.display = 'block';
         }
     } catch (e) { sEl.innerText = "❌ 連線異常"; }
@@ -85,22 +78,56 @@ function runAnalysis() {
         });
     });
     const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
-    container.innerHTML = `<div class="ai-reason-box">📈 10 年大數據總結：<br>單數比：${(odd/(currentHistoryData.length*5)*100).toFixed(1)}%<br>大號比：${(big/(currentHistoryData.length*5)*100).toFixed(1)}%<br>最熱：${sorted.slice(0,5).map(x=>x[0]).join(', ')}</div>`;
+    container.innerHTML = `
+        <div class="ai-reason-box">
+            📊 10 年大數據深度統計：<br>
+            • 樣本期數：${currentHistoryData.length} 期<br>
+            • 單數比例：${(odd/(currentHistoryData.length*5)*100).toFixed(1)}%<br>
+            • 大號比例：${(big/(currentHistoryData.length*5)*100).toFixed(1)}%<br>
+            • 歷史最熱：${sorted.slice(0,5).map(x=>x[0]).join(', ')}<br>
+            • 歷史最冷：${sorted.slice(-5).map(x=>x[0]).join(', ')}
+        </div>`;
 }
 
 function saveFavorite() {
     let favs = JSON.parse(localStorage.getItem('lottery_favs') || '[]');
     favs.push({ g: gameNames[currentGame], d: new Date().toLocaleString(), n: currentPrediction });
     localStorage.setItem('lottery_favs', JSON.stringify(favs));
-    alert("已加入收藏！");
+    alert("已成功加入收藏！");
 }
 
 function renderHistory() {
     const container = document.getElementById('history-list-container');
-    container.innerHTML = currentHistoryData.slice(0, 50).map(d => `<div class="history-item">第 ${d.issue} 期 (${(d.date||"").split('T')[0]})<br><div class="balls-container">${(d.numbers||[]).map(n=>`<div class="ball">${n}</div>`).join('')}</div></div>`).join('');
+    container.innerHTML = currentHistoryData.slice(0, 50).map(d => `
+        <div class="history-item">
+            第 ${d.issue} 期 (${(d.date||"").split('T')[0]})
+            <div class="balls-container">${(d.numbers||[]).map(n=>`<div class="ball">${n}</div>`).join('')}</div>
+        </div>`).join('');
 }
 
 function renderFavorites() {
     let favs = JSON.parse(localStorage.getItem('lottery_favs') || '[]');
-    document.getElementById('favorite-list').innerHTML = favs.reverse().map(f => `<div>${f.g} (${f.d})<div class="balls-container">${f.n.map(n=>`<div class="ball">${n}</div>`).join('')}</div></div>`).join('');
+    document.getElementById('favorite-list').innerHTML = favs.reverse().map((f, idx) => `
+        <div class="history-item">
+            <div style="display:flex; justify-content:space-between;">
+                <span>${f.g} (${f.d})</span>
+                <button onclick="deleteFav(${favs.length-1-idx})" style="background:none; border:none; color:#ff4d4f;"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="balls-container">${f.n.map(n=>`<div class="ball">${n}</div>`).join('')}</div>
+        </div>`).join('');
+}
+
+function deleteFav(idx) {
+    let favs = JSON.parse(localStorage.getItem('lottery_favs') || '[]');
+    favs.splice(idx, 1);
+    localStorage.setItem('lottery_favs', JSON.stringify(favs));
+    renderFavorites();
+}
+
+function clearCache() {
+    if (confirm("⚠️ 確定要清除系統快取嗎？\n這將會刪除您所有『收藏的號碼』並重新載入網頁。")) {
+        localStorage.clear();
+        alert("✅ 快取已清除！系統即將重新啟動。");
+        location.reload();
+    }
 }
