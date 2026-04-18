@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>彩券 AI 數據分析中心</title>
-    <link rel="stylesheet" href="style.css?v=1117">
+    <link rel="stylesheet" href="style.css?v=1118">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <header class="main-header">
         <div class="logo-icon">AI</div>
         <h1>彩券 AI 數據分析中心</h1>
-        <div class="subtitle">V11 全能旗艦版 (五合一升級)</div>
+        <div class="subtitle">V13 全能對獎旗艦版</div>
     </header>
 
     <main id="page-home" class="page active">
@@ -23,11 +23,22 @@
             <div class="balls-container" id="latest-balls">
                 <div class="loading-text">請在下方選擇彩種</div>
             </div>
-            <button class="action-btn" onclick="fetchPrediction(currentGame)"><i class="fas fa-sync-alt"></i> 從雲端抓取最新資料</button>
+            
+            <div id="ai-verify-box" class="ai-verify-box" style="display:none;">
+                <div class="verify-header">
+                    <span>🎯 上期 AI 預測對獎</span>
+                    <span id="verify-hit-count" class="hit-count">命中 0 顆</span>
+                </div>
+                <div class="balls-container" id="verify-balls" style="margin: 10px 0 0 0; gap: 6px;"></div>
+            </div>
+
+            <button class="action-btn" style="margin-top:15px;" onclick="fetchPrediction(currentGame)">
+                <i class="fas fa-sync-alt"></i> 從雲端抓取最新資料
+            </button>
         </section>
 
         <section class="card ai-prediction-card">
-            <div class="card-header"><h2>🤖 智能選號建議 (V11 泛用型矩陣)</h2></div>
+            <div class="card-header"><h2>🤖 智能選號建議 (V12 量化矩陣)</h2></div>
             <div class="game-selector">
                 <button class="game-btn" onclick="setGame('539')">今彩 539</button>
                 <button class="game-btn" onclick="setGame('daily')">天天樂</button>
@@ -63,7 +74,7 @@
             <div id="backtest-content">
                 <button class="action-btn" onclick="runAnalysis()"><i class="fas fa-chart-pie"></i> 執行近 50 期冷熱門分析</button>
                 <div id="analysis-result" style="margin-top: 15px;">
-                    <div class="loading-text" style="font-size:0.8rem;">請先在首頁選擇彩種，再執行分析</div>
+                    <div class="loading-text" style="font-size:0.8rem;">請先在首頁選擇彩種</div>
                 </div>
             </div>
         </section>
@@ -85,13 +96,9 @@
                 <span><i class="fas fa-trash-alt" style="color:var(--text-muted); margin-right:8px;"></i> 清除系統快取與收藏</span>
                 <button class="game-btn" onclick="clearCache()" style="color:#ff4d4f; border-color:#ff4d4f;">執行清除</button>
             </div>
-            <div class="setting-item">
-                <span><i class="fas fa-bell" style="color:var(--text-muted); margin-right:8px;"></i> 開獎推播通知</span>
-                <button class="game-btn" disabled>敬請期待</button>
-            </div>
             <div class="setting-item" style="border-bottom:none;">
                 <span><i class="fas fa-info-circle" style="color:var(--text-muted); margin-right:8px;"></i> 核心引擎版本</span>
-                <span style="color:var(--text-muted); font-size:0.85rem;">V11 量化貝氏矩陣</span>
+                <span style="color:var(--text-muted); font-size:0.85rem;">V13 自動對獎引擎</span>
             </div>
         </section>
     </main>
@@ -104,6 +111,6 @@
         <button class="nav-item" id="nav-setting" onclick="switchPage('setting')">設定</button>
     </nav>
 
-    <script src="app2.js?v=1117"></script>
+    <script src="app2.js?v=1118"></script>
 </body>
 </html>
