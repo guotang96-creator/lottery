@@ -1,10 +1,12 @@
-name: Update Lottery 10-Year Database
+name: Update Global Lottery 10-Year Database
 
 on:
   workflow_dispatch: 
   schedule:
-    # 狙擊模式：精準鎖定台灣時間每天晚上 22:15, 22:30, 22:45 執行
-    - cron: "15,30,45 14 * * *" 
+    # 早上狙擊：台灣時間 10:15, 10:45 (同步加州天天樂)
+    - cron: "15,45 2 * * *" 
+    # 晚上狙擊：台灣時間 22:15, 22:45 (同步台彩系列)
+    - cron: "15,45 14 * * *" 
 
 permissions:
   contents: write
