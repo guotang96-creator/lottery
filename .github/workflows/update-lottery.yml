@@ -3,9 +3,9 @@ name: Update Global Lottery 10-Year Database
 on:
   workflow_dispatch: 
   schedule:
-    # 早上狙擊：台灣時間 10:15, 10:45 (同步加州天天樂)
+    # 早上：台灣時間 10:15, 10:45 (同步加州天天樂)
     - cron: "15,45 2 * * *" 
-    # 晚上狙擊：台灣時間 22:15, 22:45 (同步台彩系列)
+    # 晚上：台灣時間 22:15, 22:45 (同步台彩系列)
     - cron: "15,45 14 * * *" 
 
 permissions:
@@ -32,4 +32,4 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "actions@github.com"
           git add *.json
-          git diff --cached --quiet || (git commit -m "🤖 V13.5 終極同步" && git push)
+          git diff --cached --quiet || (git commit -m "🤖 V13.5 終極同步(10年版)" && git push)
