@@ -13,6 +13,7 @@ async function fetchWeiliData() {
             const res = await fetch(url);
             const data = await res.json();
             
+            // 注意這裡的對應欄位是 superLotto638Res
             if (data && data.content && data.content.superLotto638Res) {
                 const yearlyData = data.content.superLotto638Res.map(item => {
                     // 威力彩有 6 個第一區 + 1 個第二區，共 7 碼
@@ -28,7 +29,10 @@ async function fetchWeiliData() {
         }
     }
 
+    // 將 10 年的資料依照期數從大到小排好
     allHistory.sort((a, b) => parseInt(b.issue) - parseInt(a.issue));
+    
+    // 寫入 weili.json (您的威力彩資料庫檔案)
     fs.writeFileSync('weili.json', JSON.stringify({ history: allHistory }, null, 2), 'utf8');
     console.log(`🎉 威力彩十年終極資料庫建置完成！總共集結了 ${allHistory.length} 筆大數據！`);
 }
