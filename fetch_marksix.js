@@ -42,7 +42,7 @@ async function fetchMarksixData() {
             const res = await fetch("https://www.pilio.idv.tw/lotto/hk6/list.asp", { headers });
             const text = await res.text();
             const periods = [...text.matchAll(/(\d{5,7})/g)].map(m => m[1]);
-            const uniquePeriods = [...new Set(periods)].sort((a,b)=>b-a).slice(0, 15);
+            const uniquePeriods = [...new Set(periods)].sort((a,b)=>b-a).slice(0, 150);
 
             for (let p of uniquePeriods) {
                 const idx = text.indexOf(p);
@@ -55,7 +55,7 @@ async function fetchMarksixData() {
         } catch (e) { console.log("管道 2 失敗"); }
     }
 
-    // 管道 3: 終極保險底火 (確保檔案絕對不會是空的)
+    // 管道 3: 終極保險底火
     if (history.length === 0) {
         console.log("⚠️ 網路全數阻擋，啟動終極底火");
         history = [
@@ -64,8 +64,9 @@ async function fetchMarksixData() {
         ];
     }
 
-    fs.writeFileSync('marksix.json', JSON.stringify({ history: history.slice(0, 50) }, null, 2), 'utf8');
-    console.log(`✅ 六合彩資料儲存完成！`);
+    // 💡 擴充至 150 期
+    fs.writeFileSync('marksix.json', JSON.stringify({ history: history.slice(0, 150) }, null, 2), 'utf8');
+    console.log(`✅ 六合彩資料儲存完成！(已擴充至最大 150 期)`);
 }
 
 fetchMarksixData();
