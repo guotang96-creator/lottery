@@ -20,11 +20,19 @@ h1 { font-size: 1.5rem; } .subtitle { font-size: 0.8rem; color: var(--text-muted
 .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 15px; }
 .highlight-text { color: var(--primary-blue); font-weight: bold; }
 
+/* 基礎球體樣式 */
 .balls-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 15px 0; }
 .ball { width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 1.1rem; font-weight: bold; background: var(--ball-bg); border: 2px solid var(--ball-border); box-shadow: 0 0 10px rgba(59,113,255,0.3); }
-.ball.special { background: var(--special-bg); border-color: var(--special-border); }
 .ball.hit { background: #b76e00; border-color: #ff9800; box-shadow: 0 0 15px rgba(255,152,0,0.8); color: #fff; }
 .ball.miss { opacity: 0.25; }
+
+/* V14 雙區顯示架構 */
+.balls-container-v14 { display: flex; flex-direction: column; gap: 10px; margin: 15px 0; }
+.balls-container-main { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.balls-container-special { display: flex; justify-content: center; gap: 10px; }
+
+/* 威力彩第二區特別球特效 */
+.ball.special-weili { background: #ff9800; border-color: #ff9800; box-shadow: 0 0 15px rgba(255,152,0,0.8); color: #fff; }
 
 .ai-verify-box { margin-top: 15px; padding: 15px; background: rgba(255, 152, 0, 0.05); border-radius: 15px; border: 1px dashed rgba(255, 152, 0, 0.4); }
 .verify-header { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); }
@@ -36,6 +44,9 @@ h1 { font-size: 1.5rem; } .subtitle { font-size: 0.8rem; color: var(--text-muted
 .game-btn.active { background: var(--primary-blue); color: white; }
 
 .ai-reason-box { margin-top: 15px; padding: 15px; background: rgba(42, 100, 246, 0.08); border-left: 4px solid var(--primary-blue); border-radius: 0 10px 10px 0; font-size: 0.85rem; line-height: 1.6; }
+.setting-item { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid var(--border-color); align-items: center; }
+
 .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(26,31,53,0.98); backdrop-filter: blur(15px); display: flex; justify-content: space-around; padding: 12px 0 25px 0; border-top: 1px solid var(--border-color); }
-.nav-item { background: none; border: none; color: var(--text-muted); font-size: 0.85rem; cursor: pointer; }
+.nav-item { background: none; border: none; color: var(--text-muted); font-size: 0.85rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .nav-item.active { color: var(--primary-blue); font-weight: bold; }
+.nav-item i { font-size: 1.2rem; }
