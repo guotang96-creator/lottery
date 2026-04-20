@@ -53,10 +53,10 @@ for (let wMean = 0; wMean <= 100; wMean += WEIGHT_STEP) {
                     d.numbers.forEach(num => scores[num] += (timeWeight * (wEma / 100)));
                 });
 
-                // C. 馬可夫鏈
+                // C. 馬可夫鏈 (已完美修復越界 Bug 🐛)
                 const lastDrawNums = pastData[0].numbers;
                 pastData.forEach((d, idx) => {
-                    if (idx === pastData.length - 1) return;
+                    if (idx === 0) return; // 💡 關鍵修復：跳過 idx=0，避免 0-1 變成 -1
                     let intersect = d.numbers.filter(n => lastDrawNums.includes(n));
                     if (intersect.length > 0) {
                         pastData[idx - 1].numbers.forEach(num => scores[num] += (intersect.length * 2 * (wMarkov / 100)));
