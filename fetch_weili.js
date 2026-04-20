@@ -4,19 +4,18 @@ async function fetchWeiliData() {
     let allHistory = [];
     const currentYear = new Date().getFullYear();
     
-    console.log("🌐 開始抓取威力彩十年大數據...");
+    console.log("🌐 啟動威力彩十年大數據掃描...");
     
     for (let year = currentYear; year >= currentYear - 10; year--) {
         try {
-            // 威力彩一年約 104 期，pageSize 設 150 綽綽有餘
+            // 威力彩 API 節點與資料陣列名稱
             const url = `https://api.taiwanlottery.com/TLCAPIWEB/Lottery/SuperLotto638Result?period&month=${year}-01&endMonth=${year}-12&pageNum=1&pageSize=150`;
             const res = await fetch(url);
             const data = await res.json();
             
-            // 注意這裡的對應欄位是 superLotto638Res
             if (data && data.content && data.content.superLotto638Res) {
                 const yearlyData = data.content.superLotto638Res.map(item => {
-                    // 威力彩有 6 個第一區 + 1 個第二區，共 7 碼
+                    // 威力彩有 6 個第一區 + 1 個第二區，共抓取 7 碼
                     const nums = item.drawNumberSize.slice(0, 7).map(n => String(n).padStart(2, '0'));
                     const d = item.lotteryDate ? item.lotteryDate.split('T')[0] : "";
                     return { issue: String(item.period), date: d, numbers: nums };
@@ -29,10 +28,9 @@ async function fetchWeiliData() {
         }
     }
 
-    // 將 10 年的資料依照期數從大到小排好
     allHistory.sort((a, b) => parseInt(b.issue) - parseInt(a.issue));
     
-    // 寫入 weili.json (您的威力彩資料庫檔案)
+    // 寫入 weili.json
     fs.writeFileSync('weili.json', JSON.stringify({ history: allHistory }, null, 2), 'utf8');
     console.log(`🎉 威力彩十年終極資料庫建置完成！總共集結了 ${allHistory.length} 筆大數據！`);
 }
