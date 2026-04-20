@@ -4,40 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="manifest" href="manifest.json">
-    <title>彩券 AI 數據分析中心</title>
-    <link rel="stylesheet" href="style.css?v=13.5">
+    <title>彩券 AI 數據分析中心 V14</title>
+    <link rel="stylesheet" href="style.css?v=14">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <header class="main-header">
         <div class="logo-icon">AI</div>
         <h1>彩券 AI 數據分析中心</h1>
-        <div class="subtitle">V13.5 終極旗艦版 (10年大數據)</div>
+        <div class="subtitle">V14 量子矩陣版 (60-0-80 黃金權重)</div>
     </header>
 
     <main id="page-home" class="page active">
         <section class="card draw-result-card">
             <div class="card-header">
-                <h2>🏆 開獎結果 <span id="current-game-title" class="highlight-text">請選擇</span></h2>
+                <h2>🏆 最新開獎 <span id="current-game-title" class="highlight-text">請選擇</span></h2>
                 <div class="status-text" id="sync-status">等待選擇...</div>
             </div>
-            <div class="balls-container" id="latest-balls">
-                <div class="loading-text">請在下方選擇彩種</div>
-            </div>
+            <div class="balls-container" id="latest-balls"></div>
             <div id="ai-verify-box" class="ai-verify-box" style="display:none;">
                 <div class="verify-header">
-                    <span>🎯 上期 AI 預測對獎</span>
-                    <span id="verify-hit-count" class="hit-count">命中 0 顆</span>
+                    <span>🎯 上期預測命中檢查</span>
+                    <span id="verify-hit-count" class="hit-count">0 顆</span>
                 </div>
-                <div class="balls-container" id="verify-balls" style="margin: 10px 0 0 0; gap: 6px;"></div>
+                <div class="balls-container" id="verify-balls"></div>
             </div>
-            <button class="action-btn" style="margin-top:15px;" onclick="fetchPrediction(currentGame)">
-                <i class="fas fa-sync-alt"></i> 從雲端抓取最新資料
-            </button>
         </section>
 
         <section class="card ai-prediction-card">
-            <div class="card-header"><h2>🤖 智能選號建議 (V12 量化矩陣)</h2></div>
+            <div class="card-header"><h2>🤖 V14 智能選號 (量化回測最強配方)</h2></div>
             <div class="game-selector">
                 <button class="game-btn" onclick="setGame('539')">今彩 539</button>
                 <button class="game-btn" onclick="setGame('daily')">天天樂</button>
@@ -45,31 +40,31 @@
                 <button class="game-btn" onclick="setGame('weili')">威力彩</button>
                 <button class="game-btn" onclick="setGame('marksix')">六合彩</button>
             </div>
-            <div class="prediction-content" id="prediction-content"></div>
-            <button id="save-fav-btn" class="action-btn" style="display:none; margin-top:15px; border-color:#ff9800; color:#ff9800;" onclick="saveFavorite()">
-                <i class="fas fa-star"></i> 將這組預測加入收藏
+            <div id="prediction-content"></div>
+            <button id="save-fav-btn" class="action-btn" style="display:none; margin-top:15px;" onclick="saveFavorite()">
+                <i class="fas fa-star"></i> 收藏這組預測
             </button>
         </section>
     </main>
 
     <main id="page-history" class="page">
         <section class="card">
-            <div class="card-header"><h2>📜 歷史查詢 (近 50 期)</h2></div>
+            <div class="card-header"><h2>📜 歷史查詢 (50 期)</h2></div>
             <div id="history-list-container"></div>
         </section>
     </main>
 
     <main id="page-backtest" class="page">
         <section class="card">
-            <div class="card-header"><h2>📈 10 年大數據分析</h2></div>
-            <button class="action-btn" onclick="runAnalysis()"><i class="fas fa-chart-pie"></i> 執行深度分析</button>
+            <div class="card-header"><h2>📈 十年回測統計</h2></div>
+            <button class="action-btn" onclick="runAnalysis()"><i class="fas fa-chart-pie"></i> 深度分析</button>
             <div id="analysis-result"></div>
         </section>
     </main>
 
     <main id="page-favorite" class="page">
         <section class="card">
-            <div class="card-header"><h2>⭐ 我的收藏</h2></div>
+            <div class="card-header"><h2>⭐ 收藏夾</h2></div>
             <div id="favorite-list"></div>
         </section>
     </main>
@@ -77,25 +72,25 @@
     <main id="page-setting" class="page">
         <section class="card">
             <div class="card-header"><h2>⚙️ 系統設定</h2></div>
-            <div class="setting-item">
-                <span><i class="fas fa-trash-alt" style="color:var(--text-muted); margin-right:8px;"></i> 清除系統快取與收藏</span>
-                <button class="game-btn" onclick="clearCache()" style="color:#ff4d4f; border-color:#ff4d4f; background:transparent;">執行清除</button>
+            <div class="setting-item" onclick="clearCache()">
+                <span>清除系統快取</span>
+                <i class="fas fa-chevron-right"></i>
             </div>
-            <div class="setting-item" style="border-bottom:none;">
-                <span><i class="fas fa-info-circle" style="color:var(--text-muted); margin-right:8px;"></i> 核心引擎版本</span>
-                <span style="color:var(--text-muted); font-size:0.85rem;">V13.5 終極旗艦版</span>
+            <div class="setting-item">
+                <span>版本號</span>
+                <span>V14.0.1</span>
             </div>
         </section>
     </main>
 
     <nav class="bottom-nav">
-        <button class="nav-item active" id="nav-home" onclick="switchPage('home')">首頁</button>
-        <button class="nav-item" id="nav-history" onclick="switchPage('history')">歷史</button>
-        <button class="nav-item" id="nav-backtest" onclick="switchPage('backtest')">回測</button>
-        <button class="nav-item" id="nav-favorite" onclick="switchPage('favorite')">收藏</button>
-        <button class="nav-item" id="nav-setting" onclick="switchPage('setting')">設定</button>
+        <button class="nav-item active" id="nav-home" onclick="switchPage('home')"><i class="fas fa-home"></i><br>首頁</button>
+        <button class="nav-item" id="nav-history" onclick="switchPage('history')"><i class="fas fa-history"></i><br>歷史</button>
+        <button class="nav-item" id="nav-backtest" onclick="switchPage('backtest')"><i class="fas fa-microchip"></i><br>分析</button>
+        <button class="nav-item" id="nav-favorite" onclick="switchPage('favorite')"><i class="fas fa-star"></i><br>收藏</button>
+        <button class="nav-item" id="nav-setting" onclick="switchPage('setting')"><i class="fas fa-cog"></i><br>設定</button>
     </nav>
 
-    <script src="app2.js?v=13.5"></script>
+    <script src="app2.js?v=14"></script>
 </body>
 </html>
