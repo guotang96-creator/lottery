@@ -1,0 +1,19 @@
+name: 🚀 V14 手動執行權重回測
+
+on:
+  workflow_dispatch: # 這個指令代表「允許在網頁上手動點擊執行」
+
+jobs:
+  run-grid-search:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 取得最新程式碼與數據庫
+        uses: actions/checkout@v4
+        
+      - name: ⚙️ 安裝 Node.js 運算環境
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          
+      - name: 🧠 啟動量子運算中心 (執行回測)
+        run: node backtest.js
