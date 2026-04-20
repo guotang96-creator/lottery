@@ -1,7 +1,7 @@
 {
   "name": "彩券 AI 數據分析中心",
   "short_name": "彩券AI",
-  "description": "V13.5 終極量化數據終端",
+  "description": "V14 終極量化數據終端",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#0f131f",
