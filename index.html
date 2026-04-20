@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="manifest" href="manifest.json">
     <title>彩券 AI 數據分析中心 V14</title>
-    <link rel="stylesheet" href="style.css?v=14">
+    <link rel="stylesheet" href="style.css?v=14.1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -21,14 +21,23 @@
                 <h2>🏆 最新開獎 <span id="current-game-title" class="highlight-text">請選擇</span></h2>
                 <div class="status-text" id="sync-status">等待選擇...</div>
             </div>
-            <div class="balls-container" id="latest-balls"></div>
+            
+            <div class="balls-container-v14">
+                <div class="balls-container-main" id="latest-balls"></div>
+                <div class="balls-container-special" id="latest-balls-special"></div>
+            </div>
+
             <div id="ai-verify-box" class="ai-verify-box" style="display:none;">
                 <div class="verify-header">
                     <span>🎯 上期預測命中檢查</span>
                     <span id="verify-hit-count" class="hit-count">0 顆</span>
                 </div>
-                <div class="balls-container" id="verify-balls"></div>
+                <div class="balls-container" id="verify-balls" style="margin-top: 10px; gap: 6px;"></div>
             </div>
+            
+            <button class="action-btn" style="margin-top:15px;" onclick="loadData(currentGame)">
+                <i class="fas fa-sync-alt"></i> 強制重新同步資料
+            </button>
         </section>
 
         <section class="card ai-prediction-card">
@@ -41,7 +50,7 @@
                 <button class="game-btn" onclick="setGame('marksix')">六合彩</button>
             </div>
             <div id="prediction-content"></div>
-            <button id="save-fav-btn" class="action-btn" style="display:none; margin-top:15px;" onclick="saveFavorite()">
+            <button id="save-fav-btn" class="action-btn" style="display:none; margin-top:15px; border-color:#ff9800; color:#ff9800;" onclick="saveFavorite()">
                 <i class="fas fa-star"></i> 收藏這組預測
             </button>
         </section>
@@ -72,13 +81,13 @@
     <main id="page-setting" class="page">
         <section class="card">
             <div class="card-header"><h2>⚙️ 系統設定</h2></div>
-            <div class="setting-item" onclick="clearCache()">
-                <span>清除系統快取</span>
-                <i class="fas fa-chevron-right"></i>
+            <div class="setting-item" onclick="clearCache()" style="cursor: pointer;">
+                <span><i class="fas fa-trash-alt" style="color:#ff4d4f; margin-right:8px;"></i> 清除系統快取與收藏</span>
+                <i class="fas fa-chevron-right" style="color:var(--text-muted);"></i>
             </div>
-            <div class="setting-item">
-                <span>版本號</span>
-                <span>V14.0.1</span>
+            <div class="setting-item" style="border-bottom:none;">
+                <span><i class="fas fa-info-circle" style="color:var(--text-muted); margin-right:8px;"></i> 核心引擎版本</span>
+                <span style="color:var(--text-muted); font-size:0.85rem;">V14 終極修復版</span>
             </div>
         </section>
     </main>
@@ -91,6 +100,6 @@
         <button class="nav-item" id="nav-setting" onclick="switchPage('setting')"><i class="fas fa-cog"></i><br>設定</button>
     </nav>
 
-    <script src="app2.js?v=14"></script>
+    <script src="app2.js?v=14.1"></script>
 </body>
 </html>
