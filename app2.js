@@ -1,84 +1,211 @@
-// 👇 請全選 app2.js 檔案內容並刪除，換上這套修復版 👇
-
-// PWA Service Worker 註冊 (維持不變)
+// PWA 註冊
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(()=>{});
-    });
+    window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(()=>{}); });
 }
 
 let currentGame = '';
 let currentHistoryData = []; 
 let currentPrediction = []; 
 
-// [重要] Render 伺服器的 API 基礎 URL (確認與舊版一致)
+// Render API 與 V14 參數
 const API_BASE_URL = 'https://lottery-k099.onrender.com/api/predict'; 
-
-// [V14 黃金權重參數]
 const V14_WEIGHTS = { MEAN: 60, EMA: 0, MARKOV: 80, PENALTY: -15 };
 
 const gameNames = { '539': '今彩 539', 'daily': '天天樂', 'lotto': '大樂透', 'weili': '威力彩', 'marksix': '六合彩' };
 const fileMap = { '539': 'latest.json', 'daily': 'daily.json', 'lotto': 'lotto.json', 'weili': 'weili.json', 'marksix': 'marksix.json' };
 
 function switchPage(pId) {
-    ... (維持不變)
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById(`page-${pId}`).classList.add('active');
+    document.getElementById(`nav-${pId}`).classList.add('active');
+    if(pId === 'history') renderHistory();
+    if(pId === 'favorite') renderFavorites();
 }
 
 function setGame(g) {
-    ... (維持不變)
+    currentGame = g;
+    document.getElementById('current-game-title').innerText = gameNames[g];
+    document.querySelectorAll('.game-btn').forEach(b => {
+        b.classList.remove('active');
+        if(b.innerText.includes(gameNames[g].replace('今彩 ', ''))) b.classList.add('active');
+    });
+    loadData(g);
 }
 
-// 🌟 V14 終極 loadData 函數：Render 聯網對獎修復版 🌟
+// 🌟 V14 終極防呆版 loadData (獨立處理 GitHub 與 Render) 🌟
 async function loadData(g) {
     const sEl = document.getElementById('sync-status');
     const lBalls = document.getElementById('latest-balls');
+    const lBallsSpec = document.getElementById('latest-balls-special'); 
     const pContent = document.getElementById('prediction-content');
-    // [重要] 定義對獎區塊元素 (HTML 結構中已存在)
     const vBox = document.getElementById('ai-verify-box');
 
     sEl.innerText = "⏳ 數據同步中...";
     lBalls.innerHTML = '';
+    lBallsSpec.innerHTML = '';
     pContent.innerHTML = '';
-    // [重要] 預設隱藏對獎區塊
     vBox.style.display = 'none';
 
+    // 第一步：強制先抓取 GitHub 的歷史開獎 (最穩定，不能失敗)
     try {
-        // [重要] 升級為 Promise.all 同時發送請求到 Render (預測數據) 和 GitHub (歷史數據)
-        const [rRes, gRes] = await Promise.all([
-            fetch(`${API_BASE_URL}/${g}`), // 從 Render 伺服器獲取預測 (修復核心眼睛)
-            fetch(`https://guotang96-creator.github.io/lottery/${fileMap[g]}?t=${Date.now()}`) // 從 GitHub 獲取歷史 (維持新版本地化邏輯)
-        ]);
-        
-        const ai = await rRes.json();
+        const gRes = await fetch(`https://guotang96-creator.github.io/lottery/${fileMap[g]}?t=${Date.now()}`);
         const gh = await gRes.json();
-
+        
         currentHistoryData = gh.history || gh.recent50 || [];
+        if (currentHistoryData.length === 0) throw new Error("無歷史數據");
+
         const latest = currentHistoryData[0];
         const dStr = (latest.date || latest.lotteryDate || "").split('T')[0];
         sEl.innerText = `✅ 第 ${latest.issue} 期 (${dStr})`;
 
         const nums = latest.numbers || latest.drawNumberSize || [];
-        lBalls.innerHTML = nums.map(n => `<div class="ball">${n}</div>`).join('');
+        
+        // 渲染球體 (支援威力彩雙區)
+        if (g === 'weili') {
+            const mainNums = nums.slice(0, 6);
+            const specialNum = nums[6];
+            lBalls.innerHTML = mainNums.map(n => `<div class="ball">${n}</div>`).join('');
+            if(specialNum) lBallsSpec.innerHTML = `<div class="ball special-weili">${specialNum}</div>`;
+        } else {
+            lBalls.innerHTML = nums.map(n => `<div class="ball">${n}</div>`).join('');
+        }
 
-        // 🌟 修復對獎區塊顯示邏輯 🌟
-        if (ai.status === "success") {
-            // [重要] 檢查 Render 的數據，是否命中了
-            if (ai.prev_predicted && ai.prev_predicted.length > 0) {
-                vBox.style.display = 'block'; // 顯示區塊
+        // 第二步：嘗試抓取 Render 伺服器進行「對獎」(允許失敗，不影響 AI 選號)
+        try {
+            const rRes = await fetch(`${API_BASE_URL}/${g}`);
+            const ai = await rRes.json();
+            
+            if (ai.status === "success" && ai.prev_predicted && ai.prev_predicted.length > 0) {
+                vBox.style.display = 'block'; 
                 const hits = ai.hit_nums || [];
                 document.getElementById('verify-hit-count').innerText = `命中 ${hits.length} 顆`;
                 document.getElementById('verify-balls').innerHTML = ai.prev_predicted.map(n => `<div class="ball ${hits.includes(n)?'hit':'miss'}">${n}</div>`).join('');
             }
+        } catch (renderErr) {
+            console.log("⚠️ Render 伺服器未回應，略過對獎畫面，繼續本機 AI 運算");
         }
-        
-        // 執行 V14 AI 預測運算 (在前端本地計算新號碼)
+
+        // 第三步：在手機本地端直接執行 V14 (60-0-80) 矩陣運算
         runV14AI();
 
     } catch (e) { 
-        console.error("V14 數據同步失敗:", e);
-        sEl.innerText = "❌ 連線異常"; 
+        console.error("GitHub 歷史數據同步失敗:", e);
+        sEl.innerText = "❌ 讀取失敗"; 
+        lBalls.innerHTML = '<div style="color:#ff4d4f; font-size:1.2rem; display:flex; align-items:center; gap:8px;"><i class="fas fa-exclamation-triangle"></i> 歷史庫載入異常</div>';
     }
 }
 
-// ... 其餘函數 (runV14AI, saveFavorite, deleteFav, clearCache, renderHistory, renderFavorites) 維持我在 V14 完整版回答中提供的程式碼 ...
-// ... ... (請把剩餘內容完整的貼在最下面) ... ...
+// 🤖 V14 本機 AI 核心引擎 (直接在前端算，不怕後端死掉)
+function runV14AI() {
+    if(currentHistoryData.length < 50) return;
+    const maxNum = (currentGame==='539'||currentGame==='daily') ? 39 : 49; // 威力彩/大樂透/六合彩用 49
+    const pickCount = (currentGame==='539'||currentGame==='daily') ? 5 : 6;
+    let scores = {};
+    for(let n=1; n<=maxNum; n++) scores[String(n).padStart(2, '0')] = 0;
+
+    // 1. 均值回歸 (權重 60)
+    const last30 = currentHistoryData.slice(0, 30);
+    let counts = {};
+    last30.forEach(d => (d.numbers||[]).forEach(n => counts[n] = (counts[n]||0)+1));
+    Object.keys(scores).forEach(n => scores[n] += (10 - (counts[n]||0)) * (V14_WEIGHTS.MEAN/100));
+    
+    // 2. 馬可夫鏈 (權重 80)
+    const lastNums = currentHistoryData[0].numbers || [];
+    currentHistoryData.slice(1, 100).forEach((d, idx, arr) => {
+        let intersect = (d.numbers||[]).filter(n => lastNums.includes(n));
+        if(intersect.length > 0 && idx > 0) {
+            (arr[idx-1].numbers||[]).forEach(n => { if(scores[n]!==undefined) scores[n] += intersect.length * 5 * (V14_WEIGHTS.MARKOV/100); });
+        }
+    });
+
+    // 3. 連莊懲罰
+    lastNums.forEach(n => { if(scores[n]!==undefined) scores[n] += V14_WEIGHTS.PENALTY; });
+
+    currentPrediction = Object.keys(scores).sort((a,b)=>scores[b]-scores[a]).slice(0, pickCount);
+    
+    document.getElementById('prediction-content').innerHTML = `
+        <div class="ai-reason-box">
+            <p style="margin-bottom:10px; font-weight:bold; color:var(--text-main);">🎯 V14 主力推薦 (${pickCount}碼)：</p>
+            <div class="balls-container">${currentPrediction.map(n=>`<div class="ball hit">${n}</div>`).join('')}</div>
+            <p style="font-size:0.75rem; color:var(--text-muted); margin-top:10px; border-top:1px solid rgba(255,255,255,0.1); padding-top:8px;">
+                <i class="fas fa-microchip"></i> 策略：均值(${V14_WEIGHTS.MEAN}) + 拖牌(${V14_WEIGHTS.MARKOV}) / 動能(${V14_WEIGHTS.EMA})
+            </p>
+        </div>`;
+    document.getElementById('save-fav-btn').style.display = 'block';
+}
+
+function runAnalysis() {
+    const container = document.getElementById('analysis-result');
+    if(!currentHistoryData.length) return alert("請先在首頁選擇彩種");
+    let odd = 0, big = 0, counts = {};
+    const threshold = (currentGame === '539' || currentGame === 'daily') ? 20 : 25;
+    
+    currentHistoryData.forEach(d => {
+        const nums = (d.numbers || []).map(Number);
+        let limit = (currentGame === '539' || currentGame === 'daily') ? 5 : 6;
+        nums.slice(0, limit).forEach(n => {
+            if(n % 2 !== 0) odd++;
+            if(n >= threshold) big++;
+            const nStr = String(n).padStart(2, '0');
+            counts[nStr] = (counts[nStr] || 0) + 1;
+        });
+    });
+    const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+    const totalBalls = currentHistoryData.length * ((currentGame === '539' || currentGame === 'daily') ? 5 : 6);
+    container.innerHTML = `
+        <div class="ai-reason-box">
+            📊 <b>10 年大數據深度統計：</b><br><br>
+            • 樣本期數：${currentHistoryData.length} 期<br>
+            • 單數比例：${(odd/totalBalls*100).toFixed(1)}%<br>
+            • 大號比例：${(big/totalBalls*100).toFixed(1)}%<br>
+            • 歷史最熱：${sorted.slice(0,5).map(x=>x[0]).join(', ')}<br>
+            • 歷史最冷：${sorted.slice(-5).map(x=>x[0]).join(', ')}
+        </div>`;
+}
+
+function saveFavorite() {
+    let favs = JSON.parse(localStorage.getItem('lottery_favs') || '[]');
+    favs.push({ game: gameNames[currentGame], date: new Date().toLocaleString(), nums: currentPrediction });
+    localStorage.setItem('lottery_favs', JSON.stringify(favs));
+    alert("✅ 已成功加入收藏！");
+}
+
+function renderHistory() {
+    document.getElementById('history-list-container').innerHTML = currentHistoryData.slice(0, 50).map(d => `
+        <div class="history-item" style="margin-bottom:15px; padding-bottom:10px; border-bottom:1px solid var(--border-color);">
+            <div style="font-size:0.85rem; margin-bottom:8px; color:var(--text-muted);">第 ${d.issue} 期 (${(d.date||"").split('T')[0]})</div>
+            <div class="balls-container" style="margin:0; justify-content:flex-start;">
+                ${(d.numbers||[]).map((n, i) => `<div class="ball ${i===6 && currentGame==='weili' ? 'special-weili' : ''}" style="width:36px; height:36px; font-size:0.9rem;">${n}</div>`).join('')}
+            </div>
+        </div>`).join('');
+}
+
+function renderFavorites() {
+    let favs = JSON.parse(localStorage.getItem('lottery_favs') || '[]');
+    document.getElementById('favorite-list').innerHTML = favs.reverse().map((f, idx) => `
+        <div class="history-item" style="margin-bottom:15px; padding:15px; background:rgba(255,255,255,0.03); border-radius:12px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px; color:var(--text-muted); font-size:0.85rem;">
+                <span>${f.game} <br> ${f.date}</span>
+                <button onclick="deleteFav(${favs.length-1-idx})" style="background:none; border:none; color:#ff4d4f; padding:5px; cursor:pointer;"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="balls-container" style="margin:0; justify-content:flex-start;">
+                ${f.nums.map(n=>`<div class="ball hit" style="width:36px; height:36px; font-size:0.9rem;">${n}</div>`).join('')}
+            </div>
+        </div>`).join('');
+}
+
+function deleteFav(idx) {
+    let favs = JSON.parse(localStorage.getItem('lottery_favs') || '[]');
+    favs.splice(idx, 1);
+    localStorage.setItem('lottery_favs', JSON.stringify(favs));
+    renderFavorites();
+}
+
+function clearCache() {
+    if (confirm("⚠️ 確定要清除系統快取嗎？\n這將會刪除您所有『收藏的號碼』並重新載入網頁。")) {
+        localStorage.clear();
+        alert("✅ 快取已清除！系統即將重新啟動。");
+        location.reload();
+    }
+}
