@@ -7,7 +7,6 @@ let currentGame = '';
 let currentHistoryData = []; 
 let currentPrediction = []; 
 
-// Render API 與 V14 參數
 const API_BASE_URL = 'https://lottery-k099.onrender.com/api/predict'; 
 const V14_WEIGHTS = { MEAN: 60, EMA: 0, MARKOV: 80, PENALTY: -15 };
 
@@ -33,7 +32,6 @@ function setGame(g) {
     loadData(g);
 }
 
-// 🌟 V14 終極防呆版 loadData (獨立處理 GitHub 與 Render) 🌟
 async function loadData(g) {
     const sEl = document.getElementById('sync-status');
     const lBalls = document.getElementById('latest-balls');
@@ -47,7 +45,6 @@ async function loadData(g) {
     pContent.innerHTML = '';
     vBox.style.display = 'none';
 
-    // 第一步：強制先抓取 GitHub 的歷史開獎 (最穩定，不能失敗)
     try {
         const gRes = await fetch(`https://guotang96-creator.github.io/lottery/${fileMap[g]}?t=${Date.now()}`);
         const gh = await gRes.json();
@@ -57,11 +54,13 @@ async function loadData(g) {
 
         const latest = currentHistoryData[0];
         const dStr = (latest.date || latest.lotteryDate || "").split('T')[0];
-        sEl.innerText = `✅ 第 ${latest.issue} 期 (${dStr})`;
+        
+        // 💡 修復 1：無期數防呆 (天天樂 undefined 問題)
+        const issueStr = latest.issue ? `第 ${latest.issue} 期 ` : "";
+        sEl.innerText = `✅ ${issueStr}(${dStr})`;
 
         const nums = latest.numbers || latest.drawNumberSize || [];
         
-        // 渲染球體 (支援威力彩雙區)
         if (g === 'weili') {
             const mainNums = nums.slice(0, 6);
             const specialNum = nums[6];
@@ -71,63 +70,78 @@ async function loadData(g) {
             lBalls.innerHTML = nums.map(n => `<div class="ball">${n}</div>`).join('');
         }
 
-        // 第二步：嘗試抓取 Render 伺服器進行「對獎」(允許失敗，不影響 AI 選號)
         try {
             const rRes = await fetch(`${API_BASE_URL}/${g}`);
             const ai = await rRes.json();
-            
             if (ai.status === "success" && ai.prev_predicted && ai.prev_predicted.length > 0) {
                 vBox.style.display = 'block'; 
                 const hits = ai.hit_nums || [];
                 document.getElementById('verify-hit-count').innerText = `命中 ${hits.length} 顆`;
                 document.getElementById('verify-balls').innerHTML = ai.prev_predicted.map(n => `<div class="ball ${hits.includes(n)?'hit':'miss'}">${n}</div>`).join('');
             }
-        } catch (renderErr) {
-            console.log("⚠️ Render 伺服器未回應，略過對獎畫面，繼續本機 AI 運算");
-        }
+        } catch (err) { console.log("略過 Render 對獎"); }
 
-        // 第三步：在手機本地端直接執行 V14 (60-0-80) 矩陣運算
         runV14AI();
 
     } catch (e) { 
-        console.error("GitHub 歷史數據同步失敗:", e);
         sEl.innerText = "❌ 讀取失敗"; 
-        lBalls.innerHTML = '<div style="color:#ff4d4f; font-size:1.2rem; display:flex; align-items:center; gap:8px;"><i class="fas fa-exclamation-triangle"></i> 歷史庫載入異常</div>';
+        lBalls.innerHTML = '<div style="color:#ff4d4f; font-size:1.2rem; display:flex; align-items:center; gap:8px;"><i class="fas fa-exclamation-triangle"></i> 資料庫載入異常</div>';
     }
 }
 
-// 🤖 V14 本機 AI 核心引擎 (直接在前端算，不怕後端死掉)
 function runV14AI() {
-    if(currentHistoryData.length < 50) return;
-    const maxNum = (currentGame==='539'||currentGame==='daily') ? 39 : 49; // 威力彩/大樂透/六合彩用 49
+    // 💡 修復 2：放寬限制，拯救六合彩 (只要大於 15 期就允許運算)
+    if(currentHistoryData.length < 15) return; 
+
+    // 💡 修復 3-1：精準設定威力彩的號碼池上限 (第一區只到 38)
+    const maxNum = (currentGame==='539'||currentGame==='daily') ? 39 : (currentGame==='weili' ? 38 : 49);
     const pickCount = (currentGame==='539'||currentGame==='daily') ? 5 : 6;
+    
     let scores = {};
     for(let n=1; n<=maxNum; n++) scores[String(n).padStart(2, '0')] = 0;
 
-    // 1. 均值回歸 (權重 60)
     const last30 = currentHistoryData.slice(0, 30);
     let counts = {};
-    last30.forEach(d => (d.numbers||[]).forEach(n => counts[n] = (counts[n]||0)+1));
+    last30.forEach(d => (d.numbers||[]).slice(0, pickCount).forEach(n => counts[n] = (counts[n]||0)+1));
     Object.keys(scores).forEach(n => scores[n] += (10 - (counts[n]||0)) * (V14_WEIGHTS.MEAN/100));
     
-    // 2. 馬可夫鏈 (權重 80)
-    const lastNums = currentHistoryData[0].numbers || [];
+    const lastNums = (currentHistoryData[0].numbers || []).slice(0, pickCount);
     currentHistoryData.slice(1, 100).forEach((d, idx, arr) => {
-        let intersect = (d.numbers||[]).filter(n => lastNums.includes(n));
+        let intersect = (d.numbers||[]).slice(0, pickCount).filter(n => lastNums.includes(n));
         if(intersect.length > 0 && idx > 0) {
-            (arr[idx-1].numbers||[]).forEach(n => { if(scores[n]!==undefined) scores[n] += intersect.length * 5 * (V14_WEIGHTS.MARKOV/100); });
+            (arr[idx-1].numbers||[]).slice(0, pickCount).forEach(n => { if(scores[n]!==undefined) scores[n] += intersect.length * 5 * (V14_WEIGHTS.MARKOV/100); });
         }
     });
 
-    // 3. 連莊懲罰
     lastNums.forEach(n => { if(scores[n]!==undefined) scores[n] += V14_WEIGHTS.PENALTY; });
 
     currentPrediction = Object.keys(scores).sort((a,b)=>scores[b]-scores[a]).slice(0, pickCount);
     
+    // 💡 修復 3-2：威力彩專屬的第二區 (特別號) 獨立運算與排版
+    let htmlBalls = `<div class="balls-container">${currentPrediction.map(n=>`<div class="ball hit">${n}</div>`).join('')}</div>`;
+    
+    if (currentGame === 'weili') {
+        // 第二區引擎：從 01~08 中，選出近期最少開出的號碼 (均值回歸)
+        let z2Counts = {};
+        for(let i=1; i<=8; i++) z2Counts[String(i).padStart(2,'0')] = 0;
+        last30.forEach(d => {
+            if(d.numbers && d.numbers.length >= 7) z2Counts[d.numbers[6]] = (z2Counts[d.numbers[6]] || 0) + 1;
+        });
+        const z2Pred = Object.keys(z2Counts).sort((a,b)=>z2Counts[a]-z2Counts[b])[0] || '08';
+        currentPrediction.push(z2Pred); // 把第二區塞入陣列，確保收藏功能正常
+        
+        // 套用雙區版面
+        htmlBalls = `
+            <div class="balls-container-v14">
+                <div class="balls-container-main">${currentPrediction.slice(0,6).map(n=>`<div class="ball hit">${n}</div>`).join('')}</div>
+                <div class="balls-container-special"><div class="ball special-weili">${z2Pred}</div></div>
+            </div>`;
+    }
+
     document.getElementById('prediction-content').innerHTML = `
         <div class="ai-reason-box">
-            <p style="margin-bottom:10px; font-weight:bold; color:var(--text-main);">🎯 V14 主力推薦 (${pickCount}碼)：</p>
-            <div class="balls-container">${currentPrediction.map(n=>`<div class="ball hit">${n}</div>`).join('')}</div>
+            <p style="margin-bottom:10px; font-weight:bold; color:var(--text-main);">🎯 V14 主力推薦：</p>
+            ${htmlBalls}
             <p style="font-size:0.75rem; color:var(--text-muted); margin-top:10px; border-top:1px solid rgba(255,255,255,0.1); padding-top:8px;">
                 <i class="fas fa-microchip"></i> 策略：均值(${V14_WEIGHTS.MEAN}) + 拖牌(${V14_WEIGHTS.MARKOV}) / 動能(${V14_WEIGHTS.EMA})
             </p>
@@ -174,7 +188,7 @@ function saveFavorite() {
 function renderHistory() {
     document.getElementById('history-list-container').innerHTML = currentHistoryData.slice(0, 50).map(d => `
         <div class="history-item" style="margin-bottom:15px; padding-bottom:10px; border-bottom:1px solid var(--border-color);">
-            <div style="font-size:0.85rem; margin-bottom:8px; color:var(--text-muted);">第 ${d.issue} 期 (${(d.date||"").split('T')[0]})</div>
+            <div style="font-size:0.85rem; margin-bottom:8px; color:var(--text-muted);">${d.issue ? `第 ${d.issue} 期 ` : ""}(${(d.date||"").split('T')[0]})</div>
             <div class="balls-container" style="margin:0; justify-content:flex-start;">
                 ${(d.numbers||[]).map((n, i) => `<div class="ball ${i===6 && currentGame==='weili' ? 'special-weili' : ''}" style="width:36px; height:36px; font-size:0.9rem;">${n}</div>`).join('')}
             </div>
@@ -190,7 +204,7 @@ function renderFavorites() {
                 <button onclick="deleteFav(${favs.length-1-idx})" style="background:none; border:none; color:#ff4d4f; padding:5px; cursor:pointer;"><i class="fas fa-trash"></i></button>
             </div>
             <div class="balls-container" style="margin:0; justify-content:flex-start;">
-                ${f.nums.map(n=>`<div class="ball hit" style="width:36px; height:36px; font-size:0.9rem;">${n}</div>`).join('')}
+                ${f.nums.map((n, i) => `<div class="ball hit ${i===6 && f.game==='威力彩' ? 'special-weili' : ''}" style="width:36px; height:36px; font-size:0.9rem;">${n}</div>`).join('')}
             </div>
         </div>`).join('');
 }
