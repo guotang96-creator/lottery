@@ -44,7 +44,6 @@ async function loadData(g) {
     lBallsSpec.innerHTML = '';
     pContent.innerHTML = '';
     vBox.style.display = 'none';
-    // 💡 修復 1：每次載入新彩種時，強制先隱藏收藏按鈕，避免六合彩幽靈按鈕事件
     document.getElementById('save-fav-btn').style.display = 'none'; 
 
     try {
@@ -59,7 +58,6 @@ async function loadData(g) {
         const issueStr = latest.issue ? `第 ${latest.issue} 期 ` : "";
         sEl.innerText = `✅ ${issueStr}(${dStr})`;
 
-        // 💡 修復 2：強制清洗顯示端的資料格式
         const nums = (latest.numbers || latest.drawNumberSize || []).map(n => String(n).padStart(2, '0'));
         
         if (g === 'weili') {
@@ -90,9 +88,8 @@ async function loadData(g) {
     }
 }
 
-// 🤖 V14 終極裝甲引擎 (資料清洗強化版)
+// 🤖 V14 終極裝甲引擎 (資料清洗 + 量子微擾防呆)
 function runV14AI() {
-    // 💡 修復 3：放寬最低運算門檻，只要有 2 期資料就硬幹，保護六合彩不斷線
     if(!currentHistoryData || currentHistoryData.length < 2) {
         document.getElementById('prediction-content').innerHTML = '<p style="color:#8b95a5; padding:15px; text-align:center;">⚠️ 歷史數據不足，無法進行量化運算</p>';
         return;
@@ -101,23 +98,23 @@ function runV14AI() {
     const maxNum = (currentGame==='539'||currentGame==='daily') ? 39 : (currentGame==='weili' ? 38 : 49);
     const pickCount = (currentGame==='539'||currentGame==='daily') ? 5 : 6;
     
-    // 💡 修復 4：核心清洗函數 (所有進入 AI 矩陣的數字，強制變身為標準的 "01", "09", "12")
     const norm = (num) => String(num).trim().padStart(2, '0');
 
     let scores = {};
-    for(let n=1; n<=maxNum; n++) scores[norm(n)] = 0;
+    for(let n=1; n<=maxNum; n++) {
+        // 💡 終極防呆：加入 0.001 級別的微擾，打破平手，消滅 10,11,12 連號
+        scores[norm(n)] = Math.random() * 0.001; 
+    }
 
     const last30 = currentHistoryData.slice(0, 30);
     let counts = {};
     
-    // 計算均值回歸分數 (使用清洗後的 norm(n))
     last30.forEach(d => (d.numbers||[]).slice(0, pickCount).forEach(n => {
         const cleanN = norm(n);
         if(scores[cleanN] !== undefined) counts[cleanN] = (counts[cleanN]||0) + 1;
     }));
     Object.keys(scores).forEach(n => scores[n] += (10 - (counts[n]||0)) * (V14_WEIGHTS.MEAN/100));
     
-    // 計算馬可夫鏈分數 (使用清洗後的 norm(n))
     const lastNums = (currentHistoryData[0].numbers || []).slice(0, pickCount).map(norm);
     currentHistoryData.slice(1, 100).forEach((d, idx, arr) => {
         let currentDrawNums = (d.numbers||[]).slice(0, pickCount).map(norm);
@@ -131,10 +128,8 @@ function runV14AI() {
         }
     });
 
-    // 執行連莊懲罰
     lastNums.forEach(n => { if(scores[n] !== undefined) scores[n] += V14_WEIGHTS.PENALTY; });
 
-    // 排序產出最終號碼
     currentPrediction = Object.keys(scores).sort((a,b)=>scores[b]-scores[a]).slice(0, pickCount);
     
     let htmlBalls = `<div class="balls-container">${currentPrediction.map(n=>`<div class="ball hit">${n}</div>`).join('')}</div>`;
@@ -142,13 +137,21 @@ function runV14AI() {
     // 威力彩第二區引擎
     if (currentGame === 'weili') {
         let z2Counts = {};
-        for(let i=1; i<=8; i++) z2Counts[norm(i)] = 0;
+        for(let i=1; i<=8; i++) {
+            // 第二區一樣加入量子微擾
+            z2Counts[norm(i)] = Math.random() * 0.001; 
+        }
+        
         last30.forEach(d => {
             if(d.numbers && d.numbers.length >= 7) {
                 const cleanZ2 = norm(d.numbers[6]);
-                z2Counts[cleanZ2] = (z2Counts[cleanZ2] || 0) + 1;
+                if(z2Counts[cleanZ2] !== undefined) {
+                    z2Counts[cleanZ2] += 1;
+                }
             }
         });
+        
+        // 選出最少開出（分數最低）的特別號
         const z2Pred = Object.keys(z2Counts).sort((a,b)=>z2Counts[a]-z2Counts[b])[0] || '08';
         currentPrediction.push(z2Pred); 
         
