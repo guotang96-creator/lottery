@@ -3,8 +3,8 @@ name: Update Global Lottery Database
 on:
   workflow_dispatch: 
   schedule:
-    - cron: "15,45 2 * * *" # 早上同步 (涵蓋加州天天樂)
-    - cron: "15,45 14 * * *" # 晚上同步 (涵蓋台彩與六合彩)
+    - cron: "15,45 2 * * *" 
+    - cron: "15,45 14 * * *" 
 
 permissions:
   contents: write
@@ -13,22 +13,22 @@ jobs:
   update-lottery:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: 📥 取得程式碼
         uses: actions/checkout@v4
-      - name: Setup Node.js
+      - name: ⚙️ 設定 Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Run All Crawlers
+      - name: 🕷️ 啟動全彩種繞道爬蟲
         run: |
           node fetch_latest_539.js || true
           node fetch_lotto.js || true
           node fetch_weili.js || true
           node fetch_marksix.js || true
           node fetch_daily.js || true
-      - name: Commit and push
+      - name: 💾 儲存並更新資料庫
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "actions@github.com"
           git add *.json
-          git diff --cached --quiet || (git commit -m "🤖 V14 全彩種歷史數據同步" && git push)
+          git diff --cached --quiet || (git commit -m "🤖 V14 代理突破版數據同步" && git push)
