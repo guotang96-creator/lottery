@@ -1,6 +1,8 @@
-// PWA 註冊
+// 💥 暴力解除 PWA 舊版快取攔截，殺死霸佔資料的 Service Worker
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => { navigator.serviceWorker.register('/sw.js').catch(()=>{}); });
+    navigator.serviceWorker.getRegistrations().then(function(regs) {
+        for(let reg of regs) reg.unregister();
+    });
 }
 
 let currentGame = '';
@@ -39,7 +41,7 @@ async function loadData(g) {
     const pContent = document.getElementById('prediction-content');
     const vBox = document.getElementById('ai-verify-box');
 
-    sEl.innerText = "⏳ 數據同步中...";
+    sEl.innerText = "⏳ 穿透快取連線中...";
     lBalls.innerHTML = '';
     lBallsSpec.innerHTML = '';
     pContent.innerHTML = '';
@@ -47,7 +49,11 @@ async function loadData(g) {
     document.getElementById('save-fav-btn').style.display = 'none'; 
 
     try {
-        const gRes = await fetch(`https://guotang96-creator.github.io/lottery/${fileMap[g]}?t=${Date.now()}`);
+        // 💥 終極穿透術：加上 cache: 'no-store' 強制瀏覽器不准使用舊庫存！
+        const gRes = await fetch(`https://guotang96-creator.github.io/lottery/${fileMap[g]}?nocache=${Date.now()}`, {
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+        });
         const gh = await gRes.json();
         
         currentHistoryData = gh.history || gh.recent50 || [];
@@ -88,7 +94,6 @@ async function loadData(g) {
     }
 }
 
-// 🤖 V14 終極裝甲引擎 (資料清洗 + 量子微擾防呆)
 function runV14AI() {
     if(!currentHistoryData || currentHistoryData.length < 2) {
         document.getElementById('prediction-content').innerHTML = '<p style="color:#8b95a5; padding:15px; text-align:center;">⚠️ 歷史數據不足，無法進行量化運算</p>';
@@ -97,14 +102,10 @@ function runV14AI() {
 
     const maxNum = (currentGame==='539'||currentGame==='daily') ? 39 : (currentGame==='weili' ? 38 : 49);
     const pickCount = (currentGame==='539'||currentGame==='daily') ? 5 : 6;
-    
     const norm = (num) => String(num).trim().padStart(2, '0');
 
     let scores = {};
-    for(let n=1; n<=maxNum; n++) {
-        // 💡 終極防呆：加入 0.001 級別的微擾，打破平手，消滅 10,11,12 連號
-        scores[norm(n)] = Math.random() * 0.001; 
-    }
+    for(let n=1; n<=maxNum; n++) { scores[norm(n)] = Math.random() * 0.001; }
 
     const last30 = currentHistoryData.slice(0, 30);
     let counts = {};
@@ -119,42 +120,28 @@ function runV14AI() {
     currentHistoryData.slice(1, 100).forEach((d, idx, arr) => {
         let currentDrawNums = (d.numbers||[]).slice(0, pickCount).map(norm);
         let intersect = currentDrawNums.filter(n => lastNums.includes(n));
-        
         if(intersect.length > 0 && idx > 0) {
             let nextDrawNums = (arr[idx-1].numbers||[]).slice(0, pickCount).map(norm);
-            nextDrawNums.forEach(n => { 
-                if(scores[n] !== undefined) scores[n] += intersect.length * 5 * (V14_WEIGHTS.MARKOV/100); 
-            });
+            nextDrawNums.forEach(n => { if(scores[n] !== undefined) scores[n] += intersect.length * 5 * (V14_WEIGHTS.MARKOV/100); });
         }
     });
 
     lastNums.forEach(n => { if(scores[n] !== undefined) scores[n] += V14_WEIGHTS.PENALTY; });
 
     currentPrediction = Object.keys(scores).sort((a,b)=>scores[b]-scores[a]).slice(0, pickCount);
-    
     let htmlBalls = `<div class="balls-container">${currentPrediction.map(n=>`<div class="ball hit">${n}</div>`).join('')}</div>`;
     
-    // 威力彩第二區引擎
     if (currentGame === 'weili') {
         let z2Counts = {};
-        for(let i=1; i<=8; i++) {
-            // 第二區一樣加入量子微擾
-            z2Counts[norm(i)] = Math.random() * 0.001; 
-        }
-        
+        for(let i=1; i<=8; i++) { z2Counts[norm(i)] = Math.random() * 0.001; }
         last30.forEach(d => {
             if(d.numbers && d.numbers.length >= 7) {
                 const cleanZ2 = norm(d.numbers[6]);
-                if(z2Counts[cleanZ2] !== undefined) {
-                    z2Counts[cleanZ2] += 1;
-                }
+                if(z2Counts[cleanZ2] !== undefined) z2Counts[cleanZ2] += 1;
             }
         });
-        
-        // 選出最少開出（分數最低）的特別號
         const z2Pred = Object.keys(z2Counts).sort((a,b)=>z2Counts[a]-z2Counts[b])[0] || '08';
         currentPrediction.push(z2Pred); 
-        
         htmlBalls = `
             <div class="balls-container-v14">
                 <div class="balls-container-main">${currentPrediction.slice(0,6).map(n=>`<div class="ball hit">${n}</div>`).join('')}</div>
@@ -178,7 +165,6 @@ function runAnalysis() {
     if(!currentHistoryData.length) return alert("請先在首頁選擇彩種");
     let odd = 0, big = 0, counts = {};
     const threshold = (currentGame === '539' || currentGame === 'daily') ? 20 : 25;
-    
     currentHistoryData.forEach(d => {
         const nums = (d.numbers || []).map(Number);
         let limit = (currentGame === '539' || currentGame === 'daily') ? 5 : 6;
@@ -240,10 +226,23 @@ function deleteFav(idx) {
     renderFavorites();
 }
 
-function clearCache() {
-    if (confirm("⚠️ 確定要清除系統快取嗎？\n這將會刪除您所有『收藏的號碼』並重新載入網頁。")) {
+// 💥 核彈級系統重置：徹底殺死舊快取
+async function clearCache() {
+    if (confirm("⚠️ 確定要執行【終極深度清理】嗎？\n這將炸毀手機裡卡住的舊資料與收藏，並強制重新連線！")) {
         localStorage.clear();
-        alert("✅ 快取已清除！系統即將重新啟動。");
-        location.reload();
+        if ('caches' in window) {
+            try {
+                const keys = await caches.keys();
+                for (let key of keys) await caches.delete(key);
+            } catch(e) {}
+        }
+        if ('serviceWorker' in navigator) {
+            try {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                for (let reg of regs) await reg.unregister();
+            } catch(e) {}
+        }
+        alert("✅ 深度清理完成！防護罩已解除，即將重新載入最新鮮的資料。");
+        window.location.replace(window.location.pathname + "?refresh=" + Date.now());
     }
 }
