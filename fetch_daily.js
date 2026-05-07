@@ -1,37 +1,68 @@
 const fs = require('fs');
 
 async function fetchDailyData() {
-    console.log("🌐 啟動加州天天樂 (終極防爆裝甲爬蟲)...");
+    console.log("🌐 啟動加州天天樂 (幽靈無頭爬蟲：避開跳板封鎖)...");
     let history = [];
 
-    // 策略一：嘗試多個代理通道抓取加州官方 API
-    const officialUrl = "https://www.calottery.com/api/DrawGameApi/DrawGamePastDrawResults/7?page=1&draws=50";
-    const proxies = [
-        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(officialUrl)}`,
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(officialUrl + "&bust=" + Date.now())}`
+    // 路線：優先直攻台灣老牌資訊網 (通常無防火牆)，最後才依賴代理
+    const routes = [
+        "https://www.pilio.idv.tw/ltodaily/list.asp",
+        "https://www.lotto-8.com/listltodaily.asp",
+        "https://api.codetabs.com/v1/proxy?quest=https://www.lotto-8.com/listltodaily.asp",
+        "https://www.calottery.com/api/DrawGameApi/DrawGamePastDrawResults/7?page=1&draws=50"
     ];
 
-    for (let i = 0; i < proxies.length; i++) {
-        console.log(`📡 嘗試官方 API 路線 ${i + 1}...`);
+    for (let i = 0; i < routes.length; i++) {
+        console.log(`📡 嘗試路線 ${i + 1}: ${routes[i].split('/')[2]}...`);
         try {
-            const res = await fetch(proxies[i], { headers: { "User-Agent": "Mozilla/5.0" } });
-            const text = await res.text(); // 先轉成純文字，防止 JSON 解析炸彈
-            
-            // 防呆：如果回傳的是 HTML (代表被防火牆擋了)，直接跳過
-            if (text.trim().startsWith('<')) {
-                console.log(`⚠️ 路線 ${i + 1} 遭防火牆攔截 (回傳了 HTML)`);
-                continue;
-            }
-            
-            const data = JSON.parse(text);
-            if (data && data.PastDrawResults && data.PastDrawResults.length > 0) {
+            const res = await fetch(routes[i], { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" } });
+            const text = await res.text();
+
+            // 1. 解析加州官方 JSON 格式
+            if (text.includes('PastDrawResults')) {
+                const data = JSON.parse(text);
                 data.PastDrawResults.forEach(item => {
                     const issue = String(item.DrawNumber);
                     const d = item.DrawDate.split('T')[0];
                     const nums = item.WinningNumbers.map(n => String(n.Number).padStart(2, '0'));
                     history.push({ issue, date: d, numbers: nums });
                 });
-                console.log(`✅ 路線 ${i + 1} 成功取得官方數據！`);
+            } 
+            // 2. 暴力解析台灣民間網頁 HTML 格式
+            else if (text.includes('<table') || text.includes('<tr')) {
+                const rows = text.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) || [];
+                rows.forEach(row => {
+                    // 尋找日期 (支援西元年 2026/05/08 或 民國年 115/05/08)
+                    let dMatch = row.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+                    let dateStr = "";
+                    if (dMatch) {
+                        dateStr = `${dMatch[1]}-${dMatch[2].padStart(2,'0')}-${dMatch[3].padStart(2,'0')}`;
+                    } else {
+                        dMatch = row.match(/(\d{3})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+                        if (dMatch) dateStr = `${parseInt(dMatch[1])+1911}-${dMatch[2].padStart(2,'0')}-${dMatch[3].padStart(2,'0')}`;
+                    }
+                    if (!dateStr) return;
+
+                    // 尋找期數與號碼
+                    const iMatch = row.replace(/<[^>]+>/g, ' ').match(/第\s*(\d+)\s*期/);
+                    const issueStr = iMatch ? iMatch[1] : dateStr.replace(/-/g, '');
+                    const cleanText = row.replace(/<[^>]+>/g, ' ').replace(dMatch[0], '');
+                    
+                    const nums = [...cleanText.matchAll(/\b(\d{1,2})\b/g)]
+                        .map(m => m[1].padStart(2, '0'))
+                        .filter(n => parseInt(n) > 0 && parseInt(n) <= 39); // 天天樂最大39
+                    
+                    // 去除重複號碼，確保至少抓到 5 顆球
+                    const uniqueNums = [...new Set(nums)];
+                    if (uniqueNums.length >= 5) {
+                        history.push({ issue: issueStr, date: dateStr, numbers: uniqueNums.slice(0, 5) });
+                    }
+                });
+            }
+
+            // 只要抓到 5 期以上的資料，就判定此路線成功，中斷搜尋
+            if (history.length > 5) {
+                console.log(`✅ 路線 ${i + 1} 成功取得數據！`);
                 break;
             }
         } catch (e) {
@@ -39,65 +70,23 @@ async function fetchDailyData() {
         }
     }
 
-    // 策略二：官方通道全掛，改用民間站台 (加入安全解析防爆機制)
-    if (history.length === 0) {
-        console.log("⚠️ 官方通道全數陣亡，啟動台灣民間站台 (安全解析模式)...");
-        const backupUrl = "https://www.lotto-8.com/listltodaily.asp";
-        const backupProxies = [
-            `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(backupUrl)}`,
-            `https://api.allorigins.win/get?url=${encodeURIComponent(backupUrl + "?bust=" + Date.now())}`
-        ];
-
-        for (let i = 0; i < backupProxies.length; i++) {
-            console.log(`📡 嘗試備用雷達路線 ${i + 1}...`);
-            try {
-                const res = await fetch(backupProxies[i]);
-                const text = await res.text(); // 統統先當成字串處理
-                let html = "";
-
-                // 判斷是 AllOrigins 的 JSON 包裝，還是 CodeTabs 的純 HTML
-                if (text.trim().startsWith('{') && text.includes('"contents"')) {
-                    html = JSON.parse(text).contents;
-                } else {
-                    html = text;
-                }
-
-                // 如果解出來根本沒有表格標籤，代表抓錯網頁了，直接跳過
-                if (!html || !html.includes("tr")) continue; 
-
-                const rows = html.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) || [];
-                rows.forEach(row => {
-                    const dateMatch = row.match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/);
-                    if (!dateMatch) return;
-                    const d = `${dateMatch[1]}-${dateMatch[2].padStart(2, '0')}-${dateMatch[3].padStart(2, '0')}`;
-                    const cleanText = row.replace(/<[^>]+>/g, ' ').replace(dateMatch[0], '');
-                    
-                    const nums = [...cleanText.matchAll(/\b(\d{1,2})\b/g)].map(m => m[1].padStart(2, '0'));
-                    if (nums.length >= 5) {
-                        history.push({ issue: d.replace(/-/g, ''), date: d, numbers: nums.slice(0, 5) });
-                    }
-                });
-
-                if (history.length > 0) {
-                    console.log(`✅ 備用雷達 ${i + 1} 刮削成功！`);
-                    break;
-                }
-            } catch (e) {
-                console.log(`❌ 備用雷達 ${i + 1} 解析失敗: ${e.message}`);
-            }
+    // 歷史資料去重與防呆寫入
+    const uniqueHistory = [];
+    const seenDates = new Set();
+    history.forEach(item => {
+        if (!seenDates.has(item.date)) {
+            seenDates.add(item.date);
+            uniqueHistory.push(item);
         }
-    }
+    });
 
-    if (history.length > 0) {
-        history.sort((a, b) => new Date(b.date) - new Date(a.date));
-        fs.writeFileSync('daily.json', JSON.stringify({ history }, null, 2));
-        console.log(`🎉 天天樂數據寫入成功！最新資料日期：${history[0].date}`);
+    if (uniqueHistory.length > 0) {
+        uniqueHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+        fs.writeFileSync('daily.json', JSON.stringify({ history: uniqueHistory }, null, 2));
+        console.log(`🎉 天天樂數據更新成功！最新日期：${uniqueHistory[0].date}`);
     } else {
-        console.log("💀 所有通道皆被封鎖，無法更新資料。");
-        // 防呆：就算都失敗，也要寫入空陣列，不要讓前端讀到壞檔而跳出「資料庫異常」紅字
-        if (!fs.existsSync('daily.json')) {
-            fs.writeFileSync('daily.json', JSON.stringify({ history: [] }, null, 2));
-        }
+        // [重要防呆] 如果全軍覆沒，絕對不要寫入空陣列，保留舊檔案才不會讓前端跳紅字
+        console.log("💀 所有通道皆被封鎖。拒絕覆寫，保留系統舊有資料。");
     }
 }
 
