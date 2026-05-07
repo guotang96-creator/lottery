@@ -19,16 +19,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: 🕷️ 啟動全彩種繞道爬蟲
+      - name: 🕷️ 啟動爬蟲抓取資料
         run: |
           node fetch_latest_539.js || true
           node fetch_lotto.js || true
           node fetch_weili.js || true
           node fetch_marksix.js || true
           node fetch_daily.js || true
+      - name: 🧠 啟動 V15 多因子最佳化引擎 (AI 核心)
+        run: node v15_optimizer.js || true
       - name: 💾 儲存並更新資料庫
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "actions@github.com"
           git add *.json
-          git diff --cached --quiet || (git commit -m "🤖 V14 代理突破版數據同步" && git push)
+          git diff --cached --quiet || (git commit -m "🤖 V15 數據與權重同步" && git push)
