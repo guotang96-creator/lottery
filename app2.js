@@ -1,3 +1,4 @@
+// 💥 暴力解除 PWA 舊版快取攔截
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then(function(regs) {
         for(let reg of regs) reg.unregister();
@@ -7,9 +8,12 @@ if ('serviceWorker' in navigator) {
 let currentGame = '';
 let currentHistoryData = []; 
 let currentPrediction = []; 
-let dynamicWeights = null; // 儲存 V15 動態權重
+let dynamicWeights = null; 
 
-// 如果後端沒算好，這是一套預設的防呆權重
+// 💡 補回被遺忘的 Render 對獎 API 網址
+const API_BASE_URL = 'https://lottery-k099.onrender.com/api/predict'; 
+
+// V15 防呆預設權重
 const DEFAULT_WEIGHTS = { ema: 10, mean: 20, gap: 15, cooc: 35, anom: 10, vol: 5, pat: 5 };
 
 const gameNames = { '539': '今彩 539', 'daily': '天天樂', 'lotto': '大樂透', 'weili': '威力彩', 'marksix': '六合彩' };
@@ -40,18 +44,24 @@ async function loadData(g) {
     const lBallsSpec = document.getElementById('latest-balls-special'); 
     const pContent = document.getElementById('prediction-content');
     
+    // 💡 抓回對獎區塊的 HTML 元素
+    const vBox = document.getElementById('ai-verify-box');
+
     sEl.innerText = "⏳ V15 引擎載入中...";
     lBalls.innerHTML = ''; lBallsSpec.innerHTML = ''; pContent.innerHTML = '';
+    
+    // 預設先隱藏按鈕與對獎區塊
     document.getElementById('save-fav-btn').style.display = 'none'; 
+    if(vBox) vBox.style.display = 'none';
 
     try {
-        // 1. 抓取歷史資料
+        // 1. 抓取 GitHub 歷史資料
         const gRes = await fetch(`https://guotang96-creator.github.io/lottery/${fileMap[g]}?nocache=${Date.now()}`, { cache: 'no-store' });
         const gh = await gRes.json();
         currentHistoryData = gh.history || [];
         if (currentHistoryData.length === 0) throw new Error("無歷史數據");
 
-        // 2. 抓取 V15 後端算好的最佳化權重
+        // 2. 抓取 V15 動態權重
         try {
             const wRes = await fetch(`https://guotang96-creator.github.io/lottery/v15_weights.json?nocache=${Date.now()}`, { cache: 'no-store' });
             const wData = await wRes.json();
@@ -61,6 +71,7 @@ async function loadData(g) {
             dynamicWeights = DEFAULT_WEIGHTS;
         }
 
+        // 渲染最新開獎號碼
         const latest = currentHistoryData[0];
         sEl.innerText = `✅ ${latest.issue ? `第 ${latest.issue} 期 ` : ""}(${latest.date})`;
 
@@ -72,6 +83,23 @@ async function loadData(g) {
             lBalls.innerHTML = nums.map(n => `<div class="ball">${n}</div>`).join('');
         }
 
+        // 💡 3. 補回這段被刪掉的 Render API 對獎邏輯！
+        if (vBox) {
+            try {
+                const rRes = await fetch(`${API_BASE_URL}/${g}`);
+                const ai = await rRes.json();
+                if (ai.status === "success" && ai.prev_predicted && ai.prev_predicted.length > 0) {
+                    vBox.style.display = 'block'; 
+                    const hits = ai.hit_nums || [];
+                    document.getElementById('verify-hit-count').innerText = `命中 ${hits.length} 顆`;
+                    document.getElementById('verify-balls').innerHTML = ai.prev_predicted.map(n => `<div class="ball ${hits.includes(n)?'hit':'miss'}">${String(n).padStart(2, '0')}</div>`).join('');
+                }
+            } catch (err) { 
+                console.log("⚠️ Render 伺服器無回應，略過對獎畫面"); 
+            }
+        }
+
+        // 4. 啟動 V15 本地即時預測
         runV15AI();
 
     } catch (e) { 
@@ -90,7 +118,7 @@ function runV15AI() {
     const w = dynamicWeights;
 
     let scores = {};
-    for(let n=1; n<=maxNum; n++) scores[norm(n)] = Math.random() * 0.001; // 量子微擾防呆
+    for(let n=1; n<=maxNum; n++) scores[norm(n)] = Math.random() * 0.001; 
 
     const pastData = currentHistoryData;
     let counts = {}, gaps = {};
@@ -106,7 +134,6 @@ function runV15AI() {
 
     const avgFreq = 30 * (pickCount / maxNum);
 
-    // 實作 7 大因子加權
     for(let n=1; n<=maxNum; n++) {
         const sn = norm(n);
         let emaScore = 0;
@@ -145,7 +172,6 @@ function runV15AI() {
             </div>`;
     }
 
-    // V15 專屬雷達報告
     document.getElementById('prediction-content').innerHTML = `
         <div class="ai-reason-box">
             <p style="font-weight:bold; color:var(--text-main); margin-bottom:10px;">🎯 V15 多因子動態推薦：</p>
@@ -165,9 +191,7 @@ function runV15AI() {
     document.getElementById('save-fav-btn').style.display = 'block';
 }
 
-function runAnalysis() {
-    alert("V15 分析功能已整合至主頁面。");
-}
+function runAnalysis() { alert("V15 分析功能已整合至主頁面。"); }
 
 function saveFavorite() {
     let favs = JSON.parse(localStorage.getItem('lottery_favs') || '[]');
