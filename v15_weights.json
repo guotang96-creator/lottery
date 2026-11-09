@@ -1,29 +1,29 @@
 {
   "539": {
-    "ema": 11,
+    "ema": 10,
     "mean": 23,
-    "gap": 7,
+    "gap": 5,
     "cooc": 12,
-    "anom": 22,
-    "vol": 2,
-    "pat": 23
+    "anom": 8,
+    "vol": 4,
+    "pat": 38
   },
   "lotto": {
-    "ema": 17,
-    "mean": 5,
-    "gap": 13,
-    "cooc": 34,
-    "anom": 16,
-    "vol": 1,
-    "pat": 14
+    "ema": 12,
+    "mean": 1,
+    "gap": 9,
+    "cooc": 28,
+    "anom": 8,
+    "vol": 30,
+    "pat": 11
   },
   "weili": {
-    "ema": 25,
-    "mean": 22,
-    "gap": 1,
-    "cooc": 4,
-    "anom": 11,
-    "vol": 9,
-    "pat": 28
+    "ema": 29,
+    "mean": 33,
+    "gap": 0,
+    "cooc": 11,
+    "anom": 10,
+    "vol": 8,
+    "pat": 9
   }
 }
